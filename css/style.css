@@ -1,0 +1,373 @@
+/* LeaveTracker Enhanced Design - Professional Color Palette */
+:root {
+    --primary-dark: #1B3C53;
+    --primary-medium: #234C6A;
+    --primary-light: #456882;
+    --accent-light: #D2C1B6;
+    --white: #ffffff;
+    --light-gray: #f8f9fa;
+    --border-color: #e9ecef;
+}
+
+/* Global Styles */
+html, body {
+    height: 100%;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--light-gray);
+    color: #333;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex: 1;
+}
+
+/* Navigation */
+.navbar {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%) !important;
+    box-shadow: 0 2px 10px rgba(27, 60, 83, 0.15);
+    padding: 1rem 2rem;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--white) !important;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    margin: 0 2px;
+    padding: 6px 12px !important;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--white) !important;
+    transform: translateY(-1px);
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(27, 60, 83, 0.08);
+    transition: all 0.3s ease;
+    background: var(--white);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(27, 60, 83, 0.12);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-light) 100%);
+    color: var(--white);
+    border-radius: 12px 12px 0 0 !important;
+    border: none;
+    padding: 1.25rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #3498db 50%, #2980b9 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #1f5f8b 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #138496 0%, #0f6674 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);
+}
+
+.btn-outline-primary1 {
+    border-color: white;
+    color: white;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary {
+    border-color: #3498db;
+    color: #3498db;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    background-color: #3498db;
+    border-color: #3498db;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary-light);
+}
+
+.dashboard-card:hover {
+    transform: translateY(-3px);
+    border-left-color: var(--primary-dark);
+}
+
+/* Leave Balance Progress */
+.leave-balance-progress {
+    height: 10px;
+    border-radius: 5px;
+    background-color: var(--accent-light);
+}
+
+.progress-bar {
+    border-radius: 5px;
+}
+
+/* Forms */
+.form-control {
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 0.2rem rgba(69, 104, 130, 0.25);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 8px;
+}
+
+/* Tables */
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background-color: var(--primary-dark);
+    color: var(--white);
+    border: none;
+    font-weight: 600;
+    padding: 15px;
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(69, 104, 130, 0.05);
+}
+
+/* Badges */
+.badge {
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: 500;
+}
+
+/* Alerts */
+.alert {
+    border: none;
+    border-radius: 10px;
+    border-left: 4px solid;
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-left-color: #28a745;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.alert-info {
+    background-color: rgba(69, 104, 130, 0.1);
+    border-left-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+/* Calendar */
+.calendar-day {
+    min-height: 120px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+    background-color: rgba(69, 104, 130, 0.05);
+}
+
+.calendar-event {
+    border-radius: 4px;
+    font-size: 0.75rem;
+    padding: 3px 6px;
+    margin: 2px 0;
+}
+
+/* Notifications */
+.notification-badge {
+    font-size: 0.7rem;
+    background-color: #dc3545;
+    border-radius: 10px;
+}
+
+/* Footer */
+.footer {
+    background-color: var(--primary-dark);
+    color: var(--accent-light);
+    margin-top: auto;
+    flex-shrink: 0;
+}
+.text-footer {
+    color: var(--accent-light) !important;
+}
+
+/* Login Page */
+.login-card {
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(27, 60, 83, 0.15);
+    border: none;
+}
+
+.login-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+    color: var(--white);
+    border-radius: 15px 15px 0 0;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .calendar-day {
+        min-height: 80px;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Status Colors */
+.status-pending { background-color: #ffc107; }
+.status-approved { background-color: #28a745; }
+.status-rejected { background-color: #dc3545; }
+.status-cancelled { background-color: #6c757d; }
+
+/* Quick Actions Panel */
+.quick-actions {
+    background: linear-gradient(135deg, var(--accent-light) 0%, rgba(210, 193, 182, 0.7) 100%);
+    border-radius: 10px;
+    padding: 1.5rem;
+}
+
+/* Professional Spacing */
+.container-fluid {
+    padding: 0.1rem;
+}
+
+.mb-professional {
+    margin-bottom: 2rem;
+}
+
+/* Enhanced Shadows */
+.shadow-professional {
+    box-shadow: 0 6px 25px rgba(27, 60, 83, 0.1);
+}
