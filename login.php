@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is already logged in, redirect to dashboard
 if(isset($_SESSION['user_id'])) {
-    header("Location: index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -86,7 +86,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
                             $log_stmt->execute();
                             
                             // Redirect user to dashboard
-                            header("location: index.php");
+                            header('Location: index.php');
                         } else {
                             // Password is not valid
                             $login_err = "Invalid email or password.";
@@ -236,7 +236,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
                 </form>
                 
                 <div class="text-center mt-3">
-                    <a href="auth/forgot_password.php">Forgot Password?</a>
+                    <a href="auth/auth/forgot_password.php">Forgot Password?</a>
                 </div>
             </div>
         </div>

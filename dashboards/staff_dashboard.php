@@ -3,12 +3,12 @@
 
 // Check if user is logged in and has staff role
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'staff') {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
 // Include dashboard widgets
-require_once 'modules/dashboard_widgets.php';
+require_once __DIR__ . '/../modules/dashboard_widgets.php';
 
 // Get user information
 $user_id = $_SESSION['user_id'];
@@ -44,102 +44,208 @@ $upcoming_holidays_sql = "SELECT name, date, description
 $upcoming_holidays_stmt = $conn->prepare($upcoming_holidays_sql);
 $upcoming_holidays_stmt->execute();
 $upcoming_holidays = $upcoming_holidays_stmt->fetchAll();
-
-// Get upcoming academic events
-$upcoming_events_sql = "SELECT event_name, start_date, end_date, event_type 
-                       FROM academic_calendar 
-                       WHERE end_date >= CURDATE() 
-                       ORDER BY start_date ASC LIMIT 5";
-$upcoming_events_stmt = $conn->prepare($upcoming_events_sql);
-$upcoming_events_stmt->execute();
-$upcoming_events = $upcoming_events_stmt->fetchAll();
 ?>
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3">Staff Dashboard</h1>
-        <div>
-            <a href="../modules/leave_calendar.php" class="btn btn-info me-2">
-                <i class="fas fa-calendar-alt me-1"></i> Leave Calendar
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="fas fa-tachometer-alt me-2"></i>Staff Dashboard</h2>
+            <p class="text-muted">Welcome back, <?php echo htmlspecialchars($_SESSION['first_name']); ?>!</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="modules/apply_leave.php" class="btn btn-primary me-2">
+                <i class="fas fa-plus-circle me-1"></i> Apply Leave
             </a>
-            <a href="../modules/apply_leave.php" class="btn btn-primary">
-                <i class="fas fa-plus-circle me-1"></i> Apply for Leave
+            <a href="../modules/leave_calendar.php" class="btn btn-outline-info">
+                <i class="fas fa-calendar-alt me-1"></i> Calendar
             </a>
         </div>
     </div>
     
-    <!-- Enhanced Dashboard Widgets -->
+    <!-- Quick Stats Row -->
     <div class="row mb-4">
-        <div class="col-lg-8 mb-professional">
-            <?php echo getLeaveBalanceWidget($conn, $user_id); ?>
-        </div>
-        <div class="col-lg-4">
-            <div class="quick-actions mb-professional">
-                <?php echo getQuickActionsWidget($_SESSION['role']); ?>
-            </div>
-            <?php echo getUpcomingLeavesWidget($conn, $user_id); ?>
-            <?php echo getNotificationWidget($conn, $user_id); ?>
-        </div>
-    </div>
-    
-    <!-- Leave Balance Cards -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-light">
-                    <h5 class="card-title mb-0">My Leave Balances (<?php echo $current_year; ?>)</h5>
-                </div>
+        <?php 
+        $total_balance = 0;
+        $total_used = 0;
+        foreach($leave_balances as $balance) {
+            $total_balance += $balance['balance'];
+            $total_used += $balance['used'];
+        }
+        ?>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
                 <div class="card-body">
-                    <div class="row">
-                        <?php if(count($leave_balances) > 0): ?>
-                            <?php foreach($leave_balances as $balance): ?>
-                                <div class="col-md-4 col-sm-6 mb-3">
-                                    <div class="card dashboard-card h-100">
-                                        <div class="card-body">
-                                            <h5 class="card-title"><?php echo htmlspecialchars($balance['name']); ?></h5>
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Available:</span>
-                                                <strong><?php echo number_format($balance['balance'], 1); ?> days</strong>
-                                            </div>
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Used:</span>
-                                                <strong><?php echo number_format($balance['used'], 1); ?> days</strong>
-                                            </div>
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Total:</span>
-                                                <strong><?php echo number_format($balance['max_days'], 1); ?> days</strong>
-                                            </div>
-                                            <div class="progress leave-balance-progress">
-                                                <?php 
-                                                $percentage = ($balance['used'] / $balance['max_days']) * 100;
-                                                $color = $percentage > 75 ? 'danger' : ($percentage > 50 ? 'warning' : 'success');
-                                                ?>
-                                                <div class="progress-bar bg-<?php echo $color; ?>" role="progressbar" style="width: <?php echo $percentage; ?>%" aria-valuenow="<?php echo $percentage; ?>" aria-valuemin="0" aria-valuemax="100"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <div class="col-12">
-                                <div class="alert alert-info">
-                                    <i class="fas fa-info-circle me-2"></i> No leave balances found for the current year.
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4><?php echo number_format($total_balance, 1); ?></h4>
+                            <p class="mb-0">Available Days</p>
+                        </div>
+                        <i class="fas fa-calendar-check fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4><?php echo number_format($total_used, 1); ?></h4>
+                            <p class="mb-0">Days Used</p>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4><?php echo count($recent_applications); ?></h4>
+                            <p class="mb-0">Recent Applications</p>
+                        </div>
+                        <i class="fas fa-file-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4><?php echo count($upcoming_holidays); ?></h4>
+                            <p class="mb-0">Upcoming Holidays</p>
+                        </div>
+                        <i class="fas fa-umbrella-beach fa-2x opacity-75"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Recent Applications and Upcoming Events -->
+    <!-- Main Content Row -->
     <div class="row">
-        <!-- Recent Leave Applications -->
-        <div class="col-lg-6 mb-4">
+        <!-- Leave Balances -->
+        <div class="col-lg-8 mb-4">
             <div class="card h-100">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Recent Leave Applications</h5>
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>My Leave Balances (<?php echo $current_year; ?>)</h5>
+                </div>
+                <div class="card-body">
+                    <?php if(count($leave_balances) > 0): ?>
+                        <div class="row">
+                            <?php foreach($leave_balances as $balance): ?>
+                                <div class="col-md-6 mb-3">
+                                    <div class="border rounded p-3">
+                                        <h6 class="fw-bold"><?php echo htmlspecialchars($balance['name']); ?></h6>
+                                        <div class="row text-center">
+                                            <div class="col-4">
+                                                <div class="text-primary">
+                                                    <strong><?php echo number_format($balance['balance'], 1); ?></strong>
+                                                    <small class="d-block text-muted">Available</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="text-danger">
+                                                    <strong><?php echo number_format($balance['used'], 1); ?></strong>
+                                                    <small class="d-block text-muted">Used</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="text-secondary">
+                                                    <strong><?php echo number_format($balance['max_days'], 1); ?></strong>
+                                                    <small class="d-block text-muted">Total</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <?php 
+                                        $percentage = ($balance['used'] / $balance['max_days']) * 100;
+                                        if ($percentage > 75) {
+                                            $color = 'danger';
+                                        } elseif ($percentage > 50) {
+                                            $color = 'warning';
+                                        } else {
+                                            $color = 'success';
+                                        }
+                                        ?>
+                                        <div class="progress mt-2" style="height: 6px;">
+                                            <div class="progress-bar bg-<?php echo $color; ?>" style="width: <?php echo $percentage; ?>%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-center py-4">
+                            <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                            <h5>No Leave Balances</h5>
+                            <p class="text-muted">No leave balances found for the current year.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions & Notifications -->
+        <div class="col-lg-4 mb-4">
+            <!-- Quick Actions -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="modules/apply_leave.php" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>Apply for Leave
+                        </a>
+                        <a href="../modules/my_leaves.php" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-list me-1"></i>My Applications
+                        </a>
+                        <a href="../modules/leave_calendar.php" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-calendar me-1"></i>Leave Calendar
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Holidays -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Upcoming Holidays</h6>
+                </div>
+                <div class="card-body">
+                    <?php if(count($upcoming_holidays) > 0): ?>
+                        <?php foreach(array_slice($upcoming_holidays, 0, 3) as $holiday): ?>
+                            <?php 
+                            $holiday_date = new DateTime($holiday['date']);
+                            $days_until = $holiday_date->diff(new DateTime())->days;
+                            ?>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong><?php echo htmlspecialchars($holiday['name']); ?></strong>
+                                    <small class="d-block text-muted"><?php echo $holiday_date->format('M d, Y'); ?></small>
+                                </div>
+                                <span class="badge bg-info"><?php echo $days_until; ?> days</span>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p class="text-muted mb-0">No upcoming holidays</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Applications -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Leave Applications</h5>
                     <a href="../modules/my_leaves.php" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
@@ -198,118 +304,15 @@ $upcoming_events = $upcoming_events_stmt->fetchAll();
                             </table>
                         </div>
                     <?php else: ?>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i> No recent leave applications found.
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h5>No Recent Applications</h5>
+                            <p class="text-muted">You haven't submitted any leave applications yet.</p>
+                            <a href="modules/apply_leave.php" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Apply for Leave
+                            </a>
                         </div>
                     <?php endif; ?>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Upcoming Holidays and Events -->
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-light">
-                    <ul class="nav nav-tabs card-header-tabs" id="upcomingTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="holidays-tab" data-bs-toggle="tab" data-bs-target="#holidays" type="button" role="tab" aria-controls="holidays" aria-selected="true">Upcoming Holidays</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab" aria-controls="events" aria-selected="false">Academic Events</button>
-                        </li>
-                    </ul>
-                </div>
-                <div class="card-body">
-                    <div class="tab-content" id="upcomingTabsContent">
-                        <!-- Holidays Tab -->
-                        <div class="tab-pane fade show active" id="holidays" role="tabpanel" aria-labelledby="holidays-tab">
-                            <?php if(count($upcoming_holidays) > 0): ?>
-                                <div class="list-group">
-                                    <?php foreach($upcoming_holidays as $holiday): ?>
-                                        <?php 
-                                        $holiday_date = new DateTime($holiday['date']);
-                                        $days_until = $holiday_date->diff(new DateTime())->days;
-                                        ?>
-                                        <div class="list-group-item list-group-item-action">
-                                            <div class="d-flex w-100 justify-content-between">
-                                                <h6 class="mb-1"><?php echo htmlspecialchars($holiday['name']); ?></h6>
-                                                <small class="text-muted"><?php echo $holiday_date->format('M d, Y'); ?></small>
-                                            </div>
-                                            <?php if(!empty($holiday['description'])): ?>
-                                                <small class="text-muted"><?php echo htmlspecialchars($holiday['description']); ?></small>
-                                            <?php endif; ?>
-                                            <?php if($days_until == 0): ?>
-                                                <span class="badge bg-success">Today</span>
-                                            <?php elseif($days_until == 1): ?>
-                                                <span class="badge bg-primary">Tomorrow</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-info"><?php echo $days_until; ?> days away</span>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="alert alert-info">
-                                    <i class="fas fa-info-circle me-2"></i> No upcoming holidays found.
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <!-- Academic Events Tab -->
-                        <div class="tab-pane fade" id="events" role="tabpanel" aria-labelledby="events-tab">
-                            <?php if(count($upcoming_events) > 0): ?>
-                                <div class="list-group">
-                                    <?php foreach($upcoming_events as $event): ?>
-                                        <?php 
-                                        $event_start = new DateTime($event['start_date']);
-                                        $event_end = new DateTime($event['end_date']);
-                                        $days_until = $event_start->diff(new DateTime())->days;
-                                        
-                                        $event_class = '';
-                                        switch($event['event_type']) {
-                                            case 'semester':
-                                                $event_class = 'semester';
-                                                break;
-                                            case 'exam':
-                                                $event_class = 'exam';
-                                                break;
-                                            case 'staff_development':
-                                                $event_class = 'staff-development';
-                                                break;
-                                            case 'restricted_leave_period':
-                                                $event_class = 'restricted';
-                                                break;
-                                        }
-                                        ?>
-                                        <div class="list-group-item list-group-item-action">
-                                            <div class="d-flex w-100 justify-content-between">
-                                                <h6 class="mb-1"><?php echo htmlspecialchars($event['event_name']); ?></h6>
-                                                <small class="text-muted">
-                                                    <?php 
-                                                    echo $event_start->format('M d') . ' - ' . $event_end->format('M d, Y');
-                                                    ?>
-                                                </small>
-                                            </div>
-                                            <div class="calendar-event <?php echo $event_class; ?>">
-                                                <?php echo ucfirst(str_replace('_', ' ', $event['event_type'])); ?>
-                                            </div>
-                                            <?php if($days_until == 0): ?>
-                                                <span class="badge bg-success">Today</span>
-                                            <?php elseif($days_until == 1): ?>
-                                                <span class="badge bg-primary">Tomorrow</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-info"><?php echo $days_until; ?> days away</span>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="alert alert-info">
-                                    <i class="fas fa-info-circle me-2"></i> No upcoming academic events found.
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

@@ -5,7 +5,7 @@ if (session_status() == PHP_SESSION_NONE) {
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -20,7 +20,7 @@ $role = $_SESSION['role'];
 if ($role != 'hr_admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -150,7 +150,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <li><a class="dropdown-item" href="../modules/academic_calendar.php"><i class="fas fa-graduation-cap me-2"></i>Academic Calendar</a></li>
                 </ul>
             </div>
-            <a href="../reports/leave_report.php" class="btn btn-outline-secondary">
+            <a href="./reports/leave_report.php" class="btn btn-outline-secondary">
                 <i class="fas fa-file-alt me-1"></i> Reports
             </a>
         </div>
@@ -234,7 +234,7 @@ include_once __DIR__ . '/../includes/header.php';
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i>Recent Leave Applications</h5>
-                    <a href="../reports/leave_report.php" class="btn btn-sm btn-outline-primary1">View All</a>
+                    <a href="./reports/leave_report.php" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
                     <?php if (count($recent_applications) == 0): ?>
@@ -300,7 +300,7 @@ include_once __DIR__ . '/../includes/header.php';
                                                 ?>
                                             </td>
                                             <td>
-                                                <a href="../modules/view_leave.php?id=<?php echo $application['id']; ?>" class="btn btn-sm btn-outline-primary">
+                                                <a href="./modules/view_leave.php?id=<?php echo $application['id']; ?>" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                             </td>
@@ -331,7 +331,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <?php else: ?>
                         <div class="list-group">
                             <?php foreach ($pending_approvals as $approval): ?>
-                                <a href="../modules/leave_approvals.php" class="list-group-item list-group-item-action">
+                                <a href="./modules/leave_approvals.php" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h6 class="mb-1"><?php echo htmlspecialchars($approval['first_name'] . ' ' . $approval['last_name']); ?></h6>
                                         <small><?php echo date('M d', strtotime($approval['created_at'])); ?></small>
@@ -356,7 +356,7 @@ include_once __DIR__ . '/../includes/header.php';
                         </div>
                         <?php if (count($pending_approvals) > 3): ?>
                             <div class="text-center mt-3">
-                                <a href="../modules/leave_approvals.php" class="btn btn-sm btn-outline-primary">View All</a>
+                                <a href="./modules/leave_approvals.php" class="btn btn-sm btn-outline-primary">View All</a>
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>
@@ -421,7 +421,7 @@ include_once __DIR__ . '/../includes/header.php';
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Upcoming Holidays</h5>
-                    <a href="../modules/holidays.php" class="btn btn-sm btn-outline-primary1">Manage</a>
+                    <a href="./modules/holidays.php" class="btn btn-sm btn-outline-primary">Manage</a>
                 </div>
                 <div class="card-body">
                     <?php if (count($upcoming_holidays) == 0): ?>
@@ -458,7 +458,7 @@ include_once __DIR__ . '/../includes/header.php';
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Academic Calendar Events</h5>
-                    <a href="../modules/academic_calendar.php" class="btn btn-sm btn-outline-primary1">Manage</a>
+                    <a href="./modules/academic_calendar.php" class="btn btn-sm btn-outline-primary">Manage</a>
                 </div>
                 <div class="card-body">
                     <?php if (count($upcoming_academic_events) == 0): ?>
@@ -507,25 +507,25 @@ include_once __DIR__ . '/../includes/header.php';
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3 col-sm-6 mb-3">
-                            <a href="../modules/users.php" class="btn btn-outline-primary w-100 py-3">
+                            <a href="./modules/users.php" class="btn btn-outline-primary w-100 py-3">
                                 <i class="fas fa-users fa-2x mb-2"></i><br>
                                 Manage Users
                             </a>
                         </div>
                         <div class="col-md-3 col-sm-6 mb-3">
-                            <a href="../modules/departments.php" class="btn btn-outline-secondary w-100 py-3">
+                            <a href="./modules/departments.php" class="btn btn-outline-secondary w-100 py-3">
                                 <i class="fas fa-building fa-2x mb-2"></i><br>
                                 Manage Departments
                             </a>
                         </div>
                         <div class="col-md-3 col-sm-6 mb-3">
-                            <a href="../modules/leave_types.php" class="btn btn-outline-success w-100 py-3">
+                            <a href="./modules/leave_types.php" class="btn btn-outline-success w-100 py-3">
                                 <i class="fas fa-tags fa-2x mb-2"></i><br>
                                 Leave Types
                             </a>
                         </div>
                         <div class="col-md-3 col-sm-6 mb-3">
-                            <a href="../reports/leave_report.php" class="btn btn-outline-info w-100 py-3">
+                            <a href="./reports/leave_report.php" class="btn btn-outline-info w-100 py-3">
                                 <i class="fas fa-chart-bar fa-2x mb-2"></i><br>
                                 Reports & Analytics
                             </a>

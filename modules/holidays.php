@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ $role = $_SESSION['role'];
 if ($role != 'hr_admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Holiday created successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/holidays.php");
+                header('Location: ./modules/holidays.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -176,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Holiday updated successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/holidays.php");
+                header('Location: ./modules/holidays.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -227,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             $_SESSION['alert'] = "Holiday deleted successfully!";
             $_SESSION['alert_type'] = "success";
-            header("Location: ../modules/holidays.php");
+            header('Location: ./modules/holidays.php');
             exit;
             
         } catch (Exception $e) {
@@ -298,7 +298,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Successfully imported $imported_count recurring holidays for year $year.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/holidays.php");
+                header('Location: ./modules/holidays.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -388,7 +388,7 @@ include_once '../includes/header.php';
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="get" action="../modules/holidays.php" class="row g-3">
+            <form method="get" action="modules/holidays.php" class="row g-3">
                 <div class="col-md-4">
                     <label for="year" class="form-label">Year</label>
                     <select class="form-select" id="year" name="year">
@@ -415,7 +415,7 @@ include_once '../includes/header.php';
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-filter me-1"></i> Apply Filters
                     </button>
-                    <a href="../modules/holidays.php" class="btn btn-outline-secondary ms-2">
+                    <a href="./modules/holidays.php" class="btn btn-outline-secondary ms-2">
                         <i class="fas fa-times me-1"></i> Clear Filters
                     </a>
                 </div>
@@ -542,7 +542,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="addHolidayModalLabel"><i class="fas fa-plus-circle me-2"></i>Add New Holiday</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="../modules/holidays.php" method="post">
+            <form action="modules/holidays.php" method="post">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="name" class="form-label">Holiday Name <span class="text-danger">*</span></label>
@@ -597,7 +597,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="editHolidayModalLabel"><i class="fas fa-edit me-2"></i>Edit Holiday</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="../modules/holidays.php" method="post">
+            <form action="modules/holidays.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="edit_holiday_id" name="edit_holiday_id">
                     
@@ -654,7 +654,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="deleteHolidayModalLabel"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Delete Holiday</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="../modules/holidays.php" method="post">
+            <form action="modules/holidays.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="delete_holiday_id" name="delete_holiday_id">
                     <p>Are you sure you want to delete the holiday <strong id="delete_holiday_name"></strong> on <strong id="delete_holiday_date"></strong>?</p>
@@ -677,7 +677,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="importHolidaysModalLabel"><i class="fas fa-file-import me-2"></i>Import Recurring Holidays</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="../modules/holidays.php" method="post">
+            <form action="modules/holidays.php" method="post">
                 <div class="modal-body">
                     <p>This will import all recurring holidays for the specified year.</p>
                     

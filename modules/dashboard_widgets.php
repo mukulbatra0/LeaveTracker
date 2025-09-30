@@ -25,7 +25,13 @@ function getLeaveBalanceWidget($conn, $user_id) {
         $html .= '<div class="row">';
         foreach ($balances as $balance) {
             $percentage = ($balance['used'] / $balance['max_days']) * 100;
-            $color_class = $percentage > 75 ? 'danger' : ($percentage > 50 ? 'warning' : 'success');
+            if ($percentage > 75) {
+                $color_class = 'danger';
+            } elseif ($percentage > 50) {
+                $color_class = 'warning';
+            } else {
+                $color_class = 'success';
+            }
             
             $html .= '<div class="col-md-6 col-lg-4 mb-3">
                         <div class="card h-100 border-left-' . $color_class . '">
@@ -83,7 +89,7 @@ function getPendingApprovalsWidget($conn, $user_id) {
     
     if ($pending_count > 0) {
         $html .= '<div class="mt-3">
-                    <a href="/modules/leave_approvals.php" class="btn btn-warning btn-sm">
+                    <a href="./modules/leave_approvals.php" class="btn btn-warning btn-sm">
                         <i class="fas fa-eye me-1"></i>Review Applications
                     </a>
                   </div>';
@@ -150,25 +156,25 @@ function getQuickActionsWidget($role) {
                     <div class="d-grid gap-2">';
     
     // Common actions for all users
-    $html .= '<a href="../modules/apply_leave.php" class="btn btn-primary btn-sm">
+    $html .= '<a href="./modules/apply_leave.php" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus me-1"></i>Apply for Leave
               </a>
-              <a href="../modules/my_leaves.php" class="btn btn-outline-primary btn-sm">
+              <a href="./modules/my_leaves.php" class="btn btn-outline-primary btn-sm">
                 <i class="fas fa-list me-1"></i>My Applications
               </a>';
     
     // Role-specific actions
     if (in_array($role, ['department_head', 'dean', 'principal', 'hr_admin'])) {
-        $html .= '<a href="../modules/leave_approvals.php" class="btn btn-warning btn-sm">
+        $html .= '<a href="./modules/leave_approvals.php" class="btn btn-warning btn-sm">
                     <i class="fas fa-check-circle me-1"></i>Pending Approvals
                   </a>';
     }
     
     if ($role === 'hr_admin') {
-        $html .= '<a href="../modules/reports.php" class="btn btn-success btn-sm">
+        $html .= '<a href="./modules/reports.php" class="btn btn-success btn-sm">
                     <i class="fas fa-chart-bar me-1"></i>Generate Reports
                   </a>
-                  <a href="../admin/users.php" class="btn btn-secondary btn-sm">
+                  <a href="./admin/users.php" class="btn btn-secondary btn-sm">
                     <i class="fas fa-users me-1"></i>Manage Users
                   </a>';
     }
@@ -220,7 +226,7 @@ function getNotificationWidget($conn, $user_id) {
         }
         
         $html .= '<div class="text-center mt-3">
-                    <a href="../modules/notifications.php" class="btn btn-outline-dark btn-sm">
+                    <a href="./modules/notifications.php" class="btn btn-outline-dark btn-sm">
                         View All Notifications
                     </a>
                   </div>';

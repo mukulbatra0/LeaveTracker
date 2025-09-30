@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -10,7 +10,7 @@ require_once '../config/db.php';
 
 $leave_id = $_GET['id'] ?? null;
 if (!$leave_id) {
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -31,7 +31,7 @@ $leave = $stmt->fetch();
 if (!$leave) {
     $_SESSION['alert'] = "Leave application not found.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 

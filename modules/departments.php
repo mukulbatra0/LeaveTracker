@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ $role = $_SESSION['role'];
 if ($role != 'hr_admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Department created successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/departments.php");
+                header('Location: ./modules/departments.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -187,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Department updated successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/departments.php");
+                header('Location: ./modules/departments.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -249,7 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             $_SESSION['alert'] = "Department deleted successfully!";
             $_SESSION['alert_type'] = "success";
-            header("Location: ../modules/departments.php");
+            header('Location: ./modules/departments.php');
             exit;
             
         } catch (Exception $e) {
@@ -375,7 +375,7 @@ include_once '../includes/header.php';
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                     
-                                    <a href="/reports/department_report.php?id=<?php echo $department['id']; ?>" class="btn btn-sm btn-outline-info">
+                                    <a href="./reports/department_report.php?id=<?php echo $department['id']; ?>" class="btn btn-sm btn-outline-info">
                                         <i class="fas fa-chart-bar"></i>
                                     </a>
                                 </td>
@@ -396,7 +396,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="addDepartmentModalLabel"><i class="fas fa-plus-circle me-2"></i>Add New Department</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/departments.php" method="post">
+            <form action="modules/departments.php" method="post">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="name" class="form-label">Department Name <span class="text-danger">*</span></label>
@@ -441,7 +441,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="editDepartmentModalLabel"><i class="fas fa-edit me-2"></i>Edit Department</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/departments.php" method="post">
+            <form action="modules/departments.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="edit_dept_id" name="edit_dept_id">
                     
@@ -488,7 +488,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="deleteDepartmentModalLabel"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Delete Department</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/departments.php" method="post">
+            <form action="modules/departments.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="delete_dept_id" name="delete_dept_id">
                     <p>Are you sure you want to delete the department <strong id="delete_dept_name"></strong>?</p>

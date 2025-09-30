@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -30,7 +30,7 @@ if ($current_year < 2020 || $current_year > 2030) {
 $start_date = $current_year . '-' . str_pad($current_month, 2, '0', STR_PAD_LEFT) . '-01';
 $end_date = date('Y-m-t', strtotime($start_date));
 
-$sql = "SELECT la.*, lt.name as leave_type_name, lt.color, u.first_name, u.last_name
+$sql = "SELECT la.*, lt.name as leave_type_name, u.first_name, u.last_name
         FROM leave_applications la
         JOIN leave_types lt ON la.leave_type_id = lt.id
         JOIN users u ON la.user_id = u.id

@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: ../login.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ $role = $_SESSION['role'];
 if ($role != 'hr_admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Leave type created successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/leave_types.php");
+                header('Location: leave_types.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -219,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Leave type updated successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/leave_types.php");
+                header('Location: leave_types.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -287,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             $_SESSION['alert'] = "Leave type deleted successfully!";
             $_SESSION['alert_type'] = "success";
-            header("Location: ../modules/leave_types.php");
+            header('Location: leave_types.php');
             exit;
             
         } catch (Exception $e) {
@@ -353,9 +353,9 @@ include_once '../includes/header.php';
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="color-indicator me-2" style="background-color: <?php echo htmlspecialchars($leave_type['color']); ?>;"></div>
+                                        <div class="color-indicator me-2" style="background-color: <?php echo htmlspecialchars($leave_type['color'] ?? '#3498db'); ?>;"></div>
                                         <?php echo htmlspecialchars($leave_type['name']); ?>
-                                        <?php if ($leave_type['is_academic']): ?>
+                                        <?php if ($leave_type['is_academic'] ?? false): ?>
                                             <span class="badge bg-info ms-2">Academic</span>
                                         <?php endif; ?>
                                     </div>
@@ -379,12 +379,12 @@ include_once '../includes/header.php';
                                             <li><i class="fas fa-paperclip text-secondary me-1"></i> Attachment required</li>
                                         <?php endif; ?>
                                         
-                                        <?php if ($leave_type['min_notice_days'] > 0): ?>
-                                            <li><i class="fas fa-clock text-secondary me-1"></i> <?php echo $leave_type['min_notice_days']; ?> days notice</li>
+                                        <?php if (($leave_type['min_notice_days'] ?? 0) > 0): ?>
+                                            <li><i class="fas fa-clock text-secondary me-1"></i> <?php echo $leave_type['min_notice_days'] ?? 0; ?> days notice</li>
                                         <?php endif; ?>
                                         
-                                        <?php if ($leave_type['max_days_per_request']): ?>
-                                            <li><i class="fas fa-calendar-day text-secondary me-1"></i> Max <?php echo $leave_type['max_days_per_request']; ?> days/request</li>
+                                        <?php if ($leave_type['max_days_per_request'] ?? null): ?>
+                                            <li><i class="fas fa-calendar-day text-secondary me-1"></i> Max <?php echo $leave_type['max_days_per_request'] ?? ''; ?> days/request</li>
                                         <?php endif; ?>
                                         
                                         <?php if ($leave_type['applicable_to'] != 'all'): ?>
@@ -405,12 +405,12 @@ include_once '../includes/header.php';
                                             data-id="<?php echo $leave_type['id']; ?>"
                                             data-name="<?php echo htmlspecialchars($leave_type['name']); ?>"
                                             data-description="<?php echo htmlspecialchars($leave_type['description'] ?? ''); ?>"
-                                            data-default-days="<?php echo $leave_type['default_days']; ?>"
-                                            data-color="<?php echo htmlspecialchars($leave_type['color']); ?>"
-                                            data-requires-attachment="<?php echo $leave_type['requires_attachment']; ?>"
-                                            data-is-academic="<?php echo $leave_type['is_academic']; ?>"
+                                            data-default-days="<?php echo $leave_type['default_days'] ?? 0; ?>"
+                                            data-color="<?php echo htmlspecialchars($leave_type['color'] ?? '#3498db'); ?>"
+                                            data-requires-attachment="<?php echo $leave_type['requires_attachment'] ?? 0; ?>"
+                                            data-is-academic="<?php echo $leave_type['is_academic'] ?? 0; ?>"
                                             data-max-days="<?php echo $leave_type['max_days_per_request'] ?? ''; ?>"
-                                            data-min-notice="<?php echo $leave_type['min_notice_days']; ?>"
+                                            data-min-notice="<?php echo $leave_type['min_notice_days'] ?? 0; ?>"
                                             data-applicable-to="<?php echo htmlspecialchars($leave_type['applicable_to']); ?>">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -424,7 +424,7 @@ include_once '../includes/header.php';
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                     
-                                    <a href="/reports/leave_type_report.php?id=<?php echo $leave_type['id']; ?>" class="btn btn-sm btn-outline-info">
+                                    <a href="../reports/leave_type_report.php?id=<?php echo $leave_type['id']; ?>" class="btn btn-sm btn-outline-info">
                                         <i class="fas fa-chart-bar"></i>
                                     </a>
                                 </td>
@@ -445,7 +445,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="addLeaveTypeModalLabel"><i class="fas fa-plus-circle me-2"></i>Add New Leave Type</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/leave_types.php" method="post">
+            <form action="leave_types.php" method="post">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
@@ -533,7 +533,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="editLeaveTypeModalLabel"><i class="fas fa-edit me-2"></i>Edit Leave Type</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/leave_types.php" method="post">
+            <form action="leave_types.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="edit_leave_type_id" name="edit_leave_type_id">
                     
@@ -630,7 +630,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="deleteLeaveTypeModalLabel"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Delete Leave Type</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/leave_types.php" method="post">
+            <form action="leave_types.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="delete_leave_type_id" name="delete_leave_type_id">
                     <p>Are you sure you want to delete the leave type <strong id="delete_leave_type_name"></strong>?</p>

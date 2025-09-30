@@ -30,7 +30,7 @@ try {
 
     // Check if the user is logged in. If not, redirect to the login page.
     if (!isset($_SESSION['user_id'])) {
-        header("Location: ../login.php");
+        header('Location: login.php');
         exit;
     }
 
@@ -44,13 +44,13 @@ try {
         // If the user's role is not allowed, set an alert and redirect them.
         $_SESSION['alert'] = "You don't have permission to access this page.";
         $_SESSION['alert_type'] = "danger";
-        header("Location: ../index.php");
+        header('Location: index.php');
         exit;
     }
 
     // Ensure the script is accessed via a POST request. Redirect if not.
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header("Location: ../modules/reports.php");
+        header('Location: ./modules/reports.php');
         exit;
     }
 

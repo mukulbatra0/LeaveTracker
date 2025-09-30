@@ -5,7 +5,7 @@ if (session_status() == PHP_SESSION_NONE) {
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -20,7 +20,7 @@ $role = $_SESSION['role'];
 if ($role != 'principal') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -156,10 +156,10 @@ include_once __DIR__ . '/../includes/header.php';
             <p class="text-muted">College-wide Leave Management Overview</p>
         </div>
         <div class="col-md-4 text-end">
-            <a href="../modules/leave_approvals.php" class="btn btn-primary">
+            <a href="./modules/leave_approvals.php" class="btn btn-primary">
                 <i class="fas fa-check-circle me-1"></i> Manage Approvals
             </a>
-            <a href="../reports/leave_report.php" class="btn btn-outline-secondary ms-2">
+            <a href="./reports/leave_report.php" class="btn btn-outline-secondary ms-2">
                 <i class="fas fa-file-alt me-1"></i> Reports
             </a>
         </div>
@@ -271,61 +271,7 @@ include_once __DIR__ . '/../includes/header.php';
                                 <?php endforeach; ?>
                                 
                                 // Chart.js not available - chart disabled
-                                    type: 'line',
-                                    data: {
-                                        labels: labels,
-                                        datasets: [
-                                            {
-                                                label: 'Applications',
-                                                data: applicationsData,
-                                                backgroundColor: 'rgba(13, 110, 253, 0.2)',
-                                                borderColor: 'rgba(13, 110, 253, 1)',
-                                                borderWidth: 2,
-                                                tension: 0.3,
-                                                yAxisID: 'y'
-                                            },
-                                            {
-                                                label: 'Total Days',
-                                                data: daysData,
-                                                backgroundColor: 'rgba(220, 53, 69, 0.2)',
-                                                borderColor: 'rgba(220, 53, 69, 1)',
-                                                borderWidth: 2,
-                                                tension: 0.3,
-                                                yAxisID: 'y1'
-                                            }
-                                        ]
-                                    },
-                                    options: {
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        scales: {
-                                            y: {
-                                                beginAtZero: true,
-                                                position: 'left',
-                                                title: {
-                                                    display: true,
-                                                    text: 'Applications'
-                                                }
-                                            },
-                                            y1: {
-                                                beginAtZero: true,
-                                                position: 'right',
-                                                grid: {
-                                                    drawOnChartArea: false
-                                                },
-                                                title: {
-                                                    display: true,
-                                                    text: 'Days'
-                                                }
-                                            }
-                                        },
-                                        plugins: {
-                                            legend: {
-                                                position: 'bottom'
-                                            }
-                                        }
-                                    }
-                                });
+                                console.log('Chart.js not loaded');
                             });
                         </script>
                     <?php endif; ?>
@@ -366,25 +312,7 @@ include_once __DIR__ . '/../includes/header.php';
                                 <?php endforeach; ?>
                                 
                                 // Chart.js not available - chart disabled
-                                    type: 'doughnut',
-                                    data: {
-                                        labels: labels,
-                                        datasets: [{
-                                            data: data,
-                                            backgroundColor: backgroundColor,
-                                            borderWidth: 1
-                                        }]
-                                    },
-                                    options: {
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        plugins: {
-                                            legend: {
-                                                position: 'bottom'
-                                            }
-                                        }
-                                    }
-                                });
+                                console.log('Chart.js not loaded');
                             });
                         </script>
                     <?php endif; ?>
@@ -429,52 +357,7 @@ include_once __DIR__ . '/../includes/header.php';
                                 <?php endforeach; ?>
                                 
                                 // Chart.js not available - chart disabled
-                                    type: 'bar',
-                                    data: {
-                                        labels: labels,
-                                        datasets: [
-                                            {
-                                                label: 'Approved',
-                                                data: approvedData,
-                                                backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                                                borderColor: 'rgba(40, 167, 69, 1)',
-                                                borderWidth: 1
-                                            },
-                                            {
-                                                label: 'Rejected',
-                                                data: rejectedData,
-                                                backgroundColor: 'rgba(220, 53, 69, 0.7)',
-                                                borderColor: 'rgba(220, 53, 69, 1)',
-                                                borderWidth: 1
-                                            },
-                                            {
-                                                label: 'Pending',
-                                                data: pendingData,
-                                                backgroundColor: 'rgba(255, 193, 7, 0.7)',
-                                                borderColor: 'rgba(255, 193, 7, 1)',
-                                                borderWidth: 1
-                                            }
-                                        ]
-                                    },
-                                    options: {
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        scales: {
-                                            x: {
-                                                stacked: true
-                                            },
-                                            y: {
-                                                stacked: true,
-                                                beginAtZero: true
-                                            }
-                                        },
-                                        plugins: {
-                                            legend: {
-                                                position: 'bottom'
-                                            }
-                                        }
-                                    }
-                                });
+                                console.log('Chart.js not loaded');
                             });
                         </script>
                     <?php endif; ?>
@@ -498,7 +381,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <?php else: ?>
                         <div class="list-group">
                             <?php foreach ($pending_approvals as $approval): ?>
-                                <a href="../modules/leave_approvals.php" class="list-group-item list-group-item-action">
+                                <a href="./modules/leave_approvals.php" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h6 class="mb-1"><?php echo htmlspecialchars($approval['first_name'] . ' ' . $approval['last_name']); ?></h6>
                                         <small><?php echo date('M d', strtotime($approval['created_at'])); ?></small>
@@ -523,7 +406,7 @@ include_once __DIR__ . '/../includes/header.php';
                         </div>
                         <?php if (count($pending_approvals) > 5): ?>
                             <div class="text-center mt-3">
-                                <a href="../modules/leave_approvals.php" class="btn btn-sm btn-outline-primary">View All</a>
+                                <a href="./modules/leave_approvals.php" class="btn btn-sm btn-outline-primary">View All</a>
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>
@@ -538,7 +421,7 @@ include_once __DIR__ . '/../includes/header.php';
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-calendar me-2"></i>Upcoming Leaves (Next 30 Days)</h5>
-                    <a href="../reports/leave_report.php" class="btn btn-sm btn-outline-primary">View All</a>
+                    <a href="./reports/leave_report.php" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
                     <?php if (count($upcoming_leaves) == 0): ?>

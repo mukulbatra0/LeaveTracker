@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ $role = $_SESSION['role'];
 if ($role != 'hr_admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Academic event created successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/academic_calendar.php");
+                header('Location: ./modules/academic_calendar.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -181,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Academic event updated successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/academic_calendar.php");
+                header('Location: ./modules/academic_calendar.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -232,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             $_SESSION['alert'] = "Academic event deleted successfully!";
             $_SESSION['alert_type'] = "success";
-            header("Location: ../modules/academic_calendar.php");
+            header('Location: ./modules/academic_calendar.php');
             exit;
             
         } catch (Exception $e) {
@@ -310,7 +310,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Semester created successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/academic_calendar.php?view=semesters");
+                header('Location: ./modules/academic_calendar.php?view=semesters');
                 exit;
                 
             } catch (PDOException $e) {
@@ -445,7 +445,7 @@ include_once '../includes/header.php';
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="get" action="/modules/academic_calendar.php" class="row g-3">
+            <form method="get" action="modules/academic_calendar.php" class="row g-3">
                 <?php if ($current_view == 'semesters'): ?>
                     <input type="hidden" name="view" value="semesters">
                 <?php endif; ?>
@@ -643,7 +643,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="addEventModalLabel"><i class="fas fa-plus-circle me-2"></i>Add New Academic Event</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/academic_calendar.php" method="post">
+            <form action="modules/academic_calendar.php" method="post">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -740,7 +740,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="editEventModalLabel"><i class="fas fa-edit me-2"></i>Edit Academic Event</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/academic_calendar.php" method="post">
+            <form action="modules/academic_calendar.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="edit_event_id" name="edit_event_id">
                     
@@ -836,7 +836,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="addSemesterModalLabel"><i class="fas fa-plus-circle me-2"></i>Add New Semester</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/academic_calendar.php?view=semesters" method="post">
+            <form action="modules/academic_calendar.php?view=semesters" method="post">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="academic_year" class="form-label">Academic Year <span class="text-danger">*</span></label>
@@ -887,7 +887,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="editSemesterModalLabel"><i class="fas fa-edit me-2"></i>Edit Semester</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/academic_calendar.php?view=semesters" method="post">
+            <form action="modules/academic_calendar.php?view=semesters" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="edit_semester_id" name="edit_event_id">
                     
@@ -947,7 +947,7 @@ include_once '../includes/header.php';
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/academic_calendar.php<?php echo ($current_view == 'semesters') ? '?view=semesters' : ''; ?>" method="post">
+            <form action="modules/academic_calendar.php<?php echo ($current_view == 'semesters') ? '?view=semesters' : ''; ?>" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="delete_event_id" name="delete_event_id">
                     <p>Are you sure you want to delete <strong id="delete_event_title"></strong>?</p>

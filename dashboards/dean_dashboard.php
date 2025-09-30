@@ -3,7 +3,7 @@
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ $role = $_SESSION['role'];
 if ($role != 'dean') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -143,7 +143,7 @@ include_once __DIR__ . '/../includes/header.php';
             <p class="text-muted">Managing <?php echo count($departments); ?> Departments</p>
         </div>
         <div class="col-md-4 text-end">
-            <a href="../modules/leave_approvals.php" class="btn btn-primary">
+            <a href="./modules/leave_approvals.php" class="btn btn-primary">
                 <i class="fas fa-check-circle me-1"></i> Manage Approvals
             </a>
         </div>
@@ -238,7 +238,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <?php else: ?>
                         <div class="list-group">
                             <?php foreach ($pending_approvals as $approval): ?>
-                                <a href="../modules/leave_approvals.php" class="list-group-item list-group-item-action">
+                                <a href="./modules/leave_approvals.php" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h6 class="mb-1"><?php echo htmlspecialchars($approval['first_name'] . ' ' . $approval['last_name']); ?></h6>
                                         <small><?php echo date('M d', strtotime($approval['created_at'])); ?></small>
@@ -263,7 +263,7 @@ include_once __DIR__ . '/../includes/header.php';
                         </div>
                         <?php if (count($pending_approvals) > 5): ?>
                             <div class="text-center mt-3">
-                                <a href="../modules/leave_approvals.php" class="btn btn-sm btn-outline-primary">View All</a>
+                                <a href="./modules/leave_approvals.php" class="btn btn-sm btn-outline-primary">View All</a>
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>

@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -121,7 +121,7 @@ if (isset($_POST['cancel_leave']) && isset($_POST['leave_id'])) {
         $_SESSION['alert_type'] = "danger";
     }
     
-    header("Location: ../modules/my_leaves.php");
+    header('Location: ./modules/my_leaves.php');
     exit;
 }
 
@@ -135,7 +135,7 @@ include_once '../includes/header.php';
             <h2><i class="fas fa-calendar-check me-2"></i>My Leave Applications</h2>
         </div>
         <div class="col-md-4 text-end">
-            <a href="../modules/apply_leave.php" class="btn btn-primary">
+            <a href="./modules/apply_leave.php" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i> Apply for Leave
             </a>
         </div>
@@ -155,7 +155,7 @@ include_once '../includes/header.php';
                 <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
                 <h4>No Leave Applications Found</h4>
                 <p class="text-muted">You haven't applied for any leave yet.</p>
-                <a href="../modules/apply_leave.php" class="btn btn-primary mt-2">
+                <a href="./modules/apply_leave.php" class="btn btn-primary mt-2">
                     <i class="fas fa-plus me-1"></i> Apply for Leave
                 </a>
             </div>

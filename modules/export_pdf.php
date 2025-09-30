@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -19,13 +19,13 @@ $allowed_roles = ['department_head', 'dean', 'principal', 'hr_admin'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
 // Check if form was submitted
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: ../modules/reports.php");
+    header('Location: ./modules/reports.php');
     exit;
 }
 
@@ -133,7 +133,7 @@ $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
     $_SESSION['alert'] = "Invalid request. Please try again.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../modules/reports.php");
+    header('Location: ./modules/reports.php');
     exit;
 }
 

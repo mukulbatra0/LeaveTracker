@@ -13,7 +13,7 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Custom JS -->
-    <script src="js/script.js"></script>
+    <script src="<?php echo $basePath; ?>js/script.js"></script>
     
     <!-- Notification Loader Script -->
     <?php if(isset($_SESSION['user_id'])): ?>
@@ -21,7 +21,7 @@
         // Function to load notifications
         function loadNotifications() {
             $.ajax({
-                url: 'modules/get_notifications.php',
+                url: '<?php echo $basePath; ?>modules/get_notifications.php',
                 type: 'GET',
                 dataType: 'json',
                 success: function(data) {
@@ -46,7 +46,7 @@
                         // Add view all link
                         $('#notification-list').append(
                             '<li><hr class="dropdown-divider"></li>' +
-                            '<li class="dropdown-item text-center"><a href="modules/notifications.php">View All</a></li>'
+                            '<li class="dropdown-item text-center"><a href="<?php echo $basePath; ?>modules/notifications.php">View All</a></li>'
                         );
                     } else {
                         $('#notification-count').text('0').hide();

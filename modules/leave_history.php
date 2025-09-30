@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -165,7 +165,7 @@ if (isset($_GET['cancel']) && is_numeric($_GET['cancel'])) {
         if (!$application) {
             $_SESSION['alert'] = "Leave application not found.";
             $_SESSION['alert_type'] = "danger";
-            header("Location: ../modules/leave_history.php");
+            header('Location: ./modules/leave_history.php');
             exit;
         }
         
@@ -185,7 +185,7 @@ if (isset($_GET['cancel']) && is_numeric($_GET['cancel'])) {
         if (!$can_cancel) {
             $_SESSION['alert'] = "You don't have permission to cancel this application or it's already processed.";
             $_SESSION['alert_type'] = "danger";
-            header("Location: ../modules/leave_history.php");
+            header('Location: ./modules/leave_history.php');
             exit;
         }
         
@@ -209,13 +209,13 @@ if (isset($_GET['cancel']) && is_numeric($_GET['cancel'])) {
         
         $_SESSION['alert'] = "Leave application cancelled successfully.";
         $_SESSION['alert_type'] = "success";
-        header("Location: ../modules/leave_history.php");
+        header('Location: ./modules/leave_history.php');
         exit;
     } catch (PDOException $e) {
         $conn->rollBack();
         $_SESSION['alert'] = "Error: " . $e->getMessage();
         $_SESSION['alert_type'] = "danger";
-        header("Location: ../modules/leave_history.php");
+        header('Location: ./modules/leave_history.php');
         exit;
     }
 }
@@ -227,7 +227,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">Leave History</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">Leave History</li>
     </ol>
     
@@ -254,7 +254,7 @@ include '../includes/header.php';
             <i class="fas fa-history me-1"></i>
             Leave Applications
             <div class="float-end">
-                <a href="../modules/apply_leave.php" class="btn btn-primary btn-sm">
+                <a href="./modules/apply_leave.php" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Apply for Leave
                 </a>
             </div>
@@ -297,7 +297,7 @@ include '../includes/header.php';
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
                             <button type="submit" class="btn btn-primary me-2">Filter</button>
-                            <a href="../modules/leave_history.php" class="btn btn-secondary">Reset</a>
+                            <a href="./modules/leave_history.php" class="btn btn-secondary">Reset</a>
                         </div>
                     </form>
                 </div>

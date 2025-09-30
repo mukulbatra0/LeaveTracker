@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -22,7 +22,7 @@ $role = $_SESSION['role'];
 if ($role == 'hr_admin') {
     $_SESSION['alert'] = "HR Admins cannot apply for leave through this system.";
     $_SESSION['alert_type'] = "warning";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -59,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (!$valid_leave_type) {
         $_SESSION['alert'] = "Invalid leave type selected.";
         $_SESSION['alert_type'] = "danger";
-        header("Location: ../modules/apply_leave.php");
+        header('Location: ./modules/apply_leave.php');
         exit;
     }
     
@@ -71,14 +71,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($start_timestamp < $current_timestamp) {
         $_SESSION['alert'] = "Start date cannot be in the past.";
         $_SESSION['alert_type'] = "danger";
-        header("Location: ../modules/apply_leave.php");
+        header('Location: ./modules/apply_leave.php');
         exit;
     }
     
     if ($end_timestamp < $start_timestamp) {
         $_SESSION['alert'] = "End date cannot be before start date.";
         $_SESSION['alert_type'] = "danger";
-        header("Location: ../modules/apply_leave.php");
+        header('Location: ./modules/apply_leave.php');
         exit;
     }
     
@@ -86,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (!is_numeric($days) || $days <= 0) {
         $_SESSION['alert'] = "Invalid number of days.";
         $_SESSION['alert_type'] = "danger";
-        header("Location: ../modules/apply_leave.php");
+        header('Location: ./modules/apply_leave.php');
         exit;
     }
     
@@ -105,7 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($days > $balance) {
             $_SESSION['alert'] = "Insufficient leave balance. You have {$balance} days available.";
             $_SESSION['alert_type'] = "danger";
-            header("Location: ../modules/apply_leave.php");
+            header('Location: ./modules/apply_leave.php');
             exit;
         }
     } else {
@@ -128,7 +128,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($days > $max_days) {
             $_SESSION['alert'] = "Insufficient leave balance. You have {$max_days} days available.";
             $_SESSION['alert_type'] = "danger";
-            header("Location: ../modules/apply_leave.php");
+            header('Location: ./modules/apply_leave.php');
             exit;
         }
     }
@@ -139,7 +139,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!isset($_FILES['attachment']) || $_FILES['attachment']['error'] == UPLOAD_ERR_NO_FILE) {
             $_SESSION['alert'] = "Attachment is required for this leave type.";
             $_SESSION['alert_type'] = "danger";
-            header("Location: ../modules/apply_leave.php");
+            header('Location: ./modules/apply_leave.php');
             exit;
         }
         
@@ -165,7 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!in_array($file_ext, $allowed_types)) {
             $_SESSION['alert'] = "Invalid file type. Allowed types: " . implode(', ', $allowed_types);
             $_SESSION['alert_type'] = "danger";
-            header("Location: ../modules/apply_leave.php");
+            header('Location: ./modules/apply_leave.php');
             exit;
         }
         
@@ -173,7 +173,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($file_size > $max_size) {
             $_SESSION['alert'] = "File is too large. Maximum size is {$max_size} bytes.";
             $_SESSION['alert_type'] = "danger";
-            header("Location: ../modules/apply_leave.php");
+            header('Location: ./modules/apply_leave.php');
             exit;
         }
         
@@ -192,7 +192,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             $_SESSION['alert'] = "Failed to upload file.";
             $_SESSION['alert_type'] = "danger";
-            header("Location: ../modules/apply_leave.php");
+            header('Location: ./modules/apply_leave.php');
             exit;
         }
     }
@@ -284,7 +284,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $_SESSION['alert'] = "Leave application submitted successfully.";
         $_SESSION['alert_type'] = "success";
-        header("Location: ../modules/my_leaves.php");
+        header('Location: ./modules/my_leaves.php');
         exit;
     } catch (Exception $e) {
         // Rollback transaction on error
@@ -292,7 +292,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $_SESSION['alert'] = "Error: " . $e->getMessage();
         $_SESSION['alert_type'] = "danger";
-        header("Location: ../modules/apply_leave.php");
+        header('Location: ./modules/apply_leave.php');
         exit;
     }
 }
@@ -370,7 +370,7 @@ include_once '../includes/header.php';
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a href="../index.php" class="btn btn-secondary me-md-2">
+                                <a href="index.php" class="btn btn-secondary me-md-2">
                                     <i class="fas fa-times me-1"></i> Cancel
                                 </a>
                                 <button type="submit" class="btn btn-primary" id="submit-btn">

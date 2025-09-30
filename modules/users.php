@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ $role = $_SESSION['role'];
 if ($role != 'hr_admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "User created successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/users.php");
+                header('Location: ./modules/users.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -241,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "User updated successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/users.php");
+                header('Location: ./modules/users.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -321,7 +321,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "User deleted successfully!";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../modules/users.php");
+                header('Location: ./modules/users.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -481,7 +481,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="addUserModalLabel"><i class="fas fa-user-plus me-2"></i>Add New User</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/users.php" method="post">
+            <form action="modules/users.php" method="post">
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -567,7 +567,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="editUserModalLabel"><i class="fas fa-user-edit me-2"></i>Edit User</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/users.php" method="post">
+            <form action="modules/users.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="edit_user_id" name="edit_user_id">
                     
@@ -655,7 +655,7 @@ include_once '../includes/header.php';
                 <h5 class="modal-title" id="deleteUserModalLabel"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Delete User</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/modules/users.php" method="post">
+            <form action="modules/users.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="delete_user_id" name="delete_user_id">
                     <p>Are you sure you want to delete the user <strong id="delete_user_name"></strong>?</p>

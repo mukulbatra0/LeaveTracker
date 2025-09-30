@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
+    header('Location: login.php');
     exit;
 }
 
@@ -23,7 +23,7 @@ $allowed_roles = ['department_head', 'dean', 'principal', 'hr_admin'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header("Location: ../index.php");
+    header('Location: index.php');
     exit;
 }
 
@@ -297,7 +297,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['alert_type'] = "danger";
         }
         
-        header("Location: ../modules/leave_approvals.php");
+        header('Location: ./modules/leave_approvals.php');
         exit;
     }
 }
