@@ -19,10 +19,9 @@ $user_role = $_SESSION['role'];
 // Redirect to appropriate dashboard based on role
 $allowed_dashboards = [
     'staff' => 'dashboards/staff_dashboard.php',
-    'department_head' => 'dashboards/department_head_dashboard.php',
-    'dean' => 'dashboards/dean_dashboard.php',
-    'principal' => 'dashboards/principal_dashboard.php',
-    'hr_admin' => 'dashboards/hr_admin_dashboard.php'
+    'head_of_department' => 'dashboards/head_of_department_dashboard.php',
+    'director' => 'dashboards/director_dashboard.php',
+    'admin' => 'dashboards/admin_dashboard.php'
 ];
 
 if (isset($allowed_dashboards[$user_role])) {

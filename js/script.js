@@ -1,4 +1,14 @@
 // ELMS JavaScript Functions
+function getBasePath() {
+    const path = window.location.pathname;
+    const segments = path.split('/');
+    const leaveTrackerIndex = segments.indexOf('LeaveTracker');
+    if (leaveTrackerIndex !== -1) {
+        return segments.slice(0, leaveTrackerIndex + 1).join('/') + '/';
+    }
+    return '/';
+}
+
 $(document).ready(function() {
     // Load notifications
     loadNotifications();
@@ -9,7 +19,7 @@ $(document).ready(function() {
 
 function loadNotifications() {
     $.ajax({
-        url: 'modules/get_notifications.php',
+        url: getBasePath() + 'modules/get_notifications.php',
         method: 'GET',
         dataType: 'json',
         success: function(data) {
