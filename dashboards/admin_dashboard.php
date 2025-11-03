@@ -55,10 +55,10 @@ $dept_stats = $dept_stats_stmt->fetchAll();
             <p class="text-muted">System administration and management overview</p>
         </div>
         <div class="col-md-4 text-end">
-            <a href="admin/users.php" class="btn btn-primary me-2">
+            <a href="./admin/users.php" class="btn btn-primary me-2">
                 <i class="fas fa-users me-1"></i> Manage Users
             </a>
-            <a href="admin/system_config.php" class="btn btn-outline-secondary">
+            <a href="./admin/system_config.php" class="btn btn-outline-secondary">
                 <i class="fas fa-cog me-1"></i> Settings
             </a>
         </div>
@@ -127,7 +127,7 @@ $dept_stats = $dept_stats_stmt->fetchAll();
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-list me-2"></i>Recent Leave Applications</h5>
-                    <a href="reports/all_applications.php" class="btn btn-sm btn-outline-primary">View All</a>
+                    <a href="./modules/leave_history.php" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
                     <?php if(count($recent_applications) > 0): ?>
@@ -211,19 +211,19 @@ $dept_stats = $dept_stats_stmt->fetchAll();
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="admin/users.php" class="btn btn-primary btn-sm">
+                        <a href="./admin/users.php" class="btn btn-primary btn-sm">
                             <i class="fas fa-users me-1"></i>Manage Users
                         </a>
-                        <a href="admin/departments.php" class="btn btn-outline-primary btn-sm">
+                        <a href="./admin/departments.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-building me-1"></i>Departments
                         </a>
-                        <a href="admin/leave_types.php" class="btn btn-outline-primary btn-sm">
+                        <a href="./admin/leave_types.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-list me-1"></i>Leave Types
                         </a>
-                        <a href="admin/holidays.php" class="btn btn-outline-info btn-sm">
+                        <a href="./admin/holidays.php" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-calendar me-1"></i>Holidays
                         </a>
-                        <a href="reports/system_reports.php" class="btn btn-outline-success btn-sm">
+                        <a href="./modules/reports.php" class="btn btn-outline-success btn-sm">
                             <i class="fas fa-chart-bar me-1"></i>Reports
                         </a>
                     </div>

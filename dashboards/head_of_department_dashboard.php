@@ -89,10 +89,10 @@ $leave_balances = $leave_balances_stmt->fetchAll();
             <p class="text-muted">Department: <?php echo htmlspecialchars($department['name'] ?? 'Unknown'); ?></p>
         </div>
         <div class="col-md-4 text-end">
-            <a href="modules/apply_leave.php" class="btn btn-primary me-2">
+            <a href="./modules/apply_leave.php" class="btn btn-primary me-2">
                 <i class="fas fa-plus-circle me-1"></i> Apply Leave
             </a>
-            <a href="modules/department_reports.php" class="btn btn-outline-info">
+            <a href="./modules/reports.php" class="btn btn-outline-info">
                 <i class="fas fa-chart-bar me-1"></i> Reports
             </a>
         </div>
@@ -235,16 +235,16 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="modules/apply_leave.php" class="btn btn-primary btn-sm">
+                        <a href="./modules/apply_leave.php" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus me-1"></i>Apply for Leave
                         </a>
-                        <a href="modules/department_staff.php" class="btn btn-outline-primary btn-sm">
+                        <a href="./modules/users.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-users me-1"></i>Department Staff
                         </a>
-                        <a href="modules/department_calendar.php" class="btn btn-outline-info btn-sm">
+                        <a href="./modules/leave_calendar.php" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-calendar me-1"></i>Department Calendar
                         </a>
-                        <a href="reports/department_reports.php" class="btn btn-outline-success btn-sm">
+                        <a href="./modules/reports.php" class="btn btn-outline-success btn-sm">
                             <i class="fas fa-chart-bar me-1"></i>Department Reports
                         </a>
                     </div>
@@ -279,7 +279,7 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                             </div>
                         <?php endforeach; ?>
                         <div class="text-center mt-2">
-                            <a href="modules/my_leaves.php" class="btn btn-sm btn-outline-primary">View All</a>
+                            <a href="./modules/my_leaves.php" class="btn btn-sm btn-outline-primary">View All</a>
                         </div>
                     <?php else: ?>
                         <p class="text-muted mb-0">No leave balance data</p>
@@ -295,7 +295,7 @@ $leave_balances = $leave_balances_stmt->fetchAll();
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Department Applications</h5>
-                    <a href="modules/department_applications.php" class="btn btn-sm btn-outline-primary">View All</a>
+                    <a href="./modules/leave_approvals.php" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
                     <?php if(count($recent_applications) > 0): ?>

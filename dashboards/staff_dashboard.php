@@ -54,10 +54,10 @@ $upcoming_holidays = $upcoming_holidays_stmt->fetchAll();
             <p class="text-muted">Welcome back, <?php echo htmlspecialchars($_SESSION['first_name']); ?>!</p>
         </div>
         <div class="col-md-4 text-end">
-            <a href="modules/apply_leave.php" class="btn btn-primary me-2">
+            <a href="./modules/apply_leave.php" class="btn btn-primary me-2">
                 <i class="fas fa-plus-circle me-1"></i> Apply Leave
             </a>
-            <a href="../modules/leave_calendar.php" class="btn btn-outline-info">
+            <a href="./modules/leave_calendar.php" class="btn btn-outline-info">
                 <i class="fas fa-calendar-alt me-1"></i> Calendar
             </a>
         </div>
@@ -199,13 +199,13 @@ $upcoming_holidays = $upcoming_holidays_stmt->fetchAll();
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="modules/apply_leave.php" class="btn btn-primary btn-sm">
+                        <a href="./modules/apply_leave.php" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus me-1"></i>Apply for Leave
                         </a>
-                        <a href="../modules/my_leaves.php" class="btn btn-outline-primary btn-sm">
+                        <a href="./modules/my_leaves.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-list me-1"></i>My Applications
                         </a>
-                        <a href="../modules/leave_calendar.php" class="btn btn-outline-info btn-sm">
+                        <a href="./modules/leave_calendar.php" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-calendar me-1"></i>Leave Calendar
                         </a>
                     </div>
@@ -246,7 +246,7 @@ $upcoming_holidays = $upcoming_holidays_stmt->fetchAll();
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Leave Applications</h5>
-                    <a href="../modules/my_leaves.php" class="btn btn-sm btn-outline-primary">View All</a>
+                    <a href="./modules/my_leaves.php" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
                     <?php if(count($recent_applications) > 0): ?>
@@ -308,7 +308,7 @@ $upcoming_holidays = $upcoming_holidays_stmt->fetchAll();
                             <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
                             <h5>No Recent Applications</h5>
                             <p class="text-muted">You haven't submitted any leave applications yet.</p>
-                            <a href="modules/apply_leave.php" class="btn btn-primary">
+                            <a href="./modules/apply_leave.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>Apply for Leave
                             </a>
                         </div>

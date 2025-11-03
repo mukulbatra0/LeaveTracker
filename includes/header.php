@@ -92,7 +92,7 @@
                             <li><a class="dropdown-item" href="<?php echo $basePath; ?>modules/profile.php"><i class="fas fa-user me-1"></i> My Profile</a></li>
                             <li><a class="dropdown-item" href="<?php echo $basePath; ?>modules/change_password.php"><i class="fas fa-key me-1"></i> Change Password</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="<?php echo $basePath; ?>auth/logout.php"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $basePath; ?>logout.php"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
                         </ul>
                     </li>
                 </ul>

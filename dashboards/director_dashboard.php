@@ -100,10 +100,10 @@ $leave_balances = $leave_balances_stmt->fetchAll();
             <p class="text-muted">Institution-wide leave management and final approvals</p>
         </div>
         <div class="col-md-4 text-end">
-            <a href="modules/apply_leave.php" class="btn btn-primary me-2">
+            <a href="./modules/apply_leave.php" class="btn btn-primary me-2">
                 <i class="fas fa-plus-circle me-1"></i> Apply Leave
             </a>
-            <a href="reports/institution_reports.php" class="btn btn-outline-info">
+            <a href="./modules/reports.php" class="btn btn-outline-info">
                 <i class="fas fa-chart-line me-1"></i> Reports
             </a>
         </div>
@@ -253,19 +253,19 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="modules/apply_leave.php" class="btn btn-primary btn-sm">
+                        <a href="./modules/apply_leave.php" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus me-1"></i>Apply for Leave
                         </a>
-                        <a href="modules/institution_overview.php" class="btn btn-outline-primary btn-sm">
+                        <a href="./modules/reports.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-building me-1"></i>Institution Overview
                         </a>
-                        <a href="modules/all_departments.php" class="btn btn-outline-info btn-sm">
+                        <a href="./modules/departments.php" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-sitemap me-1"></i>All Departments
                         </a>
-                        <a href="reports/institution_reports.php" class="btn btn-outline-success btn-sm">
+                        <a href="./modules/reports.php" class="btn btn-outline-success btn-sm">
                             <i class="fas fa-chart-line me-1"></i>Institution Reports
                         </a>
-                        <a href="modules/policy_management.php" class="btn btn-outline-secondary btn-sm">
+                        <a href="./admin/leave_types.php" class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-file-contract me-1"></i>Leave Policies
                         </a>
                     </div>
@@ -300,7 +300,7 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                             </div>
                         <?php endforeach; ?>
                         <div class="text-center mt-2">
-                            <a href="modules/my_leaves.php" class="btn btn-sm btn-outline-primary">View All</a>
+                            <a href="./modules/my_leaves.php" class="btn btn-sm btn-outline-primary">View All</a>
                         </div>
                     <?php else: ?>
                         <p class="text-muted mb-0">No leave balance data</p>
@@ -358,7 +358,7 @@ $leave_balances = $leave_balances_stmt->fetchAll();
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Applications</h5>
-                    <a href="modules/all_applications.php" class="btn btn-sm btn-outline-primary">View All</a>
+                    <a href="./modules/leave_history.php" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
                     <?php if(count($recent_applications) > 0): ?>

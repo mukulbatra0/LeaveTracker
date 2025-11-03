@@ -14,11 +14,11 @@ require_once '../config/db.php';
 $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'];
 
-// Check if user is an HR admin
-if ($role != 'hr_admin') {
+// Check if user is an admin or HR admin
+if ($role != 'admin' && $role != 'hr_admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: index.php');
+    header('Location: ../dashboards/admin_dashboard.php');
     exit;
 }
 
@@ -265,7 +265,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">Leave Types Management</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="/dashboards/hr_admin_dashboard.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="../dashboards/admin_dashboard.php">Dashboard</a></li>
         <li class="breadcrumb-item active">Leave Types</li>
     </ol>
 
