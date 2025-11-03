@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $leave_types = $leave_types_stmt->fetchAll(PDO::FETCH_COLUMN);
                 
                 foreach ($leave_types as $leave_type_id) {
-                    $balance_sql = "INSERT INTO leave_balances (user_id, leave_type_id, year, total_days, used_days) 
+                    $balance_sql = "INSERT INTO leave_balances (user_id, leave_type_id, year, balance, used) 
                                    VALUES (:user_id, :leave_type_id, YEAR(CURDATE()), 
                                    (SELECT default_days FROM leave_types WHERE id = :leave_type_id2), 0)";
                     $balance_stmt = $conn->prepare($balance_sql);
@@ -412,7 +412,7 @@ include '../includes/header.php';
                         <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-search"></i> Filter
                         </button>
-                        <a href="/admin/users.php" class="btn btn-secondary">
+                        <a href="users.php" class="btn btn-secondary">
                             <i class="fas fa-sync"></i> Reset
                         </a>
                     </div>

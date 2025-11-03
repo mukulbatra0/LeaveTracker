@@ -284,7 +284,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $_SESSION['alert'] = "Leave application submitted successfully.";
         $_SESSION['alert_type'] = "success";
-        header('Location: ./modules/my_leaves.php');
+        header('Location: my_leaves.php');
         exit;
     } catch (Exception $e) {
         // Rollback transaction on error

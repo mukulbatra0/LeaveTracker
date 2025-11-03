@@ -424,7 +424,7 @@ include_once '../includes/header.php';
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                     
-                                    <a href="../reports/leave_type_report.php?id=<?php echo $leave_type['id']; ?>" class="btn btn-sm btn-outline-info">
+                                    <a href="./reports/leave_type_report.php?id=<?php echo $leave_type['id']; ?>" class="btn btn-sm btn-outline-info">
                                         <i class="fas fa-chart-bar"></i>
                                     </a>
                                 </td>

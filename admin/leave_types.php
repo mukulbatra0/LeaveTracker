@@ -22,10 +22,22 @@ if ($role != 'admin' && $role != 'hr_admin') {
     exit;
 }
 
+// Initialize errors array
+$errors = [];
+
+// Generate CSRF token for forms
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 // Process form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Add new leave type
-    if (isset($_POST['add_leave_type'])) {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        $errors[] = "Invalid form submission. Please try again.";
+    } else {
+        // Add new leave type
+        if (isset($_POST['add_leave_type'])) {
         // Quick fix for undefined array keys
         $_POST['min_notice_days'] = $_POST['min_notice_days'] ?? 0;
         $_POST['max_days_per_request'] = $_POST['max_days_per_request'] ?? 0;
@@ -33,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim($_POST['name']);
         $description = trim($_POST['description']);
         $default_days = (int)$_POST['default_days'];
-        $color = trim($_POST['color']);
+        $color = '#3498db'; // Default color since it's not shown in frontend
         $requires_document = isset($_POST['requires_document']) ? 1 : 0;
         $is_active = isset($_POST['is_active']) ? 1 : 0;
         $accrual_method = trim($_POST['accrual_method']);
@@ -74,16 +86,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $conn->beginTransaction();
 
-                $insert_sql = "INSERT INTO leave_types (name, description, default_days, color, requires_document, is_active, accrual_method, carry_forward_days, max_consecutive_days, created_at) 
-                              VALUES (:name, :description, :default_days, :color, :requires_document, :is_active, :accrual_method, :carry_forward_days, :max_consecutive_days, NOW())";
+                $insert_sql = "INSERT INTO leave_types (name, description, default_days, color, requires_attachment, is_active, accrual_method, carry_forward_days, max_consecutive_days, created_at) 
+                              VALUES (:name, :description, :default_days, :color, :requires_attachment, :is_active, :accrual_method, :carry_forward_days, :max_consecutive_days, NOW())";
                 $insert_stmt = $conn->prepare($insert_sql);
                 $insert_stmt->bindParam(':name', $name, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':description', $description, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':default_days', $default_days, PDO::PARAM_INT);
                 $insert_stmt->bindParam(':color', $color, PDO::PARAM_STR);
-                $insert_stmt->bindParam(':requires_document', $requires_document, PDO::PARAM_INT);
+                $insert_stmt->bindParam(':requires_attachment', $requires_document, PDO::PARAM_INT);
                 $insert_stmt->bindParam(':is_active', $is_active, PDO::PARAM_INT);
-                $insert_stmt->bindParam(':accrrual_method', $accrual_method, PDO::PARAM_STR);
+                $insert_stmt->bindParam(':accrual_method', $accrual_method, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':carry_forward_days', $carry_forward_days, PDO::PARAM_INT);
                 $insert_stmt->bindParam(':max_consecutive_days', $max_consecutive_days, PDO::PARAM_INT);
                 $insert_stmt->execute();
@@ -100,7 +112,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $_SESSION['alert'] = "Leave type added successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/leave_types.php");
+                // Regenerate CSRF token to prevent resubmission
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                header("Location: leave_types.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -119,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim($_POST['name']);
         $description = trim($_POST['description']);
         $default_days = (int)$_POST['default_days'];
-        $color = trim($_POST['color']);
+        $color = '#3498db'; // Default color since it's not shown in frontend
         $requires_document = isset($_POST['requires_document']) ? 1 : 0;
         $is_active = isset($_POST['is_active']) ? 1 : 0;
         $accrual_method = trim($_POST['accrual_method']);
@@ -166,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                               description = :description, 
                               default_days = :default_days, 
                               color = :color, 
-                              requires_document = :requires_document, 
+                              requires_attachment = :requires_attachment, 
                               is_active = :is_active, 
                               accrual_method = :accrual_method, 
                               carry_forward_days = :carry_forward_days, 
@@ -178,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_stmt->bindParam(':description', $description, PDO::PARAM_STR);
                 $update_stmt->bindParam(':default_days', $default_days, PDO::PARAM_INT);
                 $update_stmt->bindParam(':color', $color, PDO::PARAM_STR);
-                $update_stmt->bindParam(':requires_document', $requires_document, PDO::PARAM_INT);
+                $update_stmt->bindParam(':requires_attachment', $requires_document, PDO::PARAM_INT);
                 $update_stmt->bindParam(':is_active', $is_active, PDO::PARAM_INT);
                 $update_stmt->bindParam(':accrual_method', $accrual_method, PDO::PARAM_STR);
                 $update_stmt->bindParam(':carry_forward_days', $carry_forward_days, PDO::PARAM_INT);
@@ -198,7 +212,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $_SESSION['alert'] = "Leave type updated successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/leave_types.php");
+                // Regenerate CSRF token to prevent resubmission
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                header("Location: leave_types.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -206,6 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+    } // End of CSRF token validation
 }
 
 // Get all leave types with pagination
@@ -234,15 +251,16 @@ if (!empty($where_clause)) {
     $where_sql = "WHERE " . implode(' AND ', $where_clause);
 }
 
-$leave_types_sql = "SELECT * FROM leave_types $where_sql ORDER BY name ASC LIMIT :limit OFFSET :offset";
+$leave_types_sql = "SELECT * FROM leave_types $where_sql ORDER BY name ASC LIMIT $limit OFFSET $offset";
 $leave_types_stmt = $conn->prepare($leave_types_sql);
 
+// Only bind parameters if they exist in the query
 foreach ($params as $key => $value) {
-    $leave_types_stmt->bindValue($key, $value);
+    if (strpos($leave_types_sql, $key) !== false) {
+        $leave_types_stmt->bindValue($key, $value);
+    }
 }
 
-$leave_types_stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-$leave_types_stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
 $leave_types_stmt->execute();
 $leave_types = $leave_types_stmt->fetchAll();
 
@@ -250,8 +268,11 @@ $leave_types = $leave_types_stmt->fetchAll();
 $count_sql = "SELECT COUNT(*) FROM leave_types $where_sql";
 $count_stmt = $conn->prepare($count_sql);
 
+// Only bind parameters if they exist in the query
 foreach ($params as $key => $value) {
-    $count_stmt->bindValue($key, $value);
+    if (strpos($count_sql, $key) !== false) {
+        $count_stmt->bindValue($key, $value);
+    }
 }
 
 $count_stmt->execute();
@@ -277,7 +298,7 @@ include '../includes/header.php';
         <?php unset($_SESSION['alert'], $_SESSION['alert_type']); ?>
     <?php endif; ?>
 
-    <?php if (!empty($errors)): ?>
+    <?php if (!empty($errors) && $_SERVER['REQUEST_METHOD'] === 'POST'): ?>
         <div class="alert alert-danger alert-dismissible fade show">
             <ul class="mb-0">
                 <?php foreach ($errors as $error): ?>
@@ -316,7 +337,7 @@ include '../includes/header.php';
                         <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-search"></i> Search
                         </button>
-                        <a href="/admin/leave_types.php" class="btn btn-secondary">
+                        <a href="leave_types.php" class="btn btn-secondary">
                             <i class="fas fa-sync"></i> Reset
                         </a>
                     </div>
@@ -332,7 +353,6 @@ include '../includes/header.php';
                             <th>Name</th>
                             <th>Description</th>
                             <th>Default Days</th>
-                            <th>Color</th>
                             <th>Requires Document</th>
                             <th>Accrual Method</th>
                             <th>Carry Forward</th>
@@ -344,7 +364,7 @@ include '../includes/header.php';
                     <tbody>
                         <?php if (empty($leave_types)): ?>
                             <tr>
-                                <td colspan="11" class="text-center">No leave types found</td>
+                                <td colspan="10" class="text-center">No leave types found</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($leave_types as $type): ?>
@@ -354,12 +374,7 @@ include '../includes/header.php';
                                     <td><?php echo htmlspecialchars($type['description'] ?? 'N/A'); ?></td>
                                     <td><?php echo $type['default_days']; ?></td>
                                     <td>
-                                        <span class="badge" style="background-color: <?php echo $type['color']; ?>">
-                                            <?php echo $type['color']; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <?php if ($type['requires_document']): ?>
+                                        <?php if (isset($type['requires_attachment']) && $type['requires_attachment']): ?>
                                             <span class="badge bg-success">Yes</span>
                                         <?php else: ?>
                                             <span class="badge bg-secondary">No</span>
@@ -382,8 +397,7 @@ include '../includes/header.php';
                                             data-name="<?php echo htmlspecialchars($type['name']); ?>"
                                             data-description="<?php echo htmlspecialchars($type['description'] ?? ''); ?>"
                                             data-default-days="<?php echo $type['default_days']; ?>"
-                                            data-color="<?php echo $type['color']; ?>"
-                                            data-requires-document="<?php echo $type['requires_document']; ?>"
+                                            data-requires-document="<?php echo isset($type['requires_attachment']) ? $type['requires_attachment'] : 0; ?>"
                                             data-is-active="<?php echo $type['is_active']; ?>"
                                             data-accrual-method="<?php echo htmlspecialchars($type['accrual_method']); ?>"
                                             data-carry-forward-days="<?php echo $type['carry_forward_days']; ?>"
@@ -435,6 +449,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -451,11 +466,7 @@ include '../includes/header.php';
                         <textarea class="form-control" id="description" name="description" rows="2"></textarea>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="color" class="form-label">Color</label>
-                            <input type="color" class="form-control" id="color" name="color" value="#3498db">
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="accrual_method" class="form-label">Accrual Method</label>
                             <select class="form-select" id="accrual_method" name="accrual_method">
                                 <option value="annual">Annual (Beginning of Year)</option>
@@ -514,6 +525,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                 <input type="hidden" name="edit_type_id" id="edit_type_id">
                 <div class="modal-body">
                     <div class="row mb-3">
@@ -531,11 +543,7 @@ include '../includes/header.php';
                         <textarea class="form-control" id="edit_description" name="description" rows="2"></textarea>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="edit_color" class="form-label">Color</label>
-                            <input type="color" class="form-control" id="edit_color" name="color">
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="edit_accrual_method" class="form-label">Accrual Method</label>
                             <select class="form-select" id="edit_accrual_method" name="accrual_method">
                                 <option value="annual">Annual (Beginning of Year)</option>
@@ -595,7 +603,6 @@ include '../includes/header.php';
                 const name = this.getAttribute('data-name');
                 const description = this.getAttribute('data-description');
                 const defaultDays = this.getAttribute('data-default-days');
-                const color = this.getAttribute('data-color');
                 const requiresDocument = this.getAttribute('data-requires-document') === '1';
                 const isActive = this.getAttribute('data-is-active') === '1';
                 const accrualMethod = this.getAttribute('data-accrual-method');
@@ -606,7 +613,6 @@ include '../includes/header.php';
                 document.getElementById('edit_name').value = name;
                 document.getElementById('edit_description').value = description;
                 document.getElementById('edit_default_days').value = defaultDays;
-                document.getElementById('edit_color').value = color;
                 document.getElementById('edit_requires_document').checked = requiresDocument;
                 document.getElementById('edit_is_active').checked = isActive;
                 document.getElementById('edit_accrual_method').value = accrualMethod;

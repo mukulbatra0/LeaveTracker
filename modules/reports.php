@@ -15,7 +15,7 @@ $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'];
 
 // Check if user has permission to access reports
-$allowed_roles = ['department_head', 'dean', 'principal', 'hr_admin'];
+$allowed_roles = ['admin', 'department_head', 'dean', 'principal', 'hr_admin'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
@@ -671,6 +671,15 @@ include_once '../includes/header.php';
     <input type="hidden" name="status" value="<?php echo $status_filter; ?>">
 </form>
 
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+<?php include_once '../includes/footer.php'; ?>
+
+<!-- DataTables JS - Load after jQuery -->
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize DataTable
@@ -702,13 +711,20 @@ include_once '../includes/header.php';
         document.getElementById('report_type').dispatchEvent(new Event('change'));
 
         // Handle export buttons
-        document.getElementById('exportPdfBtn').addEventListener('click', function() {
-            document.getElementById('exportPdfForm').submit();
-        });
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        
+        if (exportPdfBtn) {
+            exportPdfBtn.addEventListener('click', function() {
+                document.getElementById('exportPdfForm').submit();
+            });
+        }
 
-        document.getElementById('exportExcelBtn').addEventListener('click', function() {
-            document.getElementById('exportExcelForm').submit();
-        });
+        if (exportExcelBtn) {
+            exportExcelBtn.addEventListener('click', function() {
+                document.getElementById('exportExcelForm').submit();
+            });
+        }
 
         <?php if (!empty($chart_data)): ?>
             // Initialize charts based on report type
@@ -852,5 +868,3 @@ include_once '../includes/header.php';
         <?php endif; ?>
     });
 </script>
-
-<?php include_once '../includes/footer.php'; ?>

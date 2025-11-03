@@ -349,7 +349,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">Academic Calendar Management</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../dashboards/admin_dashboard.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="./dashboards/admin_dashboard.php">Dashboard</a></li>
         <li class="breadcrumb-item active">Academic Calendar</li>
     </ol>
     
@@ -420,7 +420,7 @@ include '../includes/header.php';
                         <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-search"></i> Search
                         </button>
-                        <a href="/admin/academic_calendar.php" class="btn btn-secondary">
+                        <a href="academic_calendar.php" class="btn btn-secondary">
                             <i class="fas fa-sync"></i> Reset
                         </a>
                     </div>

@@ -47,13 +47,14 @@ try {
     $years = [date('Y')];
 }
 
-// Get pagination settings
+// Get pagination settings with error handling
 try {
     $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'pagination_limit'");
     $stmt->execute();
     $pagination_limit = $stmt->fetchColumn() ?: 10;
 } catch (PDOException $e) {
-    $pagination_limit = 10; // Default if setting not found
+    // Use default value if system_settings table doesn't exist
+    $pagination_limit = 10;
 }
 
 // Calculate pagination

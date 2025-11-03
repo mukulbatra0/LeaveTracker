@@ -74,10 +74,15 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 
 // Get notifications for the current user
 try {
-    // Get pagination settings
-    $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'pagination_limit'");
-    $stmt->execute();
-    $pagination_limit = $stmt->fetchColumn() ?: 10;
+    // Get pagination settings with error handling
+    try {
+        $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'pagination_limit'");
+        $stmt->execute();
+        $pagination_limit = $stmt->fetchColumn() ?: 10;
+    } catch (PDOException $e) {
+        // Use default value if system_settings table doesn't exist
+        $pagination_limit = 10;
+    }
     
     // Calculate pagination
     $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;

@@ -342,7 +342,7 @@ include '../includes/header.php';
                         <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-search"></i> Search
                         </button>
-                        <a href="/admin/departments.php" class="btn btn-secondary">
+                        <a href="departments.php" class="btn btn-secondary">
                             <i class="fas fa-sync"></i> Reset
                         </a>
                     </div>
@@ -394,7 +394,7 @@ include '../includes/header.php';
                                                 data-head-id="<?php echo $dept['head_id'] ?? ''; ?>">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
-                                        <a href="/admin/users.php?department=<?php echo $dept['id']; ?>" class="btn btn-sm btn-info">
+                                        <a href="users.php?department=<?php echo $dept['id']; ?>" class="btn btn-sm btn-info">
                                             <i class="fas fa-users"></i> View Staff
                                         </a>
                                     </td>

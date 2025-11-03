@@ -152,14 +152,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['upload_picture'])) {
         // Check if file was uploaded without errors
         if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] == 0) {
-            // Get system settings for file uploads
-            $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'max_file_size'");
-            $stmt->execute();
-            $max_file_size = ($stmt->fetchColumn() ?: 5) * 1024 * 1024; // Convert MB to bytes
-            
-            $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'allowed_file_types'");
-            $stmt->execute();
-            $allowed_types_str = $stmt->fetchColumn() ?: 'jpg,jpeg,png';
+            // Get system settings for file uploads with error handling
+            try {
+                $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'max_file_size'");
+                $stmt->execute();
+                $max_file_size = ($stmt->fetchColumn() ?: 5) * 1024 * 1024; // Convert MB to bytes
+                
+                $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'allowed_file_types'");
+                $stmt->execute();
+                $allowed_types_str = $stmt->fetchColumn() ?: 'jpg,jpeg,png';
+            } catch (PDOException $e) {
+                // Use default values if system_settings table doesn't exist
+                $max_file_size = 5 * 1024 * 1024; // 5MB default
+                $allowed_types_str = 'jpg,jpeg,png';
+            }
             $allowed_types = explode(',', $allowed_types_str);
             
             $file = $_FILES['profile_picture'];
@@ -468,8 +474,8 @@ include '../includes/header.php';
                         </table>
                     </div>
                     <div class="mt-3">
-                        <a href="/modules/my_leaves.php" class="btn btn-outline-primary">View My Leave History</a>
-                        <a href="/modules/apply_leave.php" class="btn btn-outline-success ms-2">Apply for Leave</a>
+                        <a href="my_leaves.php" class="btn btn-outline-primary">View My Leave History</a>
+                        <a href="apply_leave.php" class="btn btn-outline-success ms-2">Apply for Leave</a>
                     </div>
                 </div>
             </div>

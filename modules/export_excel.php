@@ -39,7 +39,7 @@ try {
     $role = $_SESSION['role'];
 
     // Define which roles are allowed to access this report generation page.
-    $allowed_roles = ['department_head', 'dean', 'principal', 'hr_admin'];
+    $allowed_roles = ['admin', 'department_head', 'dean', 'principal', 'hr_admin'];
     if (!in_array($role, $allowed_roles)) {
         // If the user's role is not allowed, set an alert and redirect them.
         $_SESSION['alert'] = "You don't have permission to access this page.";

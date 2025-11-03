@@ -121,7 +121,7 @@ if (isset($_POST['cancel_leave']) && isset($_POST['leave_id'])) {
         $_SESSION['alert_type'] = "danger";
     }
     
-    header('Location: ./modules/my_leaves.php');
+    header('Location: my_leaves.php');
     exit;
 }
 

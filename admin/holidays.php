@@ -29,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim($_POST['name']);
         $date = $_POST['date'];
         $description = trim($_POST['description']);
-        $is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
         
         // Validate input
         $errors = [];
@@ -63,13 +62,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $conn->beginTransaction();
                 
-                $insert_sql = "INSERT INTO holidays (name, date, description, is_recurring, created_at) 
-                              VALUES (:name, :date, :description, :is_recurring, NOW())";
+                $insert_sql = "INSERT INTO holidays (name, date, description, created_at) 
+                              VALUES (:name, :date, :description, NOW())";
                 $insert_stmt = $conn->prepare($insert_sql);
                 $insert_stmt->bindParam(':name', $name, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':date', $date, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':description', $description, PDO::PARAM_STR);
-                $insert_stmt->bindParam(':is_recurring', $is_recurring, PDO::PARAM_INT);
                 $insert_stmt->execute();
                 
                 // Add audit log
@@ -99,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim($_POST['name']);
         $date = $_POST['date'];
         $description = trim($_POST['description']);
-        $is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
         
         // Validate input
         $errors = [];
@@ -138,14 +135,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                               name = :name, 
                               date = :date, 
                               description = :description, 
-                              is_recurring = :is_recurring, 
                               updated_at = NOW() 
                               WHERE id = :holiday_id";
                 $update_stmt = $conn->prepare($update_sql);
                 $update_stmt->bindParam(':name', $name, PDO::PARAM_STR);
                 $update_stmt->bindParam(':date', $date, PDO::PARAM_STR);
                 $update_stmt->bindParam(':description', $description, PDO::PARAM_STR);
-                $update_stmt->bindParam(':is_recurring', $is_recurring, PDO::PARAM_INT);
                 $update_stmt->bindParam(':holiday_id', $edit_holiday_id, PDO::PARAM_INT);
                 $update_stmt->execute();
                 
@@ -217,41 +212,35 @@ $limit = 10;
 $offset = ($page - 1) * $limit;
 
 $search = isset($_GET['search']) ? $_GET['search'] : '';
-$year = isset($_GET['year']) ? $_GET['year'] : date('Y');
-$recurring = isset($_GET['recurring']) ? $_GET['recurring'] : '';
+$year = isset($_GET['year']) ? $_GET['year'] : '';
 
-$where_clause = [];
-$params = [];
+$where_conditions = [];
+$bind_params = [];
 
 if (!empty($search)) {
-    $where_clause[] = "(name LIKE :search OR description LIKE :search)";
-    $params[':search'] = "%$search%";
+    $where_conditions[] = "(name LIKE ? OR description LIKE ?)";
+    $bind_params[] = "%$search%";
+    $bind_params[] = "%$search%";
 }
 
 if (!empty($year)) {
-    $where_clause[] = "YEAR(date) = :year";
-    $params[':year'] = $year;
-}
-
-if ($recurring !== '') {
-    $where_clause[] = "is_recurring = :recurring";
-    $params[':recurring'] = $recurring;
+    $where_conditions[] = "YEAR(date) = ?";
+    $bind_params[] = $year;
 }
 
 $where_sql = '';
-if (!empty($where_clause)) {
-    $where_sql = "WHERE " . implode(' AND ', $where_clause);
+if (!empty($where_conditions)) {
+    $where_sql = "WHERE " . implode(' AND ', $where_conditions);
 }
 
-$holidays_sql = "SELECT * FROM holidays $where_sql ORDER BY date ASC LIMIT :limit OFFSET :offset";
+$holidays_sql = "SELECT * FROM holidays $where_sql ORDER BY date ASC LIMIT $limit OFFSET $offset";
 $holidays_stmt = $conn->prepare($holidays_sql);
 
-foreach ($params as $key => $value) {
-    $holidays_stmt->bindValue($key, $value);
+// Bind parameters using positional binding
+for ($i = 0; $i < count($bind_params); $i++) {
+    $holidays_stmt->bindValue($i + 1, $bind_params[$i]);
 }
 
-$holidays_stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-$holidays_stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
 $holidays_stmt->execute();
 $holidays = $holidays_stmt->fetchAll();
 
@@ -259,8 +248,9 @@ $holidays = $holidays_stmt->fetchAll();
 $count_sql = "SELECT COUNT(*) FROM holidays $where_sql";
 $count_stmt = $conn->prepare($count_sql);
 
-foreach ($params as $key => $value) {
-    $count_stmt->bindValue($key, $value);
+// Bind parameters using positional binding
+for ($i = 0; $i < count($bind_params); $i++) {
+    $count_stmt->bindValue($i + 1, $bind_params[$i]);
 }
 
 $count_stmt->execute();
@@ -285,7 +275,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">Holiday Management</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../dashboards/admin_dashboard.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="./dashboards/admin_dashboard.php">Dashboard</a></li>
         <li class="breadcrumb-item active">Holidays</li>
     </ol>
     
@@ -335,18 +325,12 @@ include '../includes/header.php';
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <select class="form-select" name="recurring">
-                            <option value="" <?php echo $recurring === '' ? 'selected' : ''; ?>>All Types</option>
-                            <option value="1" <?php echo $recurring === '1' ? 'selected' : ''; ?>>Recurring</option>
-                            <option value="0" <?php echo $recurring === '0' ? 'selected' : ''; ?>>Non-Recurring</option>
-                        </select>
-                    </div>
+
                     <div class="col-md-3">
                         <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-search"></i> Search
                         </button>
-                        <a href="/admin/holidays.php" class="btn btn-secondary">
+                        <a href="holidays.php" class="btn btn-secondary">
                             <i class="fas fa-sync"></i> Reset
                         </a>
                     </div>
@@ -362,7 +346,6 @@ include '../includes/header.php';
                             <th>Name</th>
                             <th>Date</th>
                             <th>Description</th>
-                            <th>Type</th>
                             <th>Created</th>
                             <th>Actions</th>
                         </tr>
@@ -384,13 +367,7 @@ include '../includes/header.php';
                                         ?>
                                     </td>
                                     <td><?php echo htmlspecialchars($holiday['description'] ?? 'N/A'); ?></td>
-                                    <td>
-                                        <?php if ($holiday['is_recurring']): ?>
-                                            <span class="badge bg-info">Recurring</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-secondary">Non-Recurring</span>
-                                        <?php endif; ?>
-                                    </td>
+
                                     <td><?php echo date('M d, Y', strtotime($holiday['created_at'])); ?></td>
                                     <td>
                                         <button type="button" class="btn btn-sm btn-primary edit-holiday" 
@@ -399,7 +376,7 @@ include '../includes/header.php';
                                                 data-name="<?php echo htmlspecialchars($holiday['name']); ?>"
                                                 data-date="<?php echo $holiday['date']; ?>"
                                                 data-description="<?php echo htmlspecialchars($holiday['description'] ?? ''); ?>"
-                                                data-recurring="<?php echo $holiday['is_recurring']; ?>">
+
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
                                         <button type="button" class="btn btn-sm btn-danger delete-holiday" 
@@ -421,19 +398,19 @@ include '../includes/header.php';
                 <nav aria-label="Page navigation">
                     <ul class="pagination justify-content-center">
                         <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&year=<?php echo $year; ?>&recurring=<?php echo $recurring; ?>" aria-label="Previous">
+                            <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&year=<?php echo $year; ?>" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
                         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                             <li class="page-item <?php echo ($page == $i) ? 'active' : ''; ?>">
-                                <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&year=<?php echo $year; ?>&recurring=<?php echo $recurring; ?>">
+                                <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&year=<?php echo $year; ?>">
                                     <?php echo $i; ?>
                                 </a>
                             </li>
                         <?php endfor; ?>
                         <li class="page-item <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&year=<?php echo $year; ?>&recurring=<?php echo $recurring; ?>" aria-label="Next">
+                            <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&year=<?php echo $year; ?>" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>
@@ -466,11 +443,7 @@ include '../includes/header.php';
                         <label for="description" class="form-label">Description</label>
                         <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="is_recurring" name="is_recurring">
-                        <label class="form-check-label" for="is_recurring">Recurring Holiday (Annual)</label>
-                        <div class="form-text">If checked, this holiday will be observed every year on the same date.</div>
-                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -504,11 +477,7 @@ include '../includes/header.php';
                         <label for="edit_description" class="form-label">Description</label>
                         <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="edit_is_recurring" name="is_recurring">
-                        <label class="form-check-label" for="edit_is_recurring">Recurring Holiday (Annual)</label>
-                        <div class="form-text">If checked, this holiday will be observed every year on the same date.</div>
-                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -552,13 +521,11 @@ include '../includes/header.php';
                 const name = this.getAttribute('data-name');
                 const date = this.getAttribute('data-date');
                 const description = this.getAttribute('data-description');
-                const recurring = this.getAttribute('data-recurring') === '1';
                 
                 document.getElementById('edit_holiday_id').value = id;
                 document.getElementById('edit_name').value = name;
                 document.getElementById('edit_date').value = date;
                 document.getElementById('edit_description').value = description;
-                document.getElementById('edit_is_recurring').checked = recurring;
             });
         });
         
