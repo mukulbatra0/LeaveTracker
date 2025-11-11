@@ -68,5 +68,36 @@
         });
     </script>
     <?php endif; ?>
+    
+    <!-- Global Modal Accessibility Fix -->
+    <script>
+        // Fix accessibility issues with all Bootstrap modals
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all modals
+            const modals = document.querySelectorAll('.modal');
+            
+            modals.forEach(function(modal) {
+                // When modal is shown, remove aria-hidden
+                modal.addEventListener('shown.bs.modal', function() {
+                    this.removeAttribute('aria-hidden');
+                });
+                
+                // When modal is hidden, add aria-hidden
+                modal.addEventListener('hidden.bs.modal', function() {
+                    this.setAttribute('aria-hidden', 'true');
+                });
+                
+                // When modal is being shown, temporarily remove aria-hidden
+                modal.addEventListener('show.bs.modal', function() {
+                    this.removeAttribute('aria-hidden');
+                });
+                
+                // When modal is being hidden, don't add aria-hidden yet (wait for hidden event)
+                modal.addEventListener('hide.bs.modal', function() {
+                    // Don't add aria-hidden here, wait for hidden.bs.modal event
+                });
+            });
+        });
+    </script>
 </body>
 </html>

@@ -1,6 +1,9 @@
 <?php
+// Start output buffering to prevent any accidental output
+ob_start();
+
 // Enable full error reporting for debugging purposes.
-ini_set('display_errors', 1);
+ini_set('display_errors', 0); // Don't display errors in output
 error_reporting(E_ALL);
 
 session_start();
@@ -251,57 +254,63 @@ try {
     // --- Populate Spreadsheet with Data ---
 
     // Set Headers
-    $col = 'A';
+    $colIndex = 1; // Start with column 1 (A)
+    $lastColIndex = 1;
     foreach ($headers as $header) {
-        $sheet->setCellValue($col . $currentRow, $header);
-        $col++;
+        $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+        $sheet->setCellValue($colLetter . $currentRow, $header);
+        $lastColIndex = $colIndex;
+        $colIndex++;
     }
 
-    // Style the header row
-    $headerRange = 'A' . $currentRow . ':' . chr(ord($col) - 2) . $currentRow;
-    $sheet->getStyle($headerRange)->getFont()->setBold(true);
-    $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DDDDDD');
+    // Style the header row only if we have headers
+    if (!empty($headers)) {
+        $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColIndex);
+        $headerRange = 'A' . $currentRow . ':' . $lastColLetter . $currentRow;
+        $sheet->getStyle($headerRange)->getFont()->setBold(true);
+        $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DDDDDD');
+    }
 
     // Add data rows if data exists
     if (!empty($report_data)) {
         $currentRow++;
         foreach ($report_data as $data) {
-            $col = 'A';
+            $colIndex = 1;
             if ($report_type == 'leave_utilization') {
-                $sheet->setCellValue($col++, $data['first_name'] . ' ' . $data['last_name']);
-                $sheet->setCellValue($col++, $data['employee_id']);
-                $sheet->setCellValue($col++, $data['department_name']);
-                $sheet->setCellValue($col++, $data['leave_type']);
-                $sheet->setCellValue($col++, date('d M Y', strtotime($data['start_date'])));
-                $sheet->setCellValue($col++, date('d M Y', strtotime($data['end_date'])));
-                $sheet->setCellValue($col++, $data['days']);
-                $sheet->setCellValue($col++, ucfirst($data['status']));
-                $sheet->setCellValue($col++, $data['reason']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['first_name'] . ' ' . $data['last_name']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['employee_id']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['department_name']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['leave_type']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, date('d M Y', strtotime($data['start_date'])));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, date('d M Y', strtotime($data['end_date'])));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['days']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, ucfirst($data['status']));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['reason']);
             } elseif ($report_type == 'department_summary') {
-                $sheet->setCellValue($col++, $data['department_name']);
-                $sheet->setCellValue($col++, $data['total_staff']);
-                $sheet->setCellValue($col++, $data['staff_on_leave']);
-                $sheet->setCellValue($col++, $data['total_applications']);
-                $sheet->setCellValue($col++, $data['approved_days'] ?? 0);
-                $sheet->setCellValue($col++, $data['rejected_days'] ?? 0);
-                $sheet->setCellValue($col++, $data['pending_days'] ?? 0);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['department_name']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['total_staff']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['staff_on_leave']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['total_applications']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['approved_days'] ?? 0);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['rejected_days'] ?? 0);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['pending_days'] ?? 0);
             } elseif ($report_type == 'monthly_trends') {
-                $sheet->setCellValue($col++, date('F Y', strtotime($data['month'] . '-01')));
-                $sheet->setCellValue($col++, $data['total_applications']);
-                $sheet->setCellValue($col++, $data['unique_applicants']);
-                $sheet->setCellValue($col++, $data['approved_days'] ?? 0);
-                $sheet->setCellValue($col++, $data['rejected_days'] ?? 0);
-                $sheet->setCellValue($col++, $data['pending_days'] ?? 0);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, date('F Y', strtotime($data['month'] . '-01')));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['total_applications']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['unique_applicants']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['approved_days'] ?? 0);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['rejected_days'] ?? 0);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['pending_days'] ?? 0);
             } elseif ($report_type == 'leave_balance') {
                 $usage_percent = ($data['allocated_days'] > 0) ? round(($data['used_days'] / $data['allocated_days']) * 100, 1) : 0;
-                $sheet->setCellValue($col++, $data['first_name'] . ' ' . $data['last_name']);
-                $sheet->setCellValue($col++, $data['employee_id']);
-                $sheet->setCellValue($col++, $data['department_name']);
-                $sheet->setCellValue($col++, $data['leave_type']);
-                $sheet->setCellValue($col++, $data['allocated_days']);
-                $sheet->setCellValue($col++, $data['used_days']);
-                $sheet->setCellValue($col++, $data['remaining_days']);
-                $sheet->setCellValue($col++, $usage_percent . '%');
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['first_name'] . ' ' . $data['last_name']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['employee_id']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['department_name']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['leave_type']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['allocated_days']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['used_days']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $data['remaining_days']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex++) . $currentRow, $usage_percent . '%');
             }
             $currentRow++;
         }
@@ -314,30 +323,60 @@ try {
     }
 
     // --- Final Spreadsheet Styling ---
-    foreach (range('A', $sheet->getHighestDataColumn()) as $col) {
-        $sheet->getColumnDimension($col)->setAutoSize(true);
+    $highestColumn = $sheet->getHighestDataColumn();
+    $highestRow = $sheet->getHighestDataRow();
+    
+    if ($highestColumn && $highestRow >= 5) {
+        foreach (range('A', $highestColumn) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        $dataRange = 'A5:' . $highestColumn . $highestRow;
+        $sheet->getStyle($dataRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
     }
-    $dataRange = 'A5:' . $sheet->getHighestDataColumn() . ($sheet->getHighestDataRow());
-    $sheet->getStyle($dataRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
     // --- File Output ---
     $writer = new Xlsx($spreadsheet);
     $filename = 'ELMS_' . $report_type . '_report_' . date('Y-m-d_H-i-s') . '.xlsx';
 
+    // Clean any output buffer before sending Excel file
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+
     // Set HTTP headers to prompt a file download.
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
+    header('Pragma: public');
+    header('Expires: 0');
 
     // Write the file to the browser output.
     $writer->save('php://output');
     exit;
 
 } catch (PDOException $e) {
-    // Catch database-specific errors (e.g., query failed)
-    die("Database Error: " . $e->getMessage());
+    // Clean output buffer
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+    
+    // Log the error
+    error_log("Excel Export Database Error: " . $e->getMessage());
+    
+    // Return error response
+    header('Content-Type: text/html');
+    echo '<script>alert("Database Error: ' . addslashes($e->getMessage()) . '"); window.close();</script>';
 } catch (Exception $e) {
-    // Catch general application errors (e.g., file not found, connection failed)
-    die("An error occurred: " . $e->getMessage());
+    // Clean output buffer
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+    
+    // Log the error
+    error_log("Excel Export Error: " . $e->getMessage());
+    
+    // Return error response
+    header('Content-Type: text/html');
+    echo '<script>alert("An error occurred: ' . addslashes($e->getMessage()) . '"); window.close();</script>';
 }
 ?>

@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -80,10 +80,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['last_name'] = $last_name;
                 $_SESSION['email'] = $email;
                 
-                // Log the action
-                $action = "Updated profile information";
-                $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)");
-                $stmt->execute([$user_id, $action, $_SERVER['REMOTE_ADDR']]);
+                // Log the action (with error handling)
+                try {
+                    $action = "Updated profile information";
+                    $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)");
+                    $stmt->execute([$user_id, $action, $_SERVER['REMOTE_ADDR']]);
+                } catch (PDOException $e) {
+                    // Audit log table might not exist, continue without logging
+                }
                 
                 $_SESSION['alert'] = "Profile updated successfully.";
                 $_SESSION['alert_type'] = "success";
@@ -133,10 +137,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
                     $stmt->execute([$hashed_password, $user_id]);
                     
-                    // Log the action
-                    $action = "Changed password";
-                    $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)");
-                    $stmt->execute([$user_id, $action, $_SERVER['REMOTE_ADDR']]);
+                    // Log the action (with error handling)
+                    try {
+                        $action = "Changed password";
+                        $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)");
+                        $stmt->execute([$user_id, $action, $_SERVER['REMOTE_ADDR']]);
+                    } catch (PDOException $e) {
+                        // Audit log table might not exist, continue without logging
+                    }
                     
                     $_SESSION['alert'] = "Password changed successfully.";
                     $_SESSION['alert_type'] = "success";
@@ -198,8 +206,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (move_uploaded_file($file_tmp, $upload_path)) {
                     try {
                         // Delete old profile picture if exists
-                        if (!empty($user['profile_picture'])) {
-                            $old_file = '../' . $user['profile_picture'];
+                        $old_profile_pic = $user['profile_picture'] ?? $user['profile_image'] ?? '';
+                        if (!empty($old_profile_pic)) {
+                            $old_file = '../' . $old_profile_pic;
                             if (file_exists($old_file)) {
                                 unlink($old_file);
                             }
@@ -210,10 +219,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt = $conn->prepare("UPDATE users SET profile_picture = ? WHERE id = ?");
                         $stmt->execute([$profile_picture_path, $user_id]);
                         
-                        // Log the action
-                        $action = "Updated profile picture";
-                        $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)");
-                        $stmt->execute([$user_id, $action, $_SERVER['REMOTE_ADDR']]);
+                        // Log the action (with error handling)
+                        try {
+                            $action = "Updated profile picture";
+                            $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)");
+                            $stmt->execute([$user_id, $action, $_SERVER['REMOTE_ADDR']]);
+                        } catch (PDOException $e) {
+                            // Audit log table might not exist, continue without logging
+                        }
                         
                         $_SESSION['alert'] = "Profile picture updated successfully.";
                         $_SESSION['alert_type'] = "success";
@@ -236,6 +249,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Set page title
+$pageTitle = "My Profile";
+
 // Include header
 include '../includes/header.php';
 ?>
@@ -243,7 +259,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">My Profile</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="/index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">My Profile</li>
     </ol>
     
@@ -275,8 +291,10 @@ include '../includes/header.php';
                 </div>
                 <div class="card-body text-center">
                     <div class="mb-3">
-                        <?php if (!empty($user['profile_picture']) && file_exists('../' . $user['profile_picture'])): ?>
-                            <img src="/<?php echo htmlspecialchars($user['profile_picture']); ?>" alt="Profile Picture" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                        <?php 
+                        $profile_pic = $user['profile_picture'] ?? $user['profile_image'] ?? '';
+                        if (!empty($profile_pic) && file_exists('../' . $profile_pic)): ?>
+                            <img src="../<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
                         <?php else: ?>
                             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px; font-size: 4rem;">
                                 <?php echo strtoupper(substr($user['first_name'], 0, 1) . substr($user['last_name'], 0, 1)); ?>
@@ -374,16 +392,16 @@ include '../includes/header.php';
                             </div>
                             <div class="col-md-6">
                                 <label for="phone" class="form-label">Phone</label>
-                                <input type="text" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($user['phone']); ?>">
+                                <input type="text" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>">
                             </div>
                         </div>
                         <div class="mb-3">
                             <label for="address" class="form-label">Address</label>
-                            <textarea class="form-control" id="address" name="address" rows="2"><?php echo htmlspecialchars($user['address']); ?></textarea>
+                            <textarea class="form-control" id="address" name="address" rows="2"><?php echo htmlspecialchars($user['address'] ?? ''); ?></textarea>
                         </div>
                         <div class="mb-3">
                             <label for="emergency_contact" class="form-label">Emergency Contact</label>
-                            <input type="text" class="form-control" id="emergency_contact" name="emergency_contact" value="<?php echo htmlspecialchars($user['emergency_contact']); ?>">
+                            <input type="text" class="form-control" id="emergency_contact" name="emergency_contact" value="<?php echo htmlspecialchars($user['emergency_contact'] ?? ''); ?>">
                             <div class="form-text">Name and phone number of emergency contact person</div>
                         </div>
                         <button type="submit" name="update_profile" class="btn btn-primary">Update Profile</button>
@@ -482,5 +500,50 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password confirmation validation
+    const newPassword = document.getElementById('new_password');
+    const confirmPassword = document.getElementById('confirm_password');
+    
+    function validatePasswords() {
+        if (newPassword.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    }
+    
+    if (newPassword && confirmPassword) {
+        newPassword.addEventListener('input', validatePasswords);
+        confirmPassword.addEventListener('input', validatePasswords);
+    }
+    
+    // File upload preview
+    const profilePictureInput = document.getElementById('profile_picture');
+    if (profilePictureInput) {
+        profilePictureInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    this.value = '';
+                    return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Only JPG, JPEG, and PNG files are allowed');
+                    this.value = '';
+                    return;
+                }
+            }
+        });
+    }
+});
+</script>
 
 <?php include '../includes/footer.php'; ?>

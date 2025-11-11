@@ -33,7 +33,7 @@ try {
 
 // Get years for filter (from the earliest leave application to current year)
 try {
-    $stmt = $conn->prepare("SELECT MIN(YEAR(applied_at)) as min_year FROM leave_applications");
+    $stmt = $conn->prepare("SELECT MIN(YEAR(created_at)) as min_year FROM leave_applications");
     $stmt->execute();
     $min_year = $stmt->fetchColumn();
     
@@ -96,7 +96,7 @@ try {
     
     // Year filter
     if (!empty($filter_year)) {
-        $where_clauses[] = "YEAR(la.applied_at) = ?";
+        $where_clauses[] = "YEAR(la.created_at) = ?";
         $params[] = $filter_year;
     }
     
@@ -119,7 +119,7 @@ try {
     // Get leave applications with pagination
     $sql = "SELECT la.*, u.first_name, u.last_name, u.employee_id, lt.name as leave_type_name, 
            d.name as department_name " . $base_query . " " . $where_sql . "
-           ORDER BY la.applied_at DESC 
+           ORDER BY la.created_at DESC 
            LIMIT ? OFFSET ?";
     
     $stmt = $conn->prepare($sql);
@@ -341,7 +341,7 @@ include '../includes/header.php';
                                         <?php echo date('M d, Y', strtotime($application['end_date'])); ?>
                                     </td>
                                     <td><?php echo $application['working_days']; ?></td>
-                                    <td><?php echo date('M d, Y', strtotime($application['applied_at'])); ?></td>
+                                    <td><?php echo date('M d, Y', strtotime($application['created_at'])); ?></td>
                                     <td>
                                         <?php 
                                         $status_class = '';
@@ -461,7 +461,7 @@ include '../includes/header.php';
                                 </tr>
                                 <tr>
                                     <th>Applied On</th>
-                                    <td><?php echo date('M d, Y H:i', strtotime($application['applied_at'])); ?></td>
+                                    <td><?php echo date('M d, Y H:i', strtotime($application['created_at'])); ?></td>
                                 </tr>
                             </table>
                         </div>

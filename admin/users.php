@@ -341,7 +341,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">User Management</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../dashboards/admin_dashboard.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">Users</li>
     </ol>
     
@@ -729,6 +729,7 @@ include '../includes/header.php';
         
         // Reset Password Modal
         const resetButtons = document.querySelectorAll('.reset-password');
+        
         resetButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const id = this.getAttribute('data-id');

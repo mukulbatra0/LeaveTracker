@@ -384,11 +384,11 @@ include_once '../includes/header.php';
                                                 </div>
                                                 
                                                 <!-- View Modal -->
-                                                <div class="modal fade" id="viewModal<?php echo $approval['id']; ?>" tabindex="-1" aria-hidden="true">
+                                                <div class="modal fade" id="viewModal<?php echo $approval['id']; ?>" tabindex="-1" aria-labelledby="viewModalLabel<?php echo $approval['id']; ?>" aria-hidden="true">
                                                     <div class="modal-dialog modal-lg">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h5 class="modal-title">Leave Application Details</h5>
+                                                                <h5 class="modal-title" id="viewModalLabel<?php echo $approval['id']; ?>">Leave Application Details</h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <div class="modal-body">
@@ -529,12 +529,12 @@ include_once '../includes/header.php';
                                                 </div>
                                                 
                                                 <!-- Approve Modal -->
-                                                <div class="modal fade" id="approveModal<?php echo $approval['id']; ?>" tabindex="-1" aria-hidden="true">
+                                                <div class="modal fade" id="approveModal<?php echo $approval['id']; ?>" tabindex="-1" aria-labelledby="approveModalLabel<?php echo $approval['id']; ?>" aria-hidden="true">
                                                     <div class="modal-dialog">
                                                         <div class="modal-content">
                                                             <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                                                                 <div class="modal-header">
-                                                                    <h5 class="modal-title">Approve Leave Application</h5>
+                                                                    <h5 class="modal-title" id="approveModalLabel<?php echo $approval['id']; ?>">Approve Leave Application</h5>
                                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                                 </div>
                                                                 <div class="modal-body">
@@ -560,12 +560,12 @@ include_once '../includes/header.php';
                                                 </div>
                                                 
                                                 <!-- Reject Modal -->
-                                                <div class="modal fade" id="rejectModal<?php echo $approval['id']; ?>" tabindex="-1" aria-hidden="true">
+                                                <div class="modal fade" id="rejectModal<?php echo $approval['id']; ?>" tabindex="-1" aria-labelledby="rejectModalLabel<?php echo $approval['id']; ?>" aria-hidden="true">
                                                     <div class="modal-dialog">
                                                         <div class="modal-content">
                                                             <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                                                                 <div class="modal-header">
-                                                                    <h5 class="modal-title">Reject Leave Application</h5>
+                                                                    <h5 class="modal-title" id="rejectModalLabel<?php echo $approval['id']; ?>">Reject Leave Application</h5>
                                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                                 </div>
                                                                 <div class="modal-body">

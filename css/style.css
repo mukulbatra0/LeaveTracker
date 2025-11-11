@@ -392,3 +392,36 @@ body {
 .shadow-professional {
     box-shadow: 0 6px 25px rgba(27, 60, 83, 0.1);
 }
+/* Fix for
+ nav-tabs buttons in card header - prevents white text on white background */
+.card-header .nav-tabs .nav-link {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 8px 8px 0 0 !important;
+    margin-right: 5px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+}
+
+.card-header .nav-tabs .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+
+.card-header .nav-tabs .nav-link.active,
+.card-header .nav-tabs .nav-link.active:focus,
+.card-header .nav-tabs .nav-link.active:hover {
+    background-color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #1B3C53 !important;
+    font-weight: 600 !important;
+    transform: none !important;
+}
+
+.card-header .nav-tabs {
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+}

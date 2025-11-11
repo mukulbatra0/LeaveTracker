@@ -435,7 +435,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">System Configuration</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../dashboards/admin_dashboard.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">System Configuration</li>
     </ol>
     
@@ -747,5 +747,40 @@ include '../includes/header.php';
         });
     });
 </script>
+
+<style>
+/* Fix for nav-tabs buttons in card header - high specificity to override Bootstrap */
+.card .card-header .nav-tabs .nav-link {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 8px 8px 0 0 !important;
+    margin-right: 5px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+}
+
+.card .card-header .nav-tabs .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+
+.card .card-header .nav-tabs .nav-link.active,
+.card .card-header .nav-tabs .nav-link.active:focus,
+.card .card-header .nav-tabs .nav-link.active:hover {
+    background-color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #1B3C53 !important;
+    font-weight: 600 !important;
+    transform: none !important;
+}
+
+.card .card-header .nav-tabs {
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+}
+</style>
 
 <?php include '../includes/footer.php'; ?>

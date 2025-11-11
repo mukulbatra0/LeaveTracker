@@ -1,4 +1,16 @@
 <?php
+// Start output buffering to prevent any accidental output
+ob_start();
+
+// Set error reporting for debugging (remove in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display errors in output
+
+// Set secure cookie settings before starting session
+ini_set('session.cookie_samesite', 'Strict');
+ini_set('session.cookie_secure', '1');
+ini_set('session.cookie_httponly', '1');
+
 session_start();
 
 // Check if user is logged in
@@ -25,7 +37,7 @@ if (!in_array($role, $allowed_roles)) {
 
 // Check if form was submitted
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ./modules/reports.php');
+    header('Location: reports.php');
     exit;
 }
 
@@ -39,7 +51,12 @@ $status_filter = isset($_POST['status']) ? $_POST['status'] : 'all';
 
 // Require the TCPDF library (you need to install it via composer)
 // composer require tecnickcom/tcpdf
-require '../vendor/autoload.php';
+try {
+    require '../vendor/autoload.php';
+} catch (Exception $e) {
+    ob_end_clean();
+    die('Error: TCPDF library not found. Please run: composer require tecnickcom/tcpdf');
+}
 
 // Create a new PDF document
 class MYPDF extends TCPDF {
@@ -75,8 +92,9 @@ class MYPDF extends TCPDF {
     }
 }
 
-// Create new PDF document
-$pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+try {
+    // Create new PDF document
+    $pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
 // Set document information
 $pdf->SetCreator(PDF_CREATOR);
@@ -102,11 +120,6 @@ switch ($report_type) {
 $pdf->SetTitle($title);
 $pdf->SetSubject('ELMS Report');
 $pdf->SetKeywords('ELMS, Report, Leave, Management');
-
-// Set secure cookie settings
-ini_set('session.cookie_samesite', 'Strict');
-ini_set('session.cookie_secure', '1');
-ini_set('session.cookie_httponly', '1');
 
 // Set default header data
 $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, PDF_HEADER_TITLE, PDF_HEADER_STRING);
@@ -535,6 +548,35 @@ if ($status_filter != 'all') {
     $pdf->Cell(0, 6, 'Status: All Statuses', 0, 1, 'L');
 }
 
-// Close and output PDF document
-$pdf->Output('ELMS_' . $report_type . '_report_' . date('Y-m-d_H-i-s') . '.pdf', 'I');
+// Clean any output buffer before sending PDF
+if (ob_get_length()) {
+    ob_end_clean();
+}
+
+// Set headers for PDF output
+header('Content-Type: application/pdf');
+header('Cache-Control: private, must-revalidate, post-check=0, pre-check=0, max-age=1');
+header('Pragma: public');
+header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+
+    // Close and output PDF document
+    $pdf->Output('ELMS_' . $report_type . '_report_' . date('Y-m-d_H-i-s') . '.pdf', 'I');
+
+} catch (Exception $e) {
+    // Clean output buffer
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+    
+    // Log the error
+    error_log("PDF Generation Error: " . $e->getMessage());
+    
+    // Return error response
+    header('Content-Type: text/html');
+    echo '<script>alert("Error generating PDF: ' . addslashes($e->getMessage()) . '"); window.close();</script>';
+}
+
+// Ensure no further output
+exit;
 ?>
