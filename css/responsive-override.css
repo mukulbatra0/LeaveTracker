@@ -1,0 +1,397 @@
+/* RESPONSIVE OVERRIDE - Immediate Visible Changes */
+
+/* Mobile-First Container Improvements */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+    
+    /* Make page title smaller and more mobile-friendly */
+    h1 {
+        font-size: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Breadcrumb improvements */
+    .breadcrumb {
+        font-size: 0.8rem !important;
+        padding: 0.5rem 0 !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Card improvements */
+    .card {
+        margin-bottom: 1rem !important;
+        border-radius: 10px !important;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
+    }
+    
+    .card-header {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    /* Tab Navigation - MAJOR VISUAL CHANGE */
+    .nav-tabs {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+        padding: 0.25rem !important;
+        margin-bottom: 1rem !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none !important;
+        border-radius: 6px !important;
+        margin: 0 0.25rem !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.8rem !important;
+        white-space: nowrap !important;
+        min-width: 80px !important;
+        text-align: center !important;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background: white !important;
+        color: var(--primary-dark) !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Form Improvements - VERY VISIBLE */
+    .form-control,
+    .form-select {
+        font-size: 16px !important; /* Prevent zoom on iOS */
+        padding: 0.75rem !important;
+        border-radius: 8px !important;
+        border: 2px solid #e9ecef !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary-light) !important;
+        box-shadow: 0 0 0 0.2rem rgba(69, 104, 130, 0.25) !important;
+    }
+    
+    .form-label {
+        font-weight: 600 !important;
+        color: var(--primary-dark) !important;
+        margin-bottom: 0.5rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    /* Button Improvements - VERY VISIBLE */
+    .btn {
+        padding: 0.75rem 1.5rem !important;
+        font-size: 0.9rem !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        min-height: 44px !important;
+        width: 100% !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .btn-group .btn {
+        width: auto !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Table Transformation - ONLY ON MOBILE */
+    .table-responsive {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .table thead {
+        display: none !important;
+    }
+    
+    .table,
+    .table tbody,
+    .table tr,
+    .table td {
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    .table tbody tr {
+        border: 2px solid var(--border-color) !important;
+        border-radius: 10px !important;
+        margin-bottom: 1rem !important;
+        padding: 1rem !important;
+        background: white !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+    }
+    
+    .table tbody td {
+        border: none !important;
+        padding: 0.5rem 0 !important;
+        text-align: left !important;
+        position: relative !important;
+        padding-left: 40% !important;
+        min-height: 30px !important;
+    }
+    
+    .table tbody td:before {
+        content: attr(data-label) ": " !important;
+        position: absolute !important;
+        left: 0 !important;
+        width: 35% !important;
+        font-weight: 700 !important;
+        color: var(--primary-dark) !important;
+        text-transform: uppercase !important;
+        font-size: 0.75rem !important;
+    }
+    
+    /* Alert Improvements */
+    .alert {
+        border-radius: 10px !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    /* Modal Improvements */
+    .modal-dialog {
+        margin: 0.5rem !important;
+        max-width: calc(100vw - 1rem) !important;
+    }
+    
+    .modal-content {
+        border-radius: 15px !important;
+    }
+    
+    .modal-header {
+        padding: 1rem !important;
+        border-bottom: 2px solid var(--border-color) !important;
+    }
+    
+    .modal-body {
+        padding: 1rem !important;
+    }
+    
+    /* Navigation Improvements */
+    .navbar {
+        padding: 0.5rem 1rem !important;
+    }
+    
+    .navbar-brand {
+        font-size: 1.1rem !important;
+    }
+    
+    .nav-link {
+        padding: 0.5rem 0.75rem !important;
+        border-radius: 6px !important;
+        margin: 0.125rem 0 !important;
+    }
+}
+
+/* Tablet Improvements */
+@media (max-width: 992px) and (min-width: 769px) {
+    .container-fluid {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
+    
+    .card-body {
+        padding: 1.25rem !important;
+    }
+    
+    .btn {
+        width: auto !important;
+    }
+    
+    /* Keep some desktop table functionality */
+    .table thead {
+        display: table-header-group !important;
+    }
+    
+    .table,
+    .table tbody,
+    .table tr,
+    .table td {
+        display: table !important;
+    }
+    
+    .table tbody tr {
+        display: table-row !important;
+        border: none !important;
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+    
+    .table tbody td {
+        display: table-cell !important;
+        padding: 0.75rem !important;
+        position: static !important;
+        padding-left: 0.75rem !important;
+    }
+    
+    .table tbody td:before {
+        display: none !important;
+    }
+}
+
+/* Extra Small Devices */
+@media (max-width: 576px) {
+    .container-fluid {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+    
+    h1 {
+        font-size: 1.25rem !important;
+    }
+    
+    .card-body {
+        padding: 0.75rem !important;
+    }
+    
+    .btn {
+        padding: 0.6rem 1rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .form-control,
+    .form-select {
+        padding: 0.6rem !important;
+        font-size: 16px !important;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.75rem !important;
+        min-width: 70px !important;
+    }
+}
+
+/* Desktop - Reset ALL mobile styles and keep normal table appearance */
+@media (min-width: 769px) {
+    .btn {
+        width: auto !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* RESET TABLE STYLES TO NORMAL ON DESKTOP */
+    .table-responsive {
+        border: 1px solid #dee2e6 !important;
+        border-radius: 0.375rem !important;
+        box-shadow: none !important;
+    }
+    
+    .table thead {
+        display: table-header-group !important;
+    }
+    
+    .table {
+        display: table !important;
+        width: 100% !important;
+        margin-bottom: 1rem !important;
+        color: #212529 !important;
+        border-collapse: collapse !important;
+    }
+    
+    .table tbody {
+        display: table-row-group !important;
+    }
+    
+    .table tr {
+        display: table-row !important;
+    }
+    
+    .table td {
+        display: table-cell !important;
+        padding: 0.5rem !important;
+        vertical-align: top !important;
+        border-top: 1px solid #dee2e6 !important;
+        position: static !important;
+        width: auto !important;
+        text-align: left !important;
+    }
+    
+    .table tbody tr {
+        border: none !important;
+        border-radius: 0 !important;
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.075) !important;
+    }
+    
+    .table tbody td:before {
+        display: none !important;
+        content: none !important;
+    }
+    
+    .table th {
+        padding: 0.5rem !important;
+        vertical-align: bottom !important;
+        border-top: 1px solid #dee2e6 !important;
+        border-bottom: 2px solid #dee2e6 !important;
+    }
+}
+
+/* Loading Animation */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-dark);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .card {
+        border: 3px solid var(--primary-dark) !important;
+    }
+    
+    .btn {
+        border-width: 2px !important;
+    }
+    
+    .form-control,
+    .form-select {
+        border-width: 3px !important;
+    }
+}

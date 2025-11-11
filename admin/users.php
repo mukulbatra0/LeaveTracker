@@ -365,23 +365,25 @@ include '../includes/header.php';
     <?php endif; ?>
     
     <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
             <div>
                 <i class="fas fa-users me-1"></i>
                 Users
             </div>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                <i class="fas fa-plus"></i> Add User
+                <i class="fas fa-plus me-1"></i> 
+                <span class="d-none d-sm-inline">Add User</span>
+                <span class="d-sm-none">Add</span>
             </button>
         </div>
         <div class="card-body">
             <!-- Filter Form -->
             <form method="GET" action="" class="mb-4">
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-lg-3 col-md-6 col-sm-12">
                         <input type="text" class="form-control" name="search" placeholder="Search name or email" value="<?php echo htmlspecialchars($search); ?>">
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-6 col-sm-12">
                         <select class="form-select" name="department">
                             <option value="">All Departments</option>
                             <?php foreach ($departments as $dept): ?>
@@ -391,7 +393,7 @@ include '../includes/header.php';
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-6 col-sm-12">
                         <select class="form-select" name="role">
                             <option value="">All Roles</option>
                             <option value="staff" <?php echo ($role_filter == 'staff') ? 'selected' : ''; ?>>Staff</option>
@@ -401,20 +403,22 @@ include '../includes/header.php';
                             <option value="hr_admin" <?php echo ($role_filter == 'hr_admin') ? 'selected' : ''; ?>>HR Admin</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-6 col-sm-12">
                         <select class="form-select" name="status">
                             <option value="">All Status</option>
                             <option value="active" <?php echo ($status_filter == 'active') ? 'selected' : ''; ?>>Active</option>
                             <option value="inactive" <?php echo ($status_filter == 'inactive') ? 'selected' : ''; ?>>Inactive</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-primary me-2">
-                            <i class="fas fa-search"></i> Filter
-                        </button>
-                        <a href="users.php" class="btn btn-secondary">
-                            <i class="fas fa-sync"></i> Reset
-                        </a>
+                    <div class="col-lg-3 col-md-12 col-sm-12">
+                        <div class="d-grid d-md-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> Filter
+                            </button>
+                            <a href="users.php" class="btn btn-secondary">
+                                <i class="fas fa-sync me-1"></i> Reset
+                            </a>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -443,12 +447,12 @@ include '../includes/header.php';
                         <?php else: ?>
                             <?php foreach ($users as $u): ?>
                                 <tr>
-                                    <td><?php echo $u['id']; ?></td>
-                                    <td><?php echo htmlspecialchars($u['first_name'] . ' ' . $u['last_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($u['email']); ?></td>
-                                    <td><?php echo htmlspecialchars($u['phone'] ?? 'N/A'); ?></td>
-                                    <td><?php echo htmlspecialchars($u['department_name'] ?? 'N/A'); ?></td>
-                                    <td>
+                                    <td data-label="ID"><?php echo $u['id']; ?></td>
+                                    <td data-label="Name"><?php echo htmlspecialchars($u['first_name'] . ' ' . $u['last_name']); ?></td>
+                                    <td data-label="Email"><?php echo htmlspecialchars($u['email']); ?></td>
+                                    <td data-label="Phone"><?php echo htmlspecialchars($u['phone'] ?? 'N/A'); ?></td>
+                                    <td data-label="Department"><?php echo htmlspecialchars($u['department_name'] ?? 'N/A'); ?></td>
+                                    <td data-label="Role">
                                         <?php 
                                         switch ($u['role']) {
                                             case 'staff':
@@ -471,18 +475,17 @@ include '../includes/header.php';
                                         }
                                         ?>
                                     </td>
-                                    <td>
+                                    <td data-label="Status">
                                         <?php if ($u['status'] == 'active'): ?>
                                             <span class="badge bg-success">Active</span>
                                         <?php else: ?>
                                             <span class="badge bg-danger">Inactive</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?php echo date('M d, Y', strtotime($u['created_at'])); ?></td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-primary
-                                            btn-outline-primary1 edit-user" 
+                                    <td data-label="Created"><?php echo date('M d, Y', strtotime($u['created_at'])); ?></td>
+                                    <td data-label="Actions">
+                                        <div class="btn-group-vertical btn-group-sm d-md-none" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary edit-user" 
                                                     data-bs-toggle="modal" data-bs-target="#editUserModal"
                                                     data-id="<?php echo $u['id']; ?>"
                                                     data-first-name="<?php echo htmlspecialchars($u['first_name']); ?>"
@@ -492,12 +495,34 @@ include '../includes/header.php';
                                                     data-department="<?php echo $u['department_id']; ?>"
                                                     data-role="<?php echo $u['role']; ?>"
                                                     data-status="<?php echo $u['status']; ?>">
-                                                <i class="fas fa-edit"></i>
+                                                <i class="fas fa-edit me-1"></i> Edit
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-warning reset-password"
+                                            <button type="button" class="btn btn-sm btn-outline-warning reset-password"
                                                     data-bs-toggle="modal" data-bs-target="#resetPasswordModal"
                                                     data-id="<?php echo $u['id']; ?>"
                                                     data-name="<?php echo htmlspecialchars($u['first_name'] . ' ' . $u['last_name']); ?>">
+                                                <i class="fas fa-key me-1"></i> Reset
+                                            </button>
+                                        </div>
+                                        <div class="btn-group d-none d-md-flex" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary edit-user" 
+                                                    data-bs-toggle="modal" data-bs-target="#editUserModal"
+                                                    data-id="<?php echo $u['id']; ?>"
+                                                    data-first-name="<?php echo htmlspecialchars($u['first_name']); ?>"
+                                                    data-last-name="<?php echo htmlspecialchars($u['last_name']); ?>"
+                                                    data-email="<?php echo htmlspecialchars($u['email']); ?>"
+                                                    data-phone="<?php echo htmlspecialchars($u['phone'] ?? ''); ?>"
+                                                    data-department="<?php echo $u['department_id']; ?>"
+                                                    data-role="<?php echo $u['role']; ?>"
+                                                    data-status="<?php echo $u['status']; ?>"
+                                                    title="Edit User">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-warning reset-password"
+                                                    data-bs-toggle="modal" data-bs-target="#resetPasswordModal"
+                                                    data-id="<?php echo $u['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($u['first_name'] . ' ' . $u['last_name']); ?>"
+                                                    title="Reset Password">
                                                 <i class="fas fa-key"></i>
                                             </button>
                                         </div>
@@ -548,27 +573,27 @@ include '../includes/header.php';
             <form method="POST" action="">
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-md-12 mb-3">
                             <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="first_name" name="first_name" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-md-12 mb-3">
                             <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="last_name" name="last_name" required>
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-md-12 mb-3">
                             <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" id="email" name="email" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-md-12 mb-3">
                             <label for="phone" class="form-label">Phone</label>
                             <input type="text" class="form-control" id="phone" name="phone">
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-md-12 mb-3">
                             <label for="department_id" class="form-label">Department <span class="text-danger">*</span></label>
                             <select class="form-select" id="department_id" name="department_id" required>
                                 <option value="">Select Department</option>
@@ -579,7 +604,7 @@ include '../includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-md-12 mb-3">
                             <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
                             <select class="form-select" id="role" name="role" required>
                                 <option value="">Select Role</option>

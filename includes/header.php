@@ -16,8 +16,22 @@
     $basePath = str_repeat('../', $levels);
     ?>
     <link rel="stylesheet" href="<?php echo $basePath; ?>css/style.css">
+    <!-- Responsive Override CSS -->
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/responsive-override.css">
+    <!-- Mobile Table CSS -->
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/mobile-tables.css">
     <!-- Favicon -->
     <link rel="icon" href="<?php echo $basePath; ?>images/favicon.ico" type="image/x-icon">
+    
+    <!-- Mobile Detector - Load immediately -->
+    <script src="<?php echo $basePath; ?>js/mobile-detector.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Responsive Helpers -->
+    <script src="<?php echo $basePath; ?>js/responsive-helpers.js"></script>
+    <!-- Mobile Enhancements -->
+    <script src="<?php echo $basePath; ?>js/mobile-enhancements.js"></script></script>
 </head>
 <body>
 

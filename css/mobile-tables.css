@@ -1,0 +1,135 @@
+/* Mobile Table Transformations - ONLY APPLIES ON MOBILE */
+
+/* Only apply mobile table styles on screens 768px and below */
+@media (max-width: 768px) {
+    /* Mobile Table Transformation */
+    .table-responsive {
+        border: none !important;
+        box-shadow: none !important;
+        overflow-x: visible !important;
+    }
+    
+    .table thead {
+        display: none !important;
+    }
+    
+    .table,
+    .table tbody,
+    .table tr,
+    .table td {
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    .table {
+        border: none !important;
+    }
+    
+    .table tbody tr {
+        border: 2px solid #e9ecef !important;
+        border-radius: 10px !important;
+        margin-bottom: 1rem !important;
+        padding: 1rem !important;
+        background: white !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+        display: block !important;
+    }
+    
+    .table tbody td {
+        border: none !important;
+        padding: 0.5rem 0 !important;
+        text-align: left !important;
+        position: relative !important;
+        padding-left: 40% !important;
+        min-height: 30px !important;
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    .table tbody td:before {
+        content: attr(data-label) ": " !important;
+        position: absolute !important;
+        left: 0 !important;
+        width: 35% !important;
+        font-weight: 700 !important;
+        color: #1B3C53 !important;
+        text-transform: uppercase !important;
+        font-size: 0.75rem !important;
+        display: inline-block !important;
+    }
+    
+    /* Hide empty cells on mobile */
+    .table tbody td:empty {
+        display: none !important;
+    }
+    
+    /* Mobile table indicator */
+    .mobile-table-wrapper::before {
+        content: "📱 Mobile View";
+        display: block;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px 8px 0 0;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 0;
+    }
+}
+
+/* Ensure normal table appearance on desktop and tablet */
+@media (min-width: 769px) {
+    /* Force normal table display on larger screens */
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .table thead {
+        display: table-header-group !important;
+    }
+    
+    .table {
+        display: table !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+    
+    .table tbody {
+        display: table-row-group !important;
+    }
+    
+    .table tr {
+        display: table-row !important;
+    }
+    
+    .table td,
+    .table th {
+        display: table-cell !important;
+        padding: 0.75rem !important;
+        vertical-align: top !important;
+        position: static !important;
+        width: auto !important;
+    }
+    
+    .table tbody tr {
+        display: table-row !important;
+        border: none !important;
+        border-radius: 0 !important;
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+    
+    .table tbody td:before {
+        display: none !important;
+        content: none !important;
+    }
+    
+    /* Remove mobile indicator on desktop */
+    .mobile-table-wrapper::before {
+        display: none !important;
+    }
+}

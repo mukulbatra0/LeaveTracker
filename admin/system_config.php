@@ -432,8 +432,14 @@ $enable_two_factor_auth = getSetting($conn, 'enable_two_factor_auth', '0');
 include '../includes/header.php';
 ?>
 
-<div class="container-fluid px-4">
-    <h1 class="mt-4">System Configuration</h1>
+<div class="container-fluid px-2 px-md-4">
+    <div class="mobile-header d-block d-md-none mb-3">
+        <div class="d-flex align-items-center justify-content-between">
+            <h1 class="h4 mb-0">System Config</h1>
+            <span class="badge bg-primary">Mobile</span>
+        </div>
+    </div>
+    <h1 class="mt-4 d-none d-md-block">System Configuration</h1>
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">System Configuration</li>
@@ -462,28 +468,38 @@ include '../includes/header.php';
         <div class="col-xl-12">
             <div class="card mb-4">
                 <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs" id="configTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab" aria-controls="general" aria-selected="true">
-                                <i class="fas fa-cog me-1"></i> General Settings
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="leave-tab" data-bs-toggle="tab" data-bs-target="#leave" type="button" role="tab" aria-controls="leave" aria-selected="false">
-                                <i class="fas fa-calendar-alt me-1"></i> Leave Settings
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="notification-tab" data-bs-toggle="tab" data-bs-target="#notification" type="button" role="tab" aria-controls="notification" aria-selected="false">
-                                <i class="fas fa-bell me-1"></i> Notification Settings
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false">
-                                <i class="fas fa-shield-alt me-1"></i> Security Settings
-                            </button>
-                        </li>
-                    </ul>
+                    <div class="nav-tabs-wrapper">
+                        <ul class="nav nav-tabs card-header-tabs" id="configTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab" aria-controls="general" aria-selected="true">
+                                    <i class="fas fa-cog me-1 d-none d-sm-inline"></i> 
+                                    <span class="d-none d-sm-inline">General Settings</span>
+                                    <span class="d-sm-none">General</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="leave-tab" data-bs-toggle="tab" data-bs-target="#leave" type="button" role="tab" aria-controls="leave" aria-selected="false">
+                                    <i class="fas fa-calendar-alt me-1 d-none d-sm-inline"></i> 
+                                    <span class="d-none d-sm-inline">Leave Settings</span>
+                                    <span class="d-sm-none">Leave</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="notification-tab" data-bs-toggle="tab" data-bs-target="#notification" type="button" role="tab" aria-controls="notification" aria-selected="false">
+                                    <i class="fas fa-bell me-1 d-none d-sm-inline"></i> 
+                                    <span class="d-none d-sm-inline">Notification Settings</span>
+                                    <span class="d-sm-none">Notifications</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false">
+                                    <i class="fas fa-shield-alt me-1 d-none d-sm-inline"></i> 
+                                    <span class="d-none d-sm-inline">Security Settings</span>
+                                    <span class="d-sm-none">Security</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="tab-content" id="configTabsContent">
@@ -491,38 +507,38 @@ include '../includes/header.php';
                         <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                             <form method="POST" action="">
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6 mb-3">
                                         <label for="institution_name" class="form-label">Institution Name <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="institution_name" name="institution_name" value="<?php echo htmlspecialchars($institution_name); ?>" required>
+                                        <input type="text" class="form-control mobile-input" id="institution_name" name="institution_name" value="<?php echo htmlspecialchars($institution_name); ?>" required>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6 mb-3">
                                         <label for="institution_email" class="form-label">Institution Email <span class="text-danger">*</span></label>
-                                        <input type="email" class="form-control" id="institution_email" name="institution_email" value="<?php echo htmlspecialchars($institution_email); ?>" required>
+                                        <input type="email" class="form-control mobile-input" id="institution_email" name="institution_email" value="<?php echo htmlspecialchars($institution_email); ?>" required>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="institution_phone" class="form-label">Institution Phone</label>
                                         <input type="text" class="form-control" id="institution_phone" name="institution_phone" value="<?php echo htmlspecialchars($institution_phone); ?>">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="institution_address" class="form-label">Institution Address</label>
                                         <textarea class="form-control" id="institution_address" name="institution_address" rows="2"><?php echo htmlspecialchars($institution_address); ?></textarea>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="fiscal_year_start" class="form-label">Fiscal Year Start Date</label>
                                         <input type="text" class="form-control" id="fiscal_year_start" name="fiscal_year_start" value="<?php echo htmlspecialchars($fiscal_year_start); ?>" placeholder="MM-DD">
                                         <div class="form-text">Format: MM-DD (e.g., 04-01 for April 1)</div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="academic_year_start" class="form-label">Academic Year Start Date</label>
                                         <input type="text" class="form-control" id="academic_year_start" name="academic_year_start" value="<?php echo htmlspecialchars($academic_year_start); ?>" placeholder="MM-DD">
                                         <div class="form-text">Format: MM-DD (e.g., 08-01 for August 1)</div>
                                     </div>
                                 </div>
-                                <div class="mt-4">
+                                <div class="mt-4 d-grid d-md-block">
                                     <button type="submit" name="update_general_settings" class="btn btn-primary">
                                         <i class="fas fa-save me-1"></i> Save General Settings
                                     </button>
@@ -534,7 +550,7 @@ include '../includes/header.php';
                         <div class="tab-pane fade" id="leave" role="tabpanel" aria-labelledby="leave-tab">
                             <form method="POST" action="">
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="default_approval_chain" class="form-label">Default Approval Chain</label>
                                         <select class="form-select" id="default_approval_chain" name="default_approval_chain">
                                             <option value="department_head,hr_admin" <?php echo $default_approval_chain == 'department_head,hr_admin' ? 'selected' : ''; ?>>Department Head → HR Admin</option>
@@ -544,35 +560,35 @@ include '../includes/header.php';
                                         </select>
                                         <div class="form-text">Default approval workflow for leave applications</div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="max_consecutive_leave_days" class="form-label">Maximum Consecutive Leave Days</label>
                                         <input type="number" class="form-control" id="max_consecutive_leave_days" name="max_consecutive_leave_days" value="<?php echo htmlspecialchars($max_consecutive_leave_days); ?>" min="1">
                                         <div class="form-text">Maximum number of consecutive days a staff member can apply for leave</div>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="min_days_before_application" class="form-label">Minimum Days Before Application</label>
                                         <input type="number" class="form-control" id="min_days_before_application" name="min_days_before_application" value="<?php echo htmlspecialchars($min_days_before_application); ?>" min="0">
                                         <div class="form-text">Minimum number of days in advance a leave application must be submitted</div>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-4">
+                                    <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="allow_weekend_holidays" name="allow_weekend_holidays" <?php echo $allow_weekend_holidays == '1' ? 'checked' : ''; ?>>
                                             <label class="form-check-label" for="allow_weekend_holidays">Include Weekends & Holidays in Leave Calculation</label>
                                         </div>
                                         <div class="form-text">If checked, weekends and holidays will be counted in leave days</div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="enable_document_upload" name="enable_document_upload" <?php echo $enable_document_upload == '1' ? 'checked' : ''; ?>>
                                             <label class="form-check-label" for="enable_document_upload">Enable Document Upload</label>
                                         </div>
                                         <div class="form-text">Allow staff to upload supporting documents with leave applications</div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-lg-4 col-md-12 col-sm-12 mb-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="enable_leave_cancellation" name="enable_leave_cancellation" <?php echo $enable_leave_cancellation == '1' ? 'checked' : ''; ?>>
                                             <label class="form-check-label" for="enable_leave_cancellation">Enable Leave Cancellation</label>
@@ -580,7 +596,7 @@ include '../includes/header.php';
                                         <div class="form-text">Allow staff to cancel approved leave applications</div>
                                     </div>
                                 </div>
-                                <div class="mt-4">
+                                <div class="mt-4 d-grid d-md-block">
                                     <button type="submit" name="update_leave_settings" class="btn btn-primary">
                                         <i class="fas fa-save me-1"></i> Save Leave Settings
                                     </button>
@@ -592,14 +608,14 @@ include '../includes/header.php';
                         <div class="tab-pane fade" id="notification" role="tabpanel" aria-labelledby="notification-tab">
                             <form method="POST" action="">
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <div class="form-check form-switch mb-3">
+                                    <div class="col-lg-6 col-md-12 mb-3">
+                                        <div class="form-check form-switch">
                                             <input class="form-check-input" type="checkbox" id="enable_email_notifications" name="enable_email_notifications" <?php echo $enable_email_notifications == '1' ? 'checked' : ''; ?>>
                                             <label class="form-check-label" for="enable_email_notifications">Enable Email Notifications</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="form-check form-switch mb-3">
+                                    <div class="col-lg-6 col-md-12 mb-3">
+                                        <div class="form-check form-switch">
                                             <input class="form-check-input" type="checkbox" id="enable_sms_notifications" name="enable_sms_notifications" <?php echo $enable_sms_notifications == '1' ? 'checked' : ''; ?>>
                                             <label class="form-check-label" for="enable_sms_notifications">Enable SMS Notifications</label>
                                         </div>
@@ -608,28 +624,28 @@ include '../includes/header.php';
                                 
                                 <h5 class="mt-4 mb-3">Email Configuration</h5>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="smtp_host" class="form-label">SMTP Host</label>
                                         <input type="text" class="form-control" id="smtp_host" name="smtp_host" value="<?php echo htmlspecialchars($smtp_host); ?>">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="smtp_port" class="form-label">SMTP Port</label>
                                         <input type="text" class="form-control" id="smtp_port" name="smtp_port" value="<?php echo htmlspecialchars($smtp_port); ?>">
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="smtp_username" class="form-label">SMTP Username</label>
                                         <input type="text" class="form-control" id="smtp_username" name="smtp_username" value="<?php echo htmlspecialchars($smtp_username); ?>">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="smtp_password" class="form-label">SMTP Password</label>
                                         <input type="password" class="form-control" id="smtp_password" name="smtp_password" placeholder="Leave blank to keep current password">
                                         <div class="form-text">Leave blank to keep the current password</div>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="smtp_encryption" class="form-label">SMTP Encryption</label>
                                         <select class="form-select" id="smtp_encryption" name="smtp_encryption">
                                             <option value="tls" <?php echo $smtp_encryption == 'tls' ? 'selected' : ''; ?>>TLS</option>
@@ -641,24 +657,24 @@ include '../includes/header.php';
                                 
                                 <h5 class="mt-4 mb-3">SMS Configuration</h5>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="sms_api_key" class="form-label">SMS API Key</label>
                                         <input type="text" class="form-control" id="sms_api_key" name="sms_api_key" value="<?php echo htmlspecialchars($sms_api_key); ?>">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="sms_api_secret" class="form-label">SMS API Secret</label>
                                         <input type="password" class="form-control" id="sms_api_secret" name="sms_api_secret" placeholder="Leave blank to keep current secret">
                                         <div class="form-text">Leave blank to keep the current API secret</div>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="sms_sender_id" class="form-label">SMS Sender ID</label>
                                         <input type="text" class="form-control" id="sms_sender_id" name="sms_sender_id" value="<?php echo htmlspecialchars($sms_sender_id); ?>">
                                     </div>
                                 </div>
                                 
-                                <div class="mt-4">
+                                <div class="mt-4 d-grid d-md-block">
                                     <button type="submit" name="update_notification_settings" class="btn btn-primary">
                                         <i class="fas fa-save me-1"></i> Save Notification Settings
                                     </button>
@@ -670,35 +686,35 @@ include '../includes/header.php';
                         <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
                             <form method="POST" action="">
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="password_min_length" class="form-label">Minimum Password Length</label>
                                         <input type="number" class="form-control" id="password_min_length" name="password_min_length" value="<?php echo htmlspecialchars($password_min_length); ?>" min="6">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="password_expiry_days" class="form-label">Password Expiry (Days)</label>
                                         <input type="number" class="form-control" id="password_expiry_days" name="password_expiry_days" value="<?php echo htmlspecialchars($password_expiry_days); ?>" min="0">
                                         <div class="form-text">Set to 0 for no expiry</div>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="max_login_attempts" class="form-label">Maximum Login Attempts</label>
                                         <input type="number" class="form-control" id="max_login_attempts" name="max_login_attempts" value="<?php echo htmlspecialchars($max_login_attempts); ?>" min="1">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="session_timeout_minutes" class="form-label">Session Timeout (Minutes)</label>
                                         <input type="number" class="form-control" id="session_timeout_minutes" name="session_timeout_minutes" value="<?php echo htmlspecialchars($session_timeout_minutes); ?>" min="5">
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="enforce_password_complexity" name="enforce_password_complexity" <?php echo $enforce_password_complexity == '1' ? 'checked' : ''; ?>>
                                             <label class="form-check-label" for="enforce_password_complexity">Enforce Password Complexity</label>
                                         </div>
                                         <div class="form-text">Require uppercase, lowercase, numbers, and special characters</div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-6 col-md-12 mb-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="enable_two_factor_auth" name="enable_two_factor_auth" <?php echo $enable_two_factor_auth == '1' ? 'checked' : ''; ?>>
                                             <label class="form-check-label" for="enable_two_factor_auth">Enable Two-Factor Authentication</label>
@@ -706,7 +722,7 @@ include '../includes/header.php';
                                         <div class="form-text">Require email verification code during login</div>
                                     </div>
                                 </div>
-                                <div class="mt-4">
+                                <div class="mt-4 d-grid d-md-block">
                                     <button type="submit" name="update_security_settings" class="btn btn-primary">
                                         <i class="fas fa-save me-1"></i> Save Security Settings
                                     </button>
@@ -719,6 +735,11 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Responsive Helpers -->
+<script src="../js/responsive-helpers.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -745,6 +766,40 @@ include '../includes/header.php';
                 window.history.replaceState(null, '', url);
             });
         });
+        
+        // Mobile-specific enhancements
+        if (window.innerWidth <= 768) {
+            // Add swipe gesture support for tabs
+            let startX = 0;
+            let currentTab = 0;
+            const tabs = document.querySelectorAll('.nav-link');
+            
+            document.addEventListener('touchstart', function(e) {
+                startX = e.touches[0].clientX;
+            });
+            
+            document.addEventListener('touchend', function(e) {
+                const endX = e.changedTouches[0].clientX;
+                const diff = startX - endX;
+                
+                if (Math.abs(diff) > 50) { // Minimum swipe distance
+                    if (diff > 0 && currentTab < tabs.length - 1) {
+                        // Swipe left - next tab
+                        tabs[currentTab + 1].click();
+                    } else if (diff < 0 && currentTab > 0) {
+                        // Swipe right - previous tab
+                        tabs[currentTab - 1].click();
+                    }
+                }
+            });
+            
+            // Track current tab
+            tabs.forEach((tab, index) => {
+                tab.addEventListener('shown.bs.tab', function() {
+                    currentTab = index;
+                });
+            });
+        }
     });
 </script>
 
