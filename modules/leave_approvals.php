@@ -19,7 +19,7 @@ $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'];
 
 // Check if user has approval permissions
-$allowed_roles = ['department_head', 'dean', 'principal', 'hr_admin'];
+$allowed_roles = ['head_of_department', 'director', 'admin'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
@@ -188,7 +188,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         // Update leave balance
                         $current_year = date('Y');
                         $update_balance_sql = "UPDATE leave_balances 
-                                             SET balance = balance - :days, used = used + :days, updated_at = NOW() 
+                                             SET total_days = total_days - :days, used_days = used_days + :days, updated_at = NOW() 
                                              WHERE user_id = :user_id AND leave_type_id = :leave_type_id AND year = :year";
                         $update_balance_stmt = $conn->prepare($update_balance_sql);
                         $update_balance_stmt->bindParam(':days', $days, PDO::PARAM_STR);
@@ -473,7 +473,7 @@ include_once '../includes/header.php';
                                                                         
                                                                         <!-- Leave Balance -->
                                                                         <?php
-                                                                            $balance_sql = "SELECT balance, used, max_days 
+                                                                            $balance_sql = "SELECT (lb.total_days - lb.used_days) as balance, lb.used_days as used, lt.max_days 
                                                                                          FROM leave_balances lb
                                                                                          JOIN leave_types lt ON lb.leave_type_id = lt.id
                                                                                          WHERE lb.user_id = :user_id 

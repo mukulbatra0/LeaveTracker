@@ -83,8 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Log the action (with error handling)
                 try {
                     $action = "Updated profile information";
-                    $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)");
-                    $stmt->execute([$user_id, $action, $_SERVER['REMOTE_ADDR']]);
+                    $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address) VALUES (?, ?, ?, ?, ?)");
+                    $stmt->execute([$user_id, $action, 'users', $user_id, $_SERVER['REMOTE_ADDR']]);
                 } catch (PDOException $e) {
                     // Audit log table might not exist, continue without logging
                 }
@@ -140,8 +140,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Log the action (with error handling)
                     try {
                         $action = "Changed password";
-                        $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)");
-                        $stmt->execute([$user_id, $action, $_SERVER['REMOTE_ADDR']]);
+                        $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address) VALUES (?, ?, ?, ?, ?)");
+                        $stmt->execute([$user_id, $action, 'users', $user_id, $_SERVER['REMOTE_ADDR']]);
                     } catch (PDOException $e) {
                         // Audit log table might not exist, continue without logging
                     }
@@ -158,7 +158,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Profile picture upload
     if (isset($_POST['upload_picture'])) {
+        error_log("Profile upload: Form submitted");
+        
         // Check if file was uploaded without errors
+        if (isset($_FILES['profile_picture'])) {
+            error_log("Profile upload: File upload error code: " . $_FILES['profile_picture']['error']);
+            error_log("Profile upload: File details: " . print_r($_FILES['profile_picture'], true));
+        }
+        
         if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] == 0) {
             // Get system settings for file uploads with error handling
             try {
@@ -181,14 +188,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $file_tmp = $file['tmp_name'];
             $file_type = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             
+            error_log("Profile upload: File size: $file_size, Max allowed: $max_file_size");
+            error_log("Profile upload: File type: $file_type, Allowed types: $allowed_types_str");
+            
             // Validate file size
             if ($file_size > $max_file_size) {
                 $errors[] = "File size exceeds the maximum limit of " . ($max_file_size / 1024 / 1024) . "MB.";
+                error_log("Profile upload: File size validation failed");
             }
             
             // Validate file type
             if (!in_array($file_type, $allowed_types)) {
                 $errors[] = "Invalid file type. Allowed types: " . $allowed_types_str;
+                error_log("Profile upload: File type validation failed");
             }
             
             if (empty($errors)) {
@@ -202,11 +214,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $new_filename = 'profile_' . $user_id . '_' . time() . '.' . $file_type;
                 $upload_path = $upload_dir . $new_filename;
                 
+                error_log("Profile upload: Attempting to move file from $file_tmp to $upload_path");
+                
                 // Move uploaded file
                 if (move_uploaded_file($file_tmp, $upload_path)) {
+                    error_log("Profile upload: File moved successfully");
                     try {
                         // Delete old profile picture if exists
-                        $old_profile_pic = $user['profile_picture'] ?? $user['profile_image'] ?? '';
+                        $old_profile_pic = $user['profile_image'] ?? '';
                         if (!empty($old_profile_pic)) {
                             $old_file = '../' . $old_profile_pic;
                             if (file_exists($old_file)) {
@@ -216,14 +231,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         // Update database with new profile picture path
                         $profile_picture_path = 'uploads/profile_pictures/' . $new_filename;
-                        $stmt = $conn->prepare("UPDATE users SET profile_picture = ? WHERE id = ?");
-                        $stmt->execute([$profile_picture_path, $user_id]);
+                        error_log("Profile upload: Updating database with path: $profile_picture_path for user ID: $user_id");
+                        
+                        $stmt = $conn->prepare("UPDATE users SET profile_image = ? WHERE id = ?");
+                        $result = $stmt->execute([$profile_picture_path, $user_id]);
+                        
+                        error_log("Profile upload: Database update result: " . ($result ? 'Success' : 'Failed'));
+                        error_log("Profile upload: Rows affected: " . $stmt->rowCount());
                         
                         // Log the action (with error handling)
                         try {
                             $action = "Updated profile picture";
-                            $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)");
-                            $stmt->execute([$user_id, $action, $_SERVER['REMOTE_ADDR']]);
+                            $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address) VALUES (?, ?, ?, ?, ?)");
+                            $stmt->execute([$user_id, $action, 'users', $user_id, $_SERVER['REMOTE_ADDR']]);
                         } catch (PDOException $e) {
                             // Audit log table might not exist, continue without logging
                         }
@@ -241,10 +261,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } else {
                     $errors[] = "Failed to upload file. Please try again.";
+                    error_log("Profile upload: Failed to move uploaded file");
                 }
             }
         } else {
-            $errors[] = "Please select a file to upload.";
+            if (isset($_FILES['profile_picture'])) {
+                $error_code = $_FILES['profile_picture']['error'];
+                $error_messages = [
+                    UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize',
+                    UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE',
+                    UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                    UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                    UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                    UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                    UPLOAD_ERR_EXTENSION => 'File upload stopped by extension'
+                ];
+                $error_msg = $error_messages[$error_code] ?? 'Unknown upload error';
+                $errors[] = "File upload error: $error_msg";
+                error_log("Profile upload: Upload error - $error_msg (Code: $error_code)");
+            } else {
+                $errors[] = "Please select a file to upload.";
+                error_log("Profile upload: No file selected");
+            }
         }
     }
 }
@@ -292,8 +330,14 @@ include '../includes/header.php';
                 <div class="card-body text-center">
                     <div class="mb-3">
                         <?php 
-                        $profile_pic = $user['profile_picture'] ?? $user['profile_image'] ?? '';
-                        if (!empty($profile_pic) && file_exists('../' . $profile_pic)): ?>
+                        $profile_pic = $user['profile_image'] ?? '';
+                        $full_path = '../' . $profile_pic;
+                        // Debug info - remove in production
+                        if (!empty($profile_pic)) {
+                            error_log("Profile picture path: $profile_pic, Full path: $full_path, File exists: " . (file_exists($full_path) ? 'Yes' : 'No'));
+                        }
+                        
+                        if (!empty($profile_pic) && file_exists($full_path)): ?>
                             <img src="../<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
                         <?php else: ?>
                             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px; font-size: 4rem;">

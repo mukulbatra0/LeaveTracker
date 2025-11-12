@@ -28,10 +28,18 @@ if (!in_array($role, $allowed_roles)) {
 }
 
 // Process approval/rejection
-if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET['id'])) {
-    $action = $_GET['action'];
-    $application_id = $_GET['id'];
-    $reason = isset($_GET['reason']) ? trim($_GET['reason']) : '';
+if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET['id'])) || 
+    ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && isset($_POST['application_id']))) {
+    
+    if ($_SERVER["REQUEST_METHOD"] == "GET") {
+        $action = $_GET['action'];
+        $application_id = $_GET['id'];
+        $reason = isset($_GET['reason']) ? trim($_GET['reason']) : '';
+    } else {
+        $action = $_POST['action'];
+        $application_id = $_POST['application_id'];
+        $reason = isset($_POST['comments']) ? trim($_POST['comments']) : '';
+    }
     
     // Verify the application exists and user has permission to approve it
     $check_sql = "SELECT la.*, u.first_name, u.last_name, u.email, u.department_id, lt.name as leave_type_name,
@@ -48,22 +56,42 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
     if ($check_stmt->rowCount() > 0) {
         $application = $check_stmt->fetch();
         
+        // Double-check that the application is still pending
+        if ($application['status'] !== 'pending') {
+            $_SESSION['alert'] = "This application has already been " . $application['status'] . " and cannot be modified.";
+            $_SESSION['alert_type'] = "warning";
+            header('Location: ../index.php');
+            exit;
+        }
+        
         // Check if user has permission to approve this application
         $can_approve = false;
+        $permission_error = "";
         
         if ($role == 'head_of_department') {
             // Head of department can approve applications from their department staff
-            if ($application['department_id'] == $_SESSION['department_id']) {
-                // Check if this is the first level approval (no previous approvals)
-                $prev_approval_sql = "SELECT COUNT(*) as count FROM leave_approvals 
-                                     WHERE leave_application_id = :app_id";
-                $prev_approval_stmt = $conn->prepare($prev_approval_sql);
-                $prev_approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
-                $prev_approval_stmt->execute();
-                $prev_count = $prev_approval_stmt->fetch()['count'];
+            
+            // Check if department_id is set in session
+            if (!isset($_SESSION['department_id'])) {
+                $permission_error = "Department information not found in session. Please log out and log in again.";
+            } elseif ($application['department_id'] != $_SESSION['department_id']) {
+                $permission_error = "You can only approve applications from your department.";
+            } else {
+                // Check if head of department has already approved this application
+                // (Rejections can be overridden, but approvals cannot)
+                $hod_approved_sql = "SELECT COUNT(*) as count FROM leave_approvals 
+                                   WHERE leave_application_id = :app_id 
+                                   AND approver_level = 'head_of_department' 
+                                   AND status = 'approved'";
+                $hod_approved_stmt = $conn->prepare($hod_approved_sql);
+                $hod_approved_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                $hod_approved_stmt->execute();
+                $hod_approved_count = $hod_approved_stmt->fetch()['count'];
                 
-                if ($prev_count == 0) {
+                if ($hod_approved_count == 0) {
                     $can_approve = true;
+                } else {
+                    $permission_error = "This application has already been approved by a Head of Department and is awaiting Director approval.";
                 }
             }
         } elseif ($role == 'director') {
@@ -77,8 +105,21 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
             $hod_approval_stmt->execute();
             $hod_count = $hod_approval_stmt->fetch()['count'];
             
-            if ($hod_count > 0) {
+            // Check if director has already processed this application
+            $director_processed_sql = "SELECT COUNT(*) as count FROM leave_approvals 
+                                     WHERE leave_application_id = :app_id 
+                                     AND approver_level = 'director'";
+            $director_processed_stmt = $conn->prepare($director_processed_sql);
+            $director_processed_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+            $director_processed_stmt->execute();
+            $director_processed_count = $director_processed_stmt->fetch()['count'];
+            
+            if ($hod_count > 0 && $director_processed_count == 0) {
                 $can_approve = true;
+            } elseif ($hod_count == 0) {
+                $permission_error = "This application must be approved by Head of Department first.";
+            } elseif ($director_processed_count > 0) {
+                $permission_error = "This application has already been processed by a Director.";
             }
         } elseif ($role == 'admin') {
             // Admin can approve any application (for emergency cases)
@@ -86,6 +127,26 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
         }
         
         if ($can_approve) {
+            // Validate required data before proceeding
+            if (empty($user_id) || $user_id === null) {
+                $_SESSION['alert'] = "Error: User session invalid. Please log out and log in again.";
+                $_SESSION['alert_type'] = "danger";
+                header('Location: ../index.php');
+                exit;
+            }
+            
+            if (empty($application['user_id']) || $application['user_id'] === null) {
+                $_SESSION['alert'] = "Error: Application user data is missing.";
+                $_SESSION['alert_type'] = "danger";
+                header('Location: ../index.php');
+                exit;
+            }
+            
+            // Ensure we have valid integer values
+            $user_id = (int)$user_id;
+            $application_id = (int)$application_id;
+            $app_user_id = (int)$application['user_id'];
+            
             // Begin transaction
             $conn->beginTransaction();
             
@@ -111,23 +172,32 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
                         
                         // Update leave balance
                         $current_year = date('Y');
+                        $days = $application['days'];
+                        $app_leave_type_id = $application['leave_type_id'];
                         $update_balance_sql = "UPDATE leave_balances 
-                                             SET balance = balance - :days, used = used + :days 
+                                             SET total_days = total_days - :days, used_days = used_days + :days 
                                              WHERE user_id = :user_id AND leave_type_id = :leave_type_id AND year = :year";
                         $update_balance_stmt = $conn->prepare($update_balance_sql);
-                        $update_balance_stmt->bindParam(':days', $application['days'], PDO::PARAM_STR);
-                        $update_balance_stmt->bindParam(':user_id', $application['user_id'], PDO::PARAM_INT);
-                        $update_balance_stmt->bindParam(':leave_type_id', $application['leave_type_id'], PDO::PARAM_INT);
+                        $update_balance_stmt->bindParam(':days', $days, PDO::PARAM_STR);
+                        $update_balance_stmt->bindParam(':user_id', $app_user_id, PDO::PARAM_INT);
+                        $update_balance_stmt->bindParam(':leave_type_id', $app_leave_type_id, PDO::PARAM_INT);
                         $update_balance_stmt->bindParam(':year', $current_year, PDO::PARAM_STR);
                         $update_balance_stmt->execute();
                         
                         // Send final approval notification
-                        $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
-                                           VALUES (:user_id, 'Leave Application Approved', 'Your leave application has been fully approved and is now active.', 'leave_application', :related_id)";
-                        $notification_stmt = $conn->prepare($notification_sql);
-                        $notification_stmt->bindParam(':user_id', $application['user_id'], PDO::PARAM_INT);
-                        $notification_stmt->bindParam(':related_id', $application_id, PDO::PARAM_INT);
-                        $notification_stmt->execute();
+                        if ($app_user_id > 0 && $application_id > 0) {
+                            try {
+                                $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
+                                                   VALUES (:user_id, 'Leave Application Approved', 'Your leave application has been fully approved and is now active.', 'leave_application', :related_id)";
+                                $notification_stmt = $conn->prepare($notification_sql);
+                                $notification_stmt->bindParam(':user_id', $app_user_id, PDO::PARAM_INT);
+                                $notification_stmt->bindParam(':related_id', $application_id, PDO::PARAM_INT);
+                                $notification_stmt->execute();
+                            } catch (PDOException $e) {
+                                error_log("Error inserting final approval notification: " . $e->getMessage());
+                                // Continue without notification rather than failing the whole process
+                            }
+                        }
                         
                         // Send email notification
                         $emailNotification->sendLeaveStatusNotification(
@@ -149,23 +219,38 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
                         
                         if ($director_stmt->rowCount() > 0) {
                             $director = $director_stmt->fetch();
+                            $director_id = $director['id'];
                             
-                            // Send notification to director
-                            $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
-                                               VALUES (:user_id, 'Leave Approval Required', 'A leave application requires your final approval.', 'leave_application', :related_id)";
-                            $notification_stmt = $conn->prepare($notification_sql);
-                            $notification_stmt->bindParam(':user_id', $director['id'], PDO::PARAM_INT);
-                            $notification_stmt->bindParam(':related_id', $application_id, PDO::PARAM_INT);
-                            $notification_stmt->execute();
+                            // Validate director ID before inserting notification
+                            if (!empty($director_id) && $director_id > 0 && $application_id > 0) {
+                                try {
+                                    $director_id = (int)$director_id;
+                                    // Send notification to director
+                                    $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
+                                                       VALUES (:user_id, 'Leave Approval Required', 'A leave application requires your final approval.', 'leave_application', :related_id)";
+                                    $notification_stmt = $conn->prepare($notification_sql);
+                                    $notification_stmt->bindParam(':user_id', $director_id, PDO::PARAM_INT);
+                                    $notification_stmt->bindParam(':related_id', $application_id, PDO::PARAM_INT);
+                                    $notification_stmt->execute();
+                                } catch (PDOException $e) {
+                                    error_log("Error inserting director notification: " . $e->getMessage());
+                                }
+                            }
                         }
                         
                         // Notify applicant about intermediate approval
-                        $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
-                                           VALUES (:user_id, 'Leave Application Update', 'Your leave application has been approved by your Head of Department and is now awaiting Director approval.', 'leave_application', :related_id)";
-                        $notification_stmt = $conn->prepare($notification_sql);
-                        $notification_stmt->bindParam(':user_id', $application['user_id'], PDO::PARAM_INT);
-                        $notification_stmt->bindParam(':related_id', $application_id, PDO::PARAM_INT);
-                        $notification_stmt->execute();
+                        if ($app_user_id > 0 && $application_id > 0) {
+                            try {
+                                $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
+                                                   VALUES (:user_id, 'Leave Application Update', 'Your leave application has been approved by your Head of Department and is now awaiting Director approval.', 'leave_application', :related_id)";
+                                $notification_stmt = $conn->prepare($notification_sql);
+                                $notification_stmt->bindParam(':user_id', $app_user_id, PDO::PARAM_INT);
+                                $notification_stmt->bindParam(':related_id', $application_id, PDO::PARAM_INT);
+                                $notification_stmt->execute();
+                            } catch (PDOException $e) {
+                                error_log("Error inserting intermediate approval notification: " . $e->getMessage());
+                            }
+                        }
                         
                         $message = "Leave application approved and forwarded to Director for final approval.";
                     }
@@ -187,13 +272,19 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
                     $update_app_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
                     $update_app_stmt->execute();
                     
-                    // Send rejection notification
-                    $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
-                                       VALUES (:user_id, 'Leave Application Rejected', 'Your leave application has been rejected.', 'leave_application', :related_id)";
-                    $notification_stmt = $conn->prepare($notification_sql);
-                    $notification_stmt->bindParam(':user_id', $application['user_id'], PDO::PARAM_INT);
-                    $notification_stmt->bindParam(':related_id', $application_id, PDO::PARAM_INT);
-                    $notification_stmt->execute();
+                    // Send rejection notification (app_user_id already validated above)
+                    if ($app_user_id > 0 && $application_id > 0) {
+                        try {
+                            $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
+                                               VALUES (:user_id, 'Leave Application Rejected', 'Your leave application has been rejected.', 'leave_application', :related_id)";
+                            $notification_stmt = $conn->prepare($notification_sql);
+                            $notification_stmt->bindParam(':user_id', $app_user_id, PDO::PARAM_INT);
+                            $notification_stmt->bindParam(':related_id', $application_id, PDO::PARAM_INT);
+                            $notification_stmt->execute();
+                        } catch (PDOException $e) {
+                            error_log("Error inserting rejection notification: " . $e->getMessage());
+                        }
+                    }
                     
                     // Send email notification
                     $emailNotification->sendLeaveStatusNotification(
@@ -210,18 +301,25 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
                 }
                 
                 // Log the action
-                $ip_address = $_SERVER['REMOTE_ADDR'];
-                $user_agent = $_SERVER['HTTP_USER_AGENT'];
-                $log_sql = "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details, ip_address, user_agent) 
-                          VALUES (:user_id, :action, 'leave_applications', :entity_id, :details, :ip_address, :user_agent)";
-                $log_stmt = $conn->prepare($log_sql);
-                $log_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-                $log_stmt->bindParam(':action', $action . '_leave', PDO::PARAM_STR);
-                $log_stmt->bindParam(':entity_id', $application_id, PDO::PARAM_INT);
-                $log_stmt->bindParam(':details', $reason, PDO::PARAM_STR);
-                $log_stmt->bindParam(':ip_address', $ip_address, PDO::PARAM_STR);
-                $log_stmt->bindParam(':user_agent', $user_agent, PDO::PARAM_STR);
-                $log_stmt->execute();
+                if ($user_id > 0 && $application_id > 0) {
+                    try {
+                        $ip_address = $_SERVER['REMOTE_ADDR'];
+                        $user_agent = $_SERVER['HTTP_USER_AGENT'];
+                        $action_type = $action . '_leave';
+                        $log_sql = "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details, ip_address, user_agent) 
+                                  VALUES (:user_id, :action, 'leave_applications', :entity_id, :details, :ip_address, :user_agent)";
+                        $log_stmt = $conn->prepare($log_sql);
+                        $log_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                        $log_stmt->bindParam(':action', $action_type, PDO::PARAM_STR);
+                        $log_stmt->bindParam(':entity_id', $application_id, PDO::PARAM_INT);
+                        $log_stmt->bindParam(':details', $reason, PDO::PARAM_STR);
+                        $log_stmt->bindParam(':ip_address', $ip_address, PDO::PARAM_STR);
+                        $log_stmt->bindParam(':user_agent', $user_agent, PDO::PARAM_STR);
+                        $log_stmt->execute();
+                    } catch (PDOException $e) {
+                        error_log("Error inserting audit log: " . $e->getMessage());
+                    }
+                }
                 
                 // Commit transaction
                 $conn->commit();
@@ -237,7 +335,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
                 $_SESSION['alert_type'] = "danger";
             }
         } else {
-            $_SESSION['alert'] = "You don't have permission to approve this application.";
+            $_SESSION['alert'] = !empty($permission_error) ? $permission_error : "You don't have permission to approve this application.";
             $_SESSION['alert_type'] = "danger";
         }
     } else {

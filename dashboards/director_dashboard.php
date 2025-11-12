@@ -81,7 +81,11 @@ $department_summary = $department_summary_stmt->fetchAll();
 
 // Get own leave balances
 $current_year = date('Y');
-$leave_balances_sql = "SELECT lt.name, lb.balance, lb.used, lt.max_days 
+$leave_balances_sql = "SELECT lt.name, 
+                             (lb.total_days - lb.used_days) as balance, 
+                             lb.used_days as used, 
+                             lt.max_days,
+                             lb.total_days
                       FROM leave_balances lb 
                       JOIN leave_types lt ON lb.leave_type_id = lt.id 
                       WHERE lb.user_id = :user_id AND lb.year = :year";

@@ -94,7 +94,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
                     // Update leave balance
                     $current_year = date('Y');
                     $update_balance_sql = "UPDATE leave_balances 
-                                         SET balance = balance - :days, used = used + :days 
+                                         SET total_days = total_days - :days, used_days = used_days + :days 
                                          WHERE user_id = :user_id AND leave_type_id = :leave_type_id AND year = :year";
                     $update_balance_stmt = $conn->prepare($update_balance_sql);
                     $update_balance_stmt->bindParam(':days', $application['days'], PDO::PARAM_STR);

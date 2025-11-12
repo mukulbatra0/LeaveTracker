@@ -20,7 +20,7 @@ $application_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if (!$application_id) {
     $_SESSION['alert'] = "Invalid application ID.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: ../index.php');
+    header('Location: leave_history.php');
     exit;
 }
 
@@ -28,43 +28,64 @@ if (!$application_id) {
 $sql = "SELECT la.*, 
                lt.name as leave_type_name, lt.color as leave_type_color,
                u.first_name, u.last_name, u.employee_id, u.email, u.phone,
-               d.name as department_name,
-               u2.first_name as created_by_first_name, u2.last_name as created_by_last_name
+               d.name as department_name
         FROM leave_applications la
         JOIN leave_types lt ON la.leave_type_id = lt.id
         JOIN users u ON la.user_id = u.id
-        JOIN departments d ON u.department_id = d.id
-        LEFT JOIN users u2 ON la.created_by = u2.id
+        LEFT JOIN departments d ON u.department_id = d.id
         WHERE la.id = :application_id";
 
 // Add permission check based on role
 if ($role == 'staff') {
     $sql .= " AND la.user_id = :user_id";
-} elseif ($role == 'department_head') {
+} elseif ($role == 'head_of_department') {
     $sql .= " AND u.department_id = (SELECT department_id FROM users WHERE id = :user_id)";
 }
 
 $stmt = $conn->prepare($sql);
 $stmt->bindParam(':application_id', $application_id, PDO::PARAM_INT);
-if ($role == 'staff' || $role == 'department_head') {
+if ($role == 'staff' || $role == 'head_of_department') {
     $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
 }
-$stmt->execute();
-$application = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$application) {
-    $_SESSION['alert'] = "Application not found or you don't have permission to view it.";
+try {
+    $stmt->execute();
+    $application = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$application) {
+        // First check if the application exists at all
+        $check_sql = "SELECT la.user_id, u.first_name, u.last_name FROM leave_applications la JOIN users u ON la.user_id = u.id WHERE la.id = :application_id";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bindParam(':application_id', $application_id, PDO::PARAM_INT);
+        $check_stmt->execute();
+        $check_result = $check_stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$check_result) {
+            $_SESSION['alert'] = "Leave application #$application_id does not exist.";
+        } elseif ($role == 'staff' && $check_result['user_id'] != $user_id) {
+            $_SESSION['alert'] = "You can only view your own leave applications. This application belongs to " . $check_result['first_name'] . " " . $check_result['last_name'] . ".";
+        } else {
+            $_SESSION['alert'] = "Application not found or you don't have permission to view it. Debug: Role=$role, UserID=$user_id, AppID=$application_id, OwnerID=" . ($check_result['user_id'] ?? 'N/A');
+        }
+        
+        $_SESSION['alert_type'] = "danger";
+        header('Location: leave_history.php');
+        exit;
+    }
+} catch (PDOException $e) {
+    error_log("Database error in view_application.php: " . $e->getMessage());
+    $_SESSION['alert'] = "Database error occurred: " . $e->getMessage();
     $_SESSION['alert_type'] = "danger";
-    header('Location: ../index.php');
+    header('Location: leave_history.php');
     exit;
 }
 
 // Get approval history
-$approval_sql = "SELECT lap.*, u.first_name, u.last_name, u.role as approver_role
+$approval_sql = "SELECT lap.*, u.first_name, u.last_name, lap.approver_level
                 FROM leave_approvals lap
                 JOIN users u ON lap.approver_id = u.id
                 WHERE lap.leave_application_id = :application_id
-                ORDER BY lap.approver_level ASC, lap.created_at ASC";
+                ORDER BY lap.created_at ASC";
 $approval_stmt = $conn->prepare($approval_sql);
 $approval_stmt->bindParam(':application_id', $application_id, PDO::PARAM_INT);
 $approval_stmt->execute();
@@ -178,22 +199,16 @@ include_once '../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <strong>Applied By:</strong><br>
-                            <?php 
-                            if ($application['created_by_first_name']) {
-                                echo htmlspecialchars($application['created_by_first_name'] . ' ' . $application['created_by_last_name']);
-                            } else {
-                                echo htmlspecialchars($application['first_name'] . ' ' . $application['last_name']);
-                            }
-                            ?>
+                            <?php echo htmlspecialchars($application['first_name'] . ' ' . $application['last_name']); ?>
                         </div>
                     </div>
 
-                    <?php if ($application['admin_comments']): ?>
+                    <?php if (!empty($application['attachment'])): ?>
                     <div class="row">
                         <div class="col-12">
-                            <strong>Admin Comments:</strong><br>
-                            <div class="border rounded p-2 bg-warning bg-opacity-10">
-                                <?php echo nl2br(htmlspecialchars($application['admin_comments'])); ?>
+                            <strong>Attachment:</strong><br>
+                            <div class="border rounded p-2 bg-light">
+                                <i class="fas fa-paperclip"></i> <?php echo htmlspecialchars($application['attachment']); ?>
                             </div>
                         </div>
                     </div>
@@ -226,7 +241,7 @@ include_once '../includes/header.php';
                                         <div class="timeline-content">
                                             <h6 class="mb-1">
                                                 <?php echo htmlspecialchars($approval['first_name'] . ' ' . $approval['last_name']); ?>
-                                                <small class="text-muted">(<?php echo ucfirst($approval['approver_role']); ?>)</small>
+                                                <small class="text-muted">(<?php echo ucwords(str_replace('_', ' ', $approval['approver_level'])); ?>)</small>
                                             </h6>
                                             <p class="mb-1">
                                                 <span class="badge bg-<?php echo $approval['status'] == 'approved' ? 'success' : ($approval['status'] == 'rejected' ? 'danger' : 'warning'); ?>">
@@ -238,9 +253,9 @@ include_once '../includes/header.php';
                                                     "<?php echo htmlspecialchars($approval['comments']); ?>"
                                                 </p>
                                             <?php endif; ?>
-                                            <?php if ($approval['approved_at']): ?>
+                                            <?php if ($approval['status'] != 'pending'): ?>
                                                 <small class="text-muted">
-                                                    <?php echo date('M d, Y H:i', strtotime($approval['approved_at'])); ?>
+                                                    <?php echo date('M d, Y H:i', strtotime($approval['updated_at'])); ?>
                                                 </small>
                                             <?php endif; ?>
                                         </div>

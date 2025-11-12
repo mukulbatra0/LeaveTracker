@@ -92,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     // Check leave balance
     $current_year = date('Y');
-    $balance_sql = "SELECT balance FROM leave_balances 
+    $balance_sql = "SELECT (total_days - used_days) as balance FROM leave_balances 
                    WHERE user_id = :user_id AND leave_type_id = :leave_type_id AND year = :year";
     $balance_stmt = $conn->prepare($balance_sql);
     $balance_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
@@ -116,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $leave_type_stmt->execute();
         $max_days = $leave_type_stmt->fetch()['max_days'];
         
-        $insert_balance_sql = "INSERT INTO leave_balances (user_id, leave_type_id, balance, used, year) 
+        $insert_balance_sql = "INSERT INTO leave_balances (user_id, leave_type_id, total_days, used_days, year) 
                               VALUES (:user_id, :leave_type_id, :balance, 0, :year)";
         $insert_balance_stmt = $conn->prepare($insert_balance_sql);
         $insert_balance_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);

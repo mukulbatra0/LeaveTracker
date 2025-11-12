@@ -223,7 +223,7 @@ include_once '../includes/header.php';
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#leaveDetailsModal<?php echo $leave['id']; ?>">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDetails(<?php echo $leave['id']; ?>)">
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                             
@@ -236,135 +236,7 @@ include_once '../includes/header.php';
                                                 </form>
                                             <?php endif; ?>
                                         </div>
-                                        
-                                        <!-- Leave Details Modal -->
-                                        <div class="modal fade" id="leaveDetailsModal<?php echo $leave['id']; ?>" tabindex="-1" aria-labelledby="leaveDetailsModalLabel<?php echo $leave['id']; ?>" aria-hidden="true">
-                                            <div class="modal-dialog modal-lg">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title" id="leaveDetailsModalLabel<?php echo $leave['id']; ?>">
-                                                            Leave Application Details
-                                                        </h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <h6>Leave Information</h6>
-                                                                <table class="table table-sm">
-                                                                    <tr>
-                                                                        <th>Leave Type:</th>
-                                                                        <td>
-                                                                            <span class="badge bg-secondary">
-                                                                                <?php echo htmlspecialchars($leave['leave_type_name']); ?>
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>Start Date:</th>
-                                                                        <td><?php echo date('F d, Y', strtotime($leave['start_date'])); ?></td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>End Date:</th>
-                                                                        <td><?php echo date('F d, Y', strtotime($leave['end_date'])); ?></td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>Days:</th>
-                                                                        <td><?php echo $leave['days']; ?></td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>Status:</th>
-                                                                        <td>
-                                                                            <span class="badge <?php echo $status_class; ?>">
-                                                                                <?php echo ucfirst($leave['status']); ?>
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>Applied On:</th>
-                                                                        <td><?php echo date('F d, Y H:i', strtotime($leave['created_at'])); ?></td>
-                                                                    </tr>
-                                                                </table>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <h6>Approval Information</h6>
-                                                                <?php if ($leave['status'] == 'pending' && $current_approver): ?>
-                                                                    <div class="alert alert-info">
-                                                                        <small>
-                                                                            <i class="fas fa-info-circle me-1"></i>
-                                                                            Currently awaiting approval from: 
-                                                                            <strong><?php echo htmlspecialchars($current_approver['first_name'] . ' ' . $current_approver['last_name']); ?></strong>
-                                                                            (<?php echo ucwords(str_replace('_', ' ', $current_approver['approver_level'])); ?>)
-                                                                        </small>
-                                                                    </div>
-                                                                <?php endif; ?>
-                                                                
-                                                                <?php if ($leave['status'] == 'rejected'): ?>
-                                                                    <div class="alert alert-danger">
-                                                                        <small>
-                                                                            <i class="fas fa-times-circle me-1"></i>
-                                                                            Your leave application was rejected.
-                                                                            <?php if (!empty($leave['rejection_reason'])): ?>
-                                                                                <br>Reason: <?php echo htmlspecialchars($leave['rejection_reason']); ?>
-                                                                            <?php endif; ?>
-                                                                        </small>
-                                                                    </div>
-                                                                <?php endif; ?>
-                                                                
-                                                                <?php if ($leave['status'] == 'approved'): ?>
-                                                                    <div class="alert alert-success">
-                                                                        <small>
-                                                                            <i class="fas fa-check-circle me-1"></i>
-                                                                            Your leave application has been fully approved.
-                                                                        </small>
-                                                                    </div>
-                                                                <?php endif; ?>
-                                                                
-                                                                <?php if ($leave['status'] == 'cancelled'): ?>
-                                                                    <div class="alert alert-secondary">
-                                                                        <small>
-                                                                            <i class="fas fa-ban me-1"></i>
-                                                                            This leave application was cancelled.
-                                                                        </small>
-                                                                    </div>
-                                                                <?php endif; ?>
-                                                                
-                                                                <h6 class="mt-3">Reason for Leave</h6>
-                                                                <p><?php echo nl2br(htmlspecialchars($leave['reason'])); ?></p>
-                                                                
-                                                                <?php if ($leave['attachment']): ?>
-                                                                    <h6 class="mt-3">Attachment</h6>
-                                                                    <div class="document-preview">
-                                                                        <?php 
-                                                                            $file_ext = pathinfo($leave['attachment'], PATHINFO_EXTENSION);
-                                                                            $file_path = '/ELMS/uploads/' . $leave['attachment'];
-                                                                            
-                                                                            if (in_array(strtolower($file_ext), ['jpg', 'jpeg', 'png', 'gif'])): 
-                                                                        ?>
-                                                                            <img src="<?php echo $file_path; ?>" class="img-fluid img-thumbnail" alt="Attachment">
-                                                                        <?php elseif (strtolower($file_ext) == 'pdf'): ?>
-                                                                            <div class="pdf-preview">
-                                                                                <i class="fas fa-file-pdf fa-3x text-danger"></i>
-                                                                            </div>
-                                                                        <?php else: ?>
-                                                                            <div class="doc-preview">
-                                                                                <i class="fas fa-file-alt fa-3x text-primary"></i>
-                                                                            </div>
-                                                                        <?php endif; ?>
-                                                                        <a href="<?php echo $file_path; ?>" class="btn btn-sm btn-outline-primary mt-2" target="_blank">
-                                                                            <i class="fas fa-download me-1"></i> Download Attachment
-                                                                        </a>
-                                                                    </div>
-                                                                <?php endif; ?>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -375,6 +247,13 @@ include_once '../includes/header.php';
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+function viewDetails(applicationId) {
+    // Implementation for viewing details
+    window.location.href = 'view_application.php?id=' + applicationId;
+}
+</script>
 
 <?php
 // Include footer

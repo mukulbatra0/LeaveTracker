@@ -3,7 +3,7 @@
 
 function getLeaveBalanceWidget($conn, $user_id) {
     $current_year = date('Y');
-    $sql = "SELECT lt.name, lb.balance, lb.used, lt.max_days 
+    $sql = "SELECT lt.name, (lb.total_days - lb.used_days) as balance, lb.used_days as used, lt.max_days 
             FROM leave_balances lb 
             JOIN leave_types lt ON lb.leave_type_id = lt.id 
             WHERE lb.user_id = :user_id AND lb.year = :year

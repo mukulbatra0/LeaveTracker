@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     
                     $balance = isset($default_balance['value']) ? $default_balance['value'] : 0;
                     
-                    $balance_sql = "INSERT INTO leave_balances (user_id, leave_type_id, balance, used, created_at) 
+                    $balance_sql = "INSERT INTO leave_balances (user_id, leave_type_id, total_days, used_days, created_at) 
                                    VALUES (:user_id, :leave_type_id, :balance, 0, NOW())";
                     $balance_stmt = $conn->prepare($balance_sql);
                     $balance_stmt->bindParam(':user_id', $new_user_id, PDO::PARAM_INT);

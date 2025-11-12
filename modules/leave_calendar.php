@@ -43,7 +43,7 @@ $params = [':start_date' => $start_date, ':end_date' => $end_date];
 if ($role == 'staff') {
     $sql .= " AND la.user_id = :user_id";
     $params[':user_id'] = $user_id;
-} elseif ($role == 'department_head') {
+} elseif ($role == 'head_of_department') {
     $sql .= " AND u.department_id = (SELECT department_id FROM users WHERE id = :user_id)";
     $params[':user_id'] = $user_id;
 }

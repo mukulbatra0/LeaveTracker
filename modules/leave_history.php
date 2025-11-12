@@ -77,14 +77,15 @@ try {
         // Staff can only see their own applications
         $where_clauses[] = "la.user_id = ?";
         $params[] = $user_id;
-    } elseif ($role == 'department_head') {
+    } elseif ($role == 'head_of_department') {
         // Department heads can see applications from their department
         $where_clauses[] = "u.department_id = (SELECT department_id FROM users WHERE id = ?)";
         $params[] = $user_id;
     } elseif ($role == 'dean') {
-        // Deans can see applications from their faculty
-        $where_clauses[] = "d.faculty_id = (SELECT faculty_id FROM departments WHERE id = (SELECT department_id FROM users WHERE id = ?))";
-        $params[] = $user_id;
+        // Deans can see applications from all departments (simplified for now)
+        // Note: faculty_id column doesn't exist in current schema
+        // $where_clauses[] = "d.faculty_id = (SELECT faculty_id FROM departments WHERE id = (SELECT department_id FROM users WHERE id = ?))";
+        // $params[] = $user_id;
     }
     // Principal and HR admin can see all applications
     
@@ -132,21 +133,7 @@ try {
     $stmt->execute();
     $leave_applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Get approval details for each application
-    foreach ($leave_applications as &$application) {
-        $stmt = $conn->prepare("SELECT la.*, u.first_name, u.last_name, u.employee_id 
-                              FROM leave_approvals la 
-                              JOIN users u ON la.approver_id = u.id 
-                              WHERE la.leave_application_id = ? 
-                              ORDER BY la.created_at ASC");
-        $stmt->execute([$application['id']]);
-        $application['approvals'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Get documents attached to this application
-        $stmt = $conn->prepare("SELECT * FROM documents WHERE leave_application_id = ?");
-        $stmt->execute([$application['id']]);
-        $application['documents'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    // Note: Approval and document details are loaded on the view_application.php page
 } catch (PDOException $e) {
     $errors[] = "Error retrieving leave applications: " . $e->getMessage();
     $leave_applications = [];
@@ -357,7 +344,7 @@ include '../includes/header.php';
                                         </span>
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#detailsModal<?php echo $application['id']; ?>">
+                                        <button type="button" class="btn btn-sm btn-info" onclick="viewDetails(<?php echo $application['id']; ?>)">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                         <?php if ($application['status'] == 'pending' && ($application['user_id'] == $user_id || $role == 'hr_admin')): ?>
@@ -403,176 +390,13 @@ include '../includes/header.php';
     </div>
 </div>
 
-<!-- Leave Application Details Modals -->
-<?php foreach ($leave_applications as $application): ?>
-    <div class="modal fade" id="detailsModal<?php echo $application['id']; ?>" tabindex="-1" aria-labelledby="detailsModalLabel<?php echo $application['id']; ?>" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="detailsModalLabel<?php echo $application['id']; ?>">
-                        Leave Application #<?php echo $application['id']; ?>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Employee Information</h6>
-                            <table class="table table-sm">
-                                <tr>
-                                    <th>Name</th>
-                                    <td><?php echo htmlspecialchars($application['first_name'] . ' ' . $application['last_name']); ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Employee ID</th>
-                                    <td><?php echo htmlspecialchars($application['employee_id']); ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Department</th>
-                                    <td><?php echo htmlspecialchars($application['department_name']); ?></td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Leave Details</h6>
-                            <table class="table table-sm">
-                                <tr>
-                                    <th>Leave Type</th>
-                                    <td><?php echo htmlspecialchars($application['leave_type_name']); ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Period</th>
-                                    <td>
-                                        <?php echo date('M d, Y', strtotime($application['start_date'])); ?> - 
-                                        <?php echo date('M d, Y', strtotime($application['end_date'])); ?>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Working Days</th>
-                                    <td><?php echo $application['working_days']; ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Status</th>
-                                    <td>
-                                        <span class="badge <?php echo $status_class; ?>">
-                                            <?php echo ucfirst($application['status']); ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Applied On</th>
-                                    <td><?php echo date('M d, Y H:i', strtotime($application['created_at'])); ?></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <h6>Reason for Leave</h6>
-                            <p><?php echo nl2br(htmlspecialchars($application['reason'])); ?></p>
-                        </div>
-                    </div>
-                    
-                    <?php if (!empty($application['contact_during_leave'])): ?>
-                        <div class="row mt-3">
-                            <div class="col-md-12">
-                                <h6>Contact During Leave</h6>
-                                <p><?php echo htmlspecialchars($application['contact_during_leave']); ?></p>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <?php if (!empty($application['documents'])): ?>
-                        <div class="row mt-3">
-                            <div class="col-md-12">
-                                <h6>Supporting Documents</h6>
-                                <ul class="list-group">
-                                    <?php foreach ($application['documents'] as $doc): ?>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            <?php 
-                                            $icon_class = 'fa-file';
-                                            switch ($doc['file_type']) {
-                                                case 'pdf': $icon_class = 'fa-file-pdf'; break;
-                                                case 'doc': case 'docx': $icon_class = 'fa-file-word'; break;
-                                                case 'jpg': case 'jpeg': case 'png': $icon_class = 'fa-file-image'; break;
-                                            }
-                                            ?>
-                                            <span>
-                                                <i class="fas <?php echo $icon_class; ?> me-1"></i>
-                                                <?php echo htmlspecialchars($doc['file_name']); ?>
-                                            </span>
-                                            <a href="/modules/documents.php?download=<?php echo $doc['id']; ?>" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-download"></i>
-                                            </a>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <?php if (!empty($application['approvals'])): ?>
-                        <div class="row mt-3">
-                            <div class="col-md-12">
-                                <h6>Approval History</h6>
-                                <table class="table table-sm table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Approver</th>
-                                            <th>Role</th>
-                                            <th>Status</th>
-                                            <th>Date</th>
-                                            <th>Comments</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($application['approvals'] as $approval): ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($approval['first_name'] . ' ' . $approval['last_name']); ?></td>
-                                                <td><?php echo ucwords(str_replace('_', ' ', $approval['approver_role'])); ?></td>
-                                                <td>
-                                                    <?php 
-                                                    $approval_status_class = '';
-                                                    switch ($approval['status']) {
-                                                        case 'pending': $approval_status_class = 'bg-warning'; break;
-                                                        case 'approved': $approval_status_class = 'bg-success'; break;
-                                                        case 'rejected': $approval_status_class = 'bg-danger'; break;
-                                                    }
-                                                    ?>
-                                                    <span class="badge <?php echo $approval_status_class; ?>">
-                                                        <?php echo ucfirst($approval['status']); ?>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <?php 
-                                                    if ($approval['status'] == 'pending') {
-                                                        echo 'Awaiting response';
-                                                    } else {
-                                                        echo date('M d, Y H:i', strtotime($approval['updated_at']));
-                                                    }
-                                                    ?>
-                                                </td>
-                                                <td><?php echo !empty($approval['comments']) ? nl2br(htmlspecialchars($approval['comments'])) : '-'; ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <?php if ($application['status'] == 'pending' && ($application['user_id'] == $user_id || $role == 'hr_admin')): ?>
-                        <a href="?cancel=<?php echo $application['id']; ?>" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this leave application?');">
-                            Cancel Application
-                        </a>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-<?php endforeach; ?>
+
+
+<script>
+function viewDetails(applicationId) {
+    // Implementation for viewing details
+    window.location.href = 'view_application.php?id=' + applicationId;
+}
+</script>
 
 <?php include '../includes/footer.php'; ?>
