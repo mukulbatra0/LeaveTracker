@@ -14,11 +14,12 @@ require_once '../config/db.php';
 $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'];
 
-// Check if user is an HR admin
-if ($role != 'hr_admin') {
+// Check if user has permission to access departments
+$allowed_roles = ['hr_admin', 'director', 'admin'];
+if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 

@@ -15,7 +15,7 @@ $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'];
 
 // Check if user has permission to access reports
-$allowed_roles = ['admin', 'department_head', 'dean', 'principal', 'hr_admin'];
+$allowed_roles = ['admin', 'head_of_department', 'director', 'dean', 'principal', 'hr_admin'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";

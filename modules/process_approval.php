@@ -121,9 +121,24 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
             } elseif ($director_processed_count > 0) {
                 $permission_error = "This application has already been processed by a Director.";
             }
-        } elseif ($role == 'admin') {
-            // Admin can approve any application (for emergency cases)
-            $can_approve = true;
+        } elseif ($role == 'admin' || $role == 'hr_admin') {
+            // Admin/HR Admin can approve any application, including director applications
+            // Check if this is a director application that needs admin approval
+            $admin_approval_sql = "SELECT COUNT(*) as count FROM leave_approvals 
+                                 WHERE leave_application_id = :app_id 
+                                 AND approver_level = 'admin'
+                                 AND status = 'pending'";
+            $admin_approval_stmt = $conn->prepare($admin_approval_sql);
+            $admin_approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+            $admin_approval_stmt->execute();
+            $admin_pending_count = $admin_approval_stmt->fetch()['count'];
+            
+            if ($admin_pending_count > 0) {
+                $can_approve = true;
+            } else {
+                // Check if this is an emergency override situation or regular admin approval
+                $permission_error = "This application does not require admin approval or has already been processed.";
+            }
         }
         
         if ($can_approve) {
@@ -152,18 +167,47 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
             
             try {
                 if ($action == 'approve') {
-                    // Create approval record
-                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, status, comments) 
-                                   VALUES (:app_id, :approver_id, :approver_level, 'approved', :comments)";
-                    $approval_stmt = $conn->prepare($approval_sql);
-                    $approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
-                    $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
-                    $approval_stmt->bindParam(':approver_level', $role, PDO::PARAM_STR);
-                    $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
-                    $approval_stmt->execute();
+                    // Determine the correct approver level
+                    $approver_level = $role;
+                    if ($role == 'hr_admin') {
+                        $approver_level = 'admin'; // HR Admin acts as admin for approvals
+                    }
                     
-                    // Check if this is the final approval (director approval or admin override)
-                    if ($role == 'director' || $role == 'admin') {
+                    // Check if there's an existing pending approval record to update
+                    $existing_approval_sql = "SELECT id FROM leave_approvals 
+                                            WHERE leave_application_id = :app_id 
+                                            AND approver_level = :approver_level 
+                                            AND status = 'pending'";
+                    $existing_approval_stmt = $conn->prepare($existing_approval_sql);
+                    $existing_approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                    $existing_approval_stmt->bindParam(':approver_level', $approver_level, PDO::PARAM_STR);
+                    $existing_approval_stmt->execute();
+                    $existing_approval = $existing_approval_stmt->fetch();
+                    
+                    if ($existing_approval) {
+                        // Update existing approval record
+                        $approval_sql = "UPDATE leave_approvals 
+                                       SET approver_id = :approver_id, status = 'approved', comments = :comments, updated_at = NOW()
+                                       WHERE id = :approval_id";
+                        $approval_stmt = $conn->prepare($approval_sql);
+                        $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
+                        $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
+                        $approval_stmt->bindParam(':approval_id', $existing_approval['id'], PDO::PARAM_INT);
+                        $approval_stmt->execute();
+                    } else {
+                        // Create new approval record
+                        $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, status, comments) 
+                                       VALUES (:app_id, :approver_id, :approver_level, 'approved', :comments)";
+                        $approval_stmt = $conn->prepare($approval_sql);
+                        $approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                        $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
+                        $approval_stmt->bindParam(':approver_level', $approver_level, PDO::PARAM_STR);
+                        $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
+                        $approval_stmt->execute();
+                    }
+                    
+                    // Check if this is the final approval (director approval, admin approval, or hr_admin approval)
+                    if ($role == 'director' || $role == 'admin' || $role == 'hr_admin') {
                         // Final approval - update application status
                         $update_app_sql = "UPDATE leave_applications SET status = 'approved' WHERE id = :app_id";
                         $update_app_stmt = $conn->prepare($update_app_sql);
@@ -175,10 +219,11 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
                         $days = $application['days'];
                         $app_leave_type_id = $application['leave_type_id'];
                         $update_balance_sql = "UPDATE leave_balances 
-                                             SET total_days = total_days - :days, used_days = used_days + :days 
+                                             SET total_days = total_days - :days_subtract, used_days = used_days + :days_add 
                                              WHERE user_id = :user_id AND leave_type_id = :leave_type_id AND year = :year";
                         $update_balance_stmt = $conn->prepare($update_balance_sql);
-                        $update_balance_stmt->bindParam(':days', $days, PDO::PARAM_STR);
+                        $update_balance_stmt->bindParam(':days_subtract', $days, PDO::PARAM_STR);
+                        $update_balance_stmt->bindParam(':days_add', $days, PDO::PARAM_STR);
                         $update_balance_stmt->bindParam(':user_id', $app_user_id, PDO::PARAM_INT);
                         $update_balance_stmt->bindParam(':leave_type_id', $app_leave_type_id, PDO::PARAM_INT);
                         $update_balance_stmt->bindParam(':year', $current_year, PDO::PARAM_STR);
@@ -256,15 +301,44 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
                     }
                     
                 } elseif ($action == 'reject') {
-                    // Create rejection record
-                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, status, comments) 
-                                   VALUES (:app_id, :approver_id, :approver_level, 'rejected', :comments)";
-                    $approval_stmt = $conn->prepare($approval_sql);
-                    $approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
-                    $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
-                    $approval_stmt->bindParam(':approver_level', $role, PDO::PARAM_STR);
-                    $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
-                    $approval_stmt->execute();
+                    // Determine the correct approver level for rejection
+                    $approver_level = $role;
+                    if ($role == 'hr_admin') {
+                        $approver_level = 'admin'; // HR Admin acts as admin for approvals
+                    }
+                    
+                    // Check if there's an existing pending approval record to update
+                    $existing_approval_sql = "SELECT id FROM leave_approvals 
+                                            WHERE leave_application_id = :app_id 
+                                            AND approver_level = :approver_level 
+                                            AND status = 'pending'";
+                    $existing_approval_stmt = $conn->prepare($existing_approval_sql);
+                    $existing_approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                    $existing_approval_stmt->bindParam(':approver_level', $approver_level, PDO::PARAM_STR);
+                    $existing_approval_stmt->execute();
+                    $existing_approval = $existing_approval_stmt->fetch();
+                    
+                    if ($existing_approval) {
+                        // Update existing approval record
+                        $approval_sql = "UPDATE leave_approvals 
+                                       SET approver_id = :approver_id, status = 'rejected', comments = :comments, updated_at = NOW()
+                                       WHERE id = :approval_id";
+                        $approval_stmt = $conn->prepare($approval_sql);
+                        $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
+                        $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
+                        $approval_stmt->bindParam(':approval_id', $existing_approval['id'], PDO::PARAM_INT);
+                        $approval_stmt->execute();
+                    } else {
+                        // Create new rejection record
+                        $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, status, comments) 
+                                       VALUES (:app_id, :approver_id, :approver_level, 'rejected', :comments)";
+                        $approval_stmt = $conn->prepare($approval_sql);
+                        $approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                        $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
+                        $approval_stmt->bindParam(':approver_level', $approver_level, PDO::PARAM_STR);
+                        $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
+                        $approval_stmt->execute();
+                    }
                     
                     // Update application status to rejected
                     $update_app_sql = "UPDATE leave_applications SET status = 'rejected' WHERE id = :app_id";

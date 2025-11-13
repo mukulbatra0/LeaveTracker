@@ -188,10 +188,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         // Update leave balance
                         $current_year = date('Y');
                         $update_balance_sql = "UPDATE leave_balances 
-                                             SET total_days = total_days - :days, used_days = used_days + :days, updated_at = NOW() 
+                                             SET total_days = total_days - :days_subtract, used_days = used_days + :days_add, updated_at = NOW() 
                                              WHERE user_id = :user_id AND leave_type_id = :leave_type_id AND year = :year";
                         $update_balance_stmt = $conn->prepare($update_balance_sql);
-                        $update_balance_stmt->bindParam(':days', $days, PDO::PARAM_STR);
+                        $update_balance_stmt->bindParam(':days_subtract', $days, PDO::PARAM_STR);
+                        $update_balance_stmt->bindParam(':days_add', $days, PDO::PARAM_STR);
                         $update_balance_stmt->bindParam(':user_id', $applicant_id, PDO::PARAM_INT);
                         $update_balance_stmt->bindParam(':leave_type_id', $leave_type_id, PDO::PARAM_INT);
                         $update_balance_stmt->bindParam(':year', $current_year, PDO::PARAM_STR);

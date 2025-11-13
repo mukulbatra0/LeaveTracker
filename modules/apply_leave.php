@@ -216,55 +216,123 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $leave_application_id = $conn->lastInsertId();
         
-        // Get department head for approval
-        $dept_id = $_SESSION['department_id'];
-        $dept_head_sql = "SELECT head_id FROM departments WHERE id = :dept_id";
-        $dept_head_stmt = $conn->prepare($dept_head_sql);
-        $dept_head_stmt->bindParam(':dept_id', $dept_id, PDO::PARAM_INT);
-        $dept_head_stmt->execute();
-        $dept_head = $dept_head_stmt->fetch();
+        // Determine approval workflow based on applicant's role
+        $applicant_role = $_SESSION['role'];
+        $applicant_user_id = $_SESSION['user_id'];
         
-        if ($dept_head && $dept_head['head_id']) {
-            // Create approval record for department head
-            $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
-                            VALUES (:leave_application_id, :approver_id, 'department_head')";
-            $approval_stmt = $conn->prepare($approval_sql);
-            $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
-            $approval_stmt->bindParam(':approver_id', $dept_head['head_id'], PDO::PARAM_INT);
-            $approval_stmt->execute();
+        if ($applicant_role == 'director') {
+            // Director applications go directly to admin/hr_admin for approval
+            $admin_sql = "SELECT id, email, first_name, last_name FROM users WHERE role IN ('admin', 'hr_admin') AND status = 'active' ORDER BY role = 'admin' DESC LIMIT 1";
+            $admin_stmt = $conn->prepare($admin_sql);
+            $admin_stmt->execute();
             
-            // Create notification for department head
-            $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
-                                VALUES (:user_id, 'Leave Approval Required', 'A new leave application requires your approval.', 'leave_application', :related_id)";
-            $notification_stmt = $conn->prepare($notification_sql);
-            $notification_stmt->bindParam(':user_id', $dept_head['head_id'], PDO::PARAM_INT);
-            $notification_stmt->bindParam(':related_id', $leave_application_id, PDO::PARAM_INT);
-            $notification_stmt->execute();
-            
-            // Send email notification to department head
-            $dept_head_email_sql = "SELECT email, first_name, last_name FROM users WHERE id = :id";
-            $dept_head_email_stmt = $conn->prepare($dept_head_email_sql);
-            $dept_head_email_stmt->bindParam(':id', $dept_head['head_id'], PDO::PARAM_INT);
-            $dept_head_email_stmt->execute();
-            $dept_head_info = $dept_head_email_stmt->fetch();
-            
-            if ($dept_head_info) {
-                $applicant_name = $_SESSION['first_name'] . ' ' . $_SESSION['last_name'];
-                $leave_type_name_sql = "SELECT name FROM leave_types WHERE id = :id";
-                $leave_type_name_stmt = $conn->prepare($leave_type_name_sql);
-                $leave_type_name_stmt->bindParam(':id', $leave_type_id, PDO::PARAM_INT);
-                $leave_type_name_stmt->execute();
-                $leave_type_name = $leave_type_name_stmt->fetchColumn();
+            if ($admin_stmt->rowCount() > 0) {
+                $admin = $admin_stmt->fetch();
                 
-                $emailNotification->sendLeaveApplicationNotification(
-                    $dept_head_info['email'],
-                    $applicant_name,
-                    $leave_type_name,
-                    $start_date,
-                    $end_date,
-                    $leave_application_id
-                );
+                try {
+                    // Create approval record for admin
+                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
+                                    VALUES (:leave_application_id, :approver_id, 'admin')";
+                    $approval_stmt = $conn->prepare($approval_sql);
+                    $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
+                    $approval_stmt->bindParam(':approver_id', $admin['id'], PDO::PARAM_INT);
+                    $approval_stmt->execute();
+                    
+                    // Create notification for admin
+                    $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
+                                        VALUES (:user_id, 'Director Leave Approval Required', 'A Director leave application requires your approval.', 'leave_application', :related_id)";
+                    $notification_stmt = $conn->prepare($notification_sql);
+                    $notification_stmt->bindParam(':user_id', $admin['id'], PDO::PARAM_INT);
+                    $notification_stmt->bindParam(':related_id', $leave_application_id, PDO::PARAM_INT);
+                    $notification_stmt->execute();
+                    
+                    $approver_info = $admin;
+                    $approver_type = 'Admin';
+                    
+                } catch (PDOException $e) {
+                    error_log("Error creating director approval record: " . $e->getMessage());
+                    $_SESSION['alert'] = "Leave application created but approval workflow setup failed. Please contact administrator.";
+                    $_SESSION['alert_type'] = "warning";
+                }
+            } else {
+                error_log("No admin users found for director leave approval");
+                $_SESSION['alert'] = "Leave application created but no admin users available for approval. Please contact administrator.";
+                $_SESSION['alert_type'] = "warning";
             }
+        } elseif ($applicant_role == 'head_of_department') {
+            // Head of Department applications go directly to Director for approval
+            $director_sql = "SELECT id, email, first_name, last_name FROM users WHERE role = 'director' AND status = 'active' LIMIT 1";
+            $director_stmt = $conn->prepare($director_sql);
+            $director_stmt->execute();
+            
+            if ($director_stmt->rowCount() > 0) {
+                $director = $director_stmt->fetch();
+                
+                // Create approval record for director
+                $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
+                                VALUES (:leave_application_id, :approver_id, 'director')";
+                $approval_stmt = $conn->prepare($approval_sql);
+                $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
+                $approval_stmt->bindParam(':approver_id', $director['id'], PDO::PARAM_INT);
+                $approval_stmt->execute();
+                
+                // Create notification for director
+                $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
+                                    VALUES (:user_id, 'HOD Leave Approval Required', 'A Head of Department leave application requires your approval.', 'leave_application', :related_id)";
+                $notification_stmt = $conn->prepare($notification_sql);
+                $notification_stmt->bindParam(':user_id', $director['id'], PDO::PARAM_INT);
+                $notification_stmt->bindParam(':related_id', $leave_application_id, PDO::PARAM_INT);
+                $notification_stmt->execute();
+                
+                $approver_info = $director;
+                $approver_type = 'Director';
+            }
+        } else {
+            // Regular staff - normal workflow (HOD then Director)
+            $dept_id = $_SESSION['department_id'];
+            $dept_head_sql = "SELECT head_id FROM departments WHERE id = :dept_id";
+            $dept_head_stmt = $conn->prepare($dept_head_sql);
+            $dept_head_stmt->bindParam(':dept_id', $dept_id, PDO::PARAM_INT);
+            $dept_head_stmt->execute();
+            $dept_head = $dept_head_stmt->fetch();
+            
+            if ($dept_head && $dept_head['head_id'] && $dept_head['head_id'] != $applicant_user_id) {
+                // Create approval record for department head
+                $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
+                                VALUES (:leave_application_id, :approver_id, 'head_of_department')";
+                $approval_stmt = $conn->prepare($approval_sql);
+                $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
+                $approval_stmt->bindParam(':approver_id', $dept_head['head_id'], PDO::PARAM_INT);
+                $approval_stmt->execute();
+                
+                // Get department head info for notification
+                $dept_head_email_sql = "SELECT email, first_name, last_name FROM users WHERE id = :id";
+                $dept_head_email_stmt = $conn->prepare($dept_head_email_sql);
+                $dept_head_email_stmt->bindParam(':id', $dept_head['head_id'], PDO::PARAM_INT);
+                $dept_head_email_stmt->execute();
+                $approver_info = $dept_head_email_stmt->fetch();
+                $approver_type = 'Head of Department';
+            }
+        }
+        
+        // Send notifications and emails if approver info is available
+        if (isset($approver_info) && $approver_info) {
+            // Send email notification to approver
+            $applicant_name = $_SESSION['first_name'] . ' ' . $_SESSION['last_name'];
+            $leave_type_name_sql = "SELECT name FROM leave_types WHERE id = :id";
+            $leave_type_name_stmt = $conn->prepare($leave_type_name_sql);
+            $leave_type_name_stmt->bindParam(':id', $leave_type_id, PDO::PARAM_INT);
+            $leave_type_name_stmt->execute();
+            $leave_type_name = $leave_type_name_stmt->fetchColumn();
+            
+            $emailNotification->sendLeaveApplicationNotification(
+                $approver_info['email'],
+                $applicant_name,
+                $leave_type_name,
+                $start_date,
+                $end_date,
+                $leave_application_id
+            );
         }
         
         // Log the action

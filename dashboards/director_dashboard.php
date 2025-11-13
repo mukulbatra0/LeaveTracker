@@ -261,15 +261,16 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                             <i class="fas fa-plus me-1"></i>Apply for Leave
                         </a>
                         <a href="./modules/reports.php" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-building me-1"></i>Institution Overview
+                            <i class="fas fa-building me-1"></i>Institution Reports
                         </a>
                         <a href="./modules/departments.php" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-sitemap me-1"></i>All Departments
                         </a>
-                        <a href="./modules/reports.php" class="btn btn-outline-success btn-sm">
-                            <i class="fas fa-chart-line me-1"></i>Institution Reports
+                        <a href="./modules/leave_history.php" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-history me-1"></i>All Applications
                         </a>
-                        <a href="./admin/leave_types.php" class="btn btn-outline-secondary btn-sm">
+                        <a href="
+                        ./admin/leave_types.php" class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-file-contract me-1"></i>Leave Policies
                         </a>
                     </div>

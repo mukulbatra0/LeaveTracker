@@ -103,58 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // Password change
-    if (isset($_POST['change_password'])) {
-        $current_password = $_POST['current_password'];
-        $new_password = $_POST['new_password'];
-        $confirm_password = $_POST['confirm_password'];
         
-        // Validate inputs
-        if (empty($current_password)) {
-            $errors[] = "Current password is required.";
-        }
-        
-        if (empty($new_password)) {
-            $errors[] = "New password is required.";
-        } elseif (strlen($new_password) < 8) {
-            $errors[] = "New password must be at least 8 characters long.";
-        }
-        
-        if ($new_password !== $confirm_password) {
-            $errors[] = "New passwords do not match.";
-        }
-        
-        if (empty($errors)) {
-            // Verify current password
-            if (!password_verify($current_password, $user['password'])) {
-                $errors[] = "Current password is incorrect.";
-            } else {
-                try {
-                    // Hash the new password
-                    $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-                    
-                    // Update the password
-                    $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
-                    $stmt->execute([$hashed_password, $user_id]);
-                    
-                    // Log the action (with error handling)
-                    try {
-                        $action = "Changed password";
-                        $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address) VALUES (?, ?, ?, ?, ?)");
-                        $stmt->execute([$user_id, $action, 'users', $user_id, $_SERVER['REMOTE_ADDR']]);
-                    } catch (PDOException $e) {
-                        // Audit log table might not exist, continue without logging
-                    }
-                    
-                    $_SESSION['alert'] = "Password changed successfully.";
-                    $_SESSION['alert_type'] = "success";
-                    $success = true;
-                } catch (PDOException $e) {
-                    $errors[] = "Database error: " . $e->getMessage();
-                }
-            }
-        }
-    }
     
     // Profile picture upload
     if (isset($_POST['upload_picture'])) {
@@ -452,33 +401,6 @@ include '../includes/header.php';
                     </form>
                 </div>
             </div>
-            
-            <!-- Change Password -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-key me-1"></i>
-                    Change Password
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        <div class="mb-3">
-                            <label for="current_password" class="form-label">Current Password</label>
-                            <input type="password" class="form-control" id="current_password" name="current_password" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="new_password" class="form-label">New Password</label>
-                            <input type="password" class="form-control" id="new_password" name="new_password" required>
-                            <div class="form-text">Password must be at least 8 characters long</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="confirm_password" class="form-label">Confirm New Password</label>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                        </div>
-                        <button type="submit" name="change_password" class="btn btn-primary">Change Password</button>
-                    </form>
-                </div>
-            </div>
-            
             <!-- Leave Balances -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -547,22 +469,7 @@ include '../includes/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Password confirmation validation
-    const newPassword = document.getElementById('new_password');
-    const confirmPassword = document.getElementById('confirm_password');
-    
-    function validatePasswords() {
-        if (newPassword.value !== confirmPassword.value) {
-            confirmPassword.setCustomValidity('Passwords do not match');
-        } else {
-            confirmPassword.setCustomValidity('');
-        }
-    }
-    
-    if (newPassword && confirmPassword) {
-        newPassword.addEventListener('input', validatePasswords);
-        confirmPassword.addEventListener('input', validatePasswords);
-    }
+
     
     // File upload preview
     const profilePictureInput = document.getElementById('profile_picture');

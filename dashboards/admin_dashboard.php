@@ -15,10 +15,34 @@ $stats_sql = "SELECT
     (SELECT COUNT(*) FROM users WHERE status = 'active') as total_users,
     (SELECT COUNT(*) FROM leave_applications WHERE status = 'pending') as pending_applications,
     (SELECT COUNT(*) FROM leave_applications WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())) as monthly_applications,
-    (SELECT COUNT(*) FROM departments) as total_departments";
+    (SELECT COUNT(*) FROM departments) as total_departments,
+    (SELECT COUNT(*) FROM leave_applications la 
+     JOIN users u ON la.user_id = u.id 
+     JOIN leave_approvals lap ON la.id = lap.leave_application_id
+     WHERE la.status = 'pending' AND u.role = 'director' 
+     AND lap.approver_level = 'admin' AND lap.status = 'pending') as director_approvals_pending";
 $stats_stmt = $conn->prepare($stats_sql);
 $stats_stmt->execute();
 $stats = $stats_stmt->fetch();
+
+// Get director leave applications pending admin approval (show all pending director applications for any admin)
+$director_approvals_sql = "SELECT la.id, u.first_name, u.last_name, u.employee_id, lt.name as leave_type, 
+                          la.start_date, la.end_date, la.days, la.reason, la.created_at, d.name as department,
+                          lap.approver_id, approver.first_name as assigned_admin_name
+                          FROM leave_applications la 
+                          JOIN users u ON la.user_id = u.id 
+                          JOIN leave_types lt ON la.leave_type_id = lt.id 
+                          JOIN departments d ON u.department_id = d.id
+                          JOIN leave_approvals lap ON la.id = lap.leave_application_id
+                          LEFT JOIN users approver ON lap.approver_id = approver.id
+                          WHERE la.status = 'pending'
+                          AND u.role = 'director'
+                          AND lap.approver_level = 'admin'
+                          AND lap.status = 'pending'
+                          ORDER BY la.created_at ASC";
+$director_approvals_stmt = $conn->prepare($director_approvals_sql);
+$director_approvals_stmt->execute();
+$director_approvals = $director_approvals_stmt->fetchAll();
 
 // Get recent leave applications for admin overview
 $recent_applications_sql = "SELECT la.id, u.first_name, u.last_name, u.employee_id, lt.name as leave_type, 
@@ -66,7 +90,7 @@ $dept_stats = $dept_stats_stmt->fetchAll();
     
     <!-- Quick Stats Row -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-lg-3 col-md-6 mb-3">
             <div class="card bg-primary text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
@@ -79,7 +103,7 @@ $dept_stats = $dept_stats_stmt->fetchAll();
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-lg-3 col-md-6 mb-3">
             <div class="card bg-warning text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
@@ -92,7 +116,20 @@ $dept_stats = $dept_stats_stmt->fetchAll();
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4><?php echo $stats['director_approvals_pending']; ?></h4>
+                            <p class="mb-0">Director Approvals</p>
+                        </div>
+                        <i class="fas fa-crown fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
             <div class="card bg-success text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
@@ -105,7 +142,11 @@ $dept_stats = $dept_stats_stmt->fetchAll();
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+    </div>
+    
+    <!-- Second Row of Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
             <div class="card bg-info text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
@@ -118,7 +159,94 @@ $dept_stats = $dept_stats_stmt->fetchAll();
                 </div>
             </div>
         </div>
+        <!-- Add more stats cards here if needed -->
     </div>
+    </div>
+    
+    <!-- Director Leave Approvals Section -->
+    <?php if (count($director_approvals) > 0): ?>
+    <div class="row mb-4" id="director-approvals">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-crown me-2"></i>Director Leave Approvals Required
+                        <span class="badge bg-dark ms-2"><?php echo count($director_approvals); ?> pending</span>
+                    </h5>
+                    <a href="./admin/director_leave_approvals.php" class="btn btn-dark btn-sm">
+                        <i class="fas fa-external-link-alt me-1"></i>View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Director</th>
+                                    <th>Department</th>
+                                    <th>Leave Type</th>
+                                    <th>Period</th>
+                                    <th>Days</th>
+                                    <th>Applied On</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach($director_approvals as $application): ?>
+                                    <tr class="table-warning">
+                                        <td>
+                                            <strong><?php echo htmlspecialchars($application['first_name'] . ' ' . $application['last_name']); ?></strong>
+                                            <small class="d-block text-muted"><?php echo htmlspecialchars($application['employee_id']); ?></small>
+                                            <span class="badge bg-warning text-dark">Director</span>
+                                            <?php if (!empty($application['assigned_admin_name'])): ?>
+                                                <br><small class="text-info">Originally assigned to: <?php echo htmlspecialchars($application['assigned_admin_name']); ?></small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($application['department']); ?></td>
+                                        <td>
+                                            <span class="badge bg-primary"><?php echo htmlspecialchars($application['leave_type']); ?></span>
+                                        </td>
+                                        <td>
+                                            <?php 
+                                            $start_date = new DateTime($application['start_date']);
+                                            $end_date = new DateTime($application['end_date']);
+                                            echo $start_date->format('M d, Y');
+                                            if($application['start_date'] != $application['end_date']) {
+                                                echo ' to ' . $end_date->format('M d, Y');
+                                            }
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info"><?php echo number_format($application['days'], 1); ?> days</span>
+                                        </td>
+                                        <td><?php echo (new DateTime($application['created_at']))->format('M d, Y H:i'); ?></td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-success btn-sm" onclick="approveDirectorLeave(<?php echo $application['id']; ?>)">
+                                                    <i class="fas fa-check"></i> Approve
+                                                </button>
+                                                <button class="btn btn-danger btn-sm" onclick="rejectDirectorLeave(<?php echo $application['id']; ?>)">
+                                                    <i class="fas fa-times"></i> Reject
+                                                </button>
+                                                <button class="btn btn-info btn-sm" onclick="viewDirectorApplication(<?php echo $application['id']; ?>)">
+                                                    <i class="fas fa-eye"></i> View
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-info mt-3 mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Director leave applications require admin approval. Any admin can approve these applications regardless of original assignment. These are high-priority items that should be reviewed promptly.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
     
     <!-- Main Content Row -->
     <div class="row">
@@ -211,6 +339,12 @@ $dept_stats = $dept_stats_stmt->fetchAll();
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
+                        <?php if ($stats['director_approvals_pending'] > 0): ?>
+                        <a href="./admin/director_leave_approvals.php" class="btn btn-danger btn-sm">
+                            <i class="fas fa-crown me-1"></i>Director Approvals 
+                            <span class="badge bg-light text-dark"><?php echo $stats['director_approvals_pending']; ?></span>
+                        </a>
+                        <?php endif; ?>
                         <a href="./admin/users.php" class="btn btn-primary btn-sm">
                             <i class="fas fa-users me-1"></i>Manage Users
                         </a>
@@ -261,3 +395,29 @@ $dept_stats = $dept_stats_stmt->fetchAll();
         </div>
     </div>
 </div>
+
+<script>
+function approveDirectorLeave(applicationId) {
+    if(confirm('Are you sure you want to approve this Director leave application?')) {
+        const comments = prompt('Add any comments (optional):');
+        let url = 'modules/process_approval.php?action=approve&id=' + applicationId;
+        if (comments && comments.trim() !== '') {
+            url += '&reason=' + encodeURIComponent(comments);
+        }
+        window.location.href = url;
+    }
+}
+
+function rejectDirectorLeave(applicationId) {
+    const reason = prompt('Please provide a reason for rejection (required):');
+    if(reason && reason.trim() !== '') {
+        window.location.href = 'modules/process_approval.php?action=reject&id=' + applicationId + '&reason=' + encodeURIComponent(reason);
+    } else if (reason !== null) {
+        alert('Reason for rejection is required.');
+    }
+}
+
+function viewDirectorApplication(applicationId) {
+    window.location.href = 'modules/view_application.php?id=' + applicationId;
+}
+</script>

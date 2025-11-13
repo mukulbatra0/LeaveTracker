@@ -31,7 +31,9 @@
     <!-- Responsive Helpers -->
     <script src="<?php echo $basePath; ?>js/responsive-helpers.js"></script>
     <!-- Mobile Enhancements -->
-    <script src="<?php echo $basePath; ?>js/mobile-enhancements.js"></script></script>
+    <script src="<?php echo $basePath; ?>js/mobile-enhancements.js"></script>
+    <!-- Notifications -->
+    <script src="<?php echo $basePath; ?>js/notifications.js"></script>
 </head>
 <body>
 
@@ -51,7 +53,7 @@
                         <a class="nav-link" href="<?php echo $basePath; ?>index.php"><i class="fas fa-home me-1"></i> Dashboard</a>
                     </li>
                     
-                    <?php if($_SESSION['role'] == 'staff' || $_SESSION['role'] == 'department_head' || $_SESSION['role'] == 'dean' || $_SESSION['role'] == 'principal'): ?>
+                    <?php if($_SESSION['role'] == 'staff' || $_SESSION['role'] == 'head_of_department' || $_SESSION['role'] == 'director' || $_SESSION['role'] == 'dean' || $_SESSION['role'] == 'principal'): ?>
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo $basePath; ?>modules/apply_leave.php"><i class="fas fa-file-alt me-1"></i> Apply Leave</a>
                     </li>
@@ -63,18 +65,30 @@
                     </li>
                     <?php endif; ?>
                     
-                    <?php if($_SESSION['role'] == 'department_head' || $_SESSION['role'] == 'dean' || $_SESSION['role'] == 'principal' || $_SESSION['role'] == 'hr_admin'): ?>
+                    <?php if($_SESSION['role'] == 'head_of_department' || $_SESSION['role'] == 'director' || $_SESSION['role'] == 'dean' || $_SESSION['role'] == 'principal' || $_SESSION['role'] == 'hr_admin'): ?>
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo $basePath; ?>modules/leave_approvals.php"><i class="fas fa-tasks me-1"></i> Pending Approvals</a>
                     </li>
                     <?php endif; ?>
                     
-                    <?php if($_SESSION['role'] == 'hr_admin'): ?>
+                    <?php if($_SESSION['role'] == 'director' || $_SESSION['role'] == 'dean' || $_SESSION['role'] == 'principal' || $_SESSION['role'] == 'hr_admin'): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo $basePath; ?>modules/reports.php"><i class="fas fa-chart-line me-1"></i> Reports</a>
+                    </li>
+                    <?php endif; ?>
+                    
+                    <?php if($_SESSION['role'] == 'hr_admin' || $_SESSION['role'] == 'admin'): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-cogs me-1"></i> Administration
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                            <?php if($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'hr_admin'): ?>
+                            <li><a class="dropdown-item" href="<?php echo $basePath; ?>admin/director_leave_approvals.php">
+                                <i class="fas fa-crown me-1"></i>Director Approvals
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <?php endif; ?>
                             <li><a class="dropdown-item" href="<?php echo $basePath; ?>admin/users.php">Manage Users</a></li>
                             <li><a class="dropdown-item" href="<?php echo $basePath; ?>admin/departments.php">Manage Departments</a></li>
                             <li><a class="dropdown-item" href="<?php echo $basePath; ?>admin/leave_types.php">Manage Leave Types</a></li>
@@ -89,14 +103,11 @@
                 </ul>
                 
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo $basePath; ?>modules/notifications.php" id="notificationLink">
                             <i class="fas fa-bell me-1"></i>
-                            <span class="badge bg-danger notification-badge" id="notification-count">0</span>
+                            <span class="badge bg-danger notification-badge" id="notification-count" style="display: none;">0</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown" id="notification-list">
-                            <li class="dropdown-item text-center">No new notifications</li>
-                        </ul>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

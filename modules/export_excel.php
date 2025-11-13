@@ -42,7 +42,7 @@ try {
     $role = $_SESSION['role'];
 
     // Define which roles are allowed to access this report generation page.
-    $allowed_roles = ['admin', 'department_head', 'dean', 'principal', 'hr_admin'];
+    $allowed_roles = ['admin', 'head_of_department', 'director', 'dean', 'principal', 'hr_admin'];
     if (!in_array($role, $allowed_roles)) {
         // If the user's role is not allowed, set an alert and redirect them.
         $_SESSION['alert'] = "You don't have permission to access this page.";
@@ -69,7 +69,7 @@ try {
     // --- Department Head Specific Logic ---
     // If the user is a department head, fetch their department ID once to filter reports.
     $user_department_id = null;
-    if ($role == 'department_head') {
+    if ($role == 'head_of_department') {
         $stmt = $conn->prepare("SELECT department_id FROM users WHERE id = :user_id");
         $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
         $stmt->execute();
@@ -142,7 +142,7 @@ try {
                 JOIN departments d ON u.department_id = d.id
                 WHERE la.start_date >= :start_date AND la.end_date <= :end_date";
 
-        if ($role == 'department_head' && $user_department_id) {
+        if ($role == 'head_of_department' && $user_department_id) {
             $sql .= " AND u.department_id = :department_id";
             $params[':department_id'] = $user_department_id;
         } elseif ($department_filter != 'all') {
@@ -176,7 +176,7 @@ try {
                 LEFT JOIN leave_applications la ON u.id = la.user_id AND la.start_date <= :end_date AND la.end_date >= :start_date
                 WHERE u.role != 'hr_admin'";
 
-        if ($role == 'department_head' && $user_department_id) {
+        if ($role == 'head_of_department' && $user_department_id) {
             $sql .= " AND d.id = :department_id";
             $params[':department_id'] = $user_department_id;
         } elseif ($department_filter != 'all') {
@@ -199,7 +199,7 @@ try {
                 JOIN users u ON la.user_id = u.id
                 WHERE la.start_date >= :start_date AND la.end_date <= :end_date";
 
-        if ($role == 'department_head' && $user_department_id) {
+        if ($role == 'head_of_department' && $user_department_id) {
             $sql .= " AND u.department_id = :department_id";
             $params[':department_id'] = $user_department_id;
         } elseif ($department_filter != 'all') {
@@ -230,7 +230,7 @@ try {
         
         unset($params[':start_date'], $params[':end_date']);
 
-        if ($role == 'department_head' && $user_department_id) {
+        if ($role == 'head_of_department' && $user_department_id) {
             $sql .= " AND u.department_id = :department_id";
             $params[':department_id'] = $user_department_id;
         } elseif ($department_filter != 'all') {

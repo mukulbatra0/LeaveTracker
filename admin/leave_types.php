@@ -14,13 +14,17 @@ require_once '../config/db.php';
 $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'];
 
-// Check if user is an admin or HR admin
-if ($role != 'admin' && $role != 'hr_admin') {
+// Check if user has permission to access leave types
+$allowed_roles = ['admin', 'hr_admin', 'director'];
+if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: ../dashboards/admin_dashboard.php');
+    header('Location: ../index.php');
     exit;
 }
+
+// Directors have read-only access
+$is_read_only = ($role == 'director');
 
 // Initialize errors array
 $errors = [];
@@ -30,8 +34,8 @@ if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Process form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Process form submissions (only for admin and hr_admin)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_read_only) {
     // Verify CSRF token
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $errors[] = "Invalid form submission. Please try again.";
@@ -309,17 +313,59 @@ include '../includes/header.php';
         </div>
     <?php endif; ?>
 
+    <?php if ($is_read_only): ?>
+    <!-- Director Summary Card -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h4><?php echo count($leave_types); ?></h4>
+                    <p class="mb-0">Total Leave Types</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h4><?php echo count(array_filter($leave_types, function($type) { return $type['is_active']; })); ?></h4>
+                    <p class="mb-0">Active Types</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h4><?php echo count(array_filter($leave_types, function($type) { return isset($type['requires_attachment']) && $type['requires_attachment']; })); ?></h4>
+                    <p class="mb-0">Require Documents</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h4><?php echo array_sum(array_column($leave_types, 'default_days')); ?></h4>
+                    <p class="mb-0">Total Default Days</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <div>
                 <i class="fas fa-calendar-alt me-1"></i>
-                Leave Types
+                Leave Types <?php if($is_read_only): ?><span class="badge bg-info ms-2">View Only</span><?php endif; ?>
             </div>
+            <?php if (!$is_read_only): ?>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLeaveTypeModal">
                 <i class="fas fa-plus"></i> Add Leave Type
             </button>
+            <?php endif; ?>
         </div>
         <div class="card-body">
+
+            
             <!-- Filter Form -->
             <form method="GET" action="" class="mb-4">
                 <div class="row g-3">
@@ -350,46 +396,65 @@ include '../includes/header.php';
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Name</th>
-                            <th>Description</th>
+                            <th><?php echo $is_read_only ? 'Leave Type & Description' : 'Name'; ?></th>
+                            <?php if (!$is_read_only): ?><th>Description</th><?php endif; ?>
                             <th>Default Days</th>
                             <th>Requires Document</th>
                             <th>Accrual Method</th>
                             <th>Carry Forward</th>
                             <th>Max Consecutive</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <?php if (!$is_read_only): ?><th>Actions</th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($leave_types)): ?>
                             <tr>
-                                <td colspan="10" class="text-center">No leave types found</td>
+                                <td colspan="<?php echo $is_read_only ? '8' : '10'; ?>" class="text-center">No leave types found</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($leave_types as $type): ?>
-                                <tr>
-                                    <td><?php echo $type['id']; ?></td>
-                                    <td><?php echo htmlspecialchars($type['name']); ?></td>
+                                <tr class="<?php echo $is_read_only ? 'director-view-row' : ''; ?>">
+                                    <td><span class="badge bg-light text-dark"><?php echo $type['id']; ?></span></td>
+                                    <td>
+                                        <strong><?php echo htmlspecialchars($type['name']); ?></strong>
+                                        <?php if ($is_read_only && !empty($type['description'])): ?>
+                                            <br><small class="text-muted"><?php echo htmlspecialchars($type['description']); ?></small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <?php if (!$is_read_only): ?>
                                     <td><?php echo htmlspecialchars($type['description'] ?? 'N/A'); ?></td>
-                                    <td><?php echo $type['default_days']; ?></td>
+                                    <?php endif; ?>
+                                    <td>
+                                        <span class="badge bg-primary"><?php echo $type['default_days']; ?></span>
+                                        <?php if ($is_read_only): ?><small class="d-block text-muted">days/year</small><?php endif; ?>
+                                    </td>
                                     <td>
                                         <?php if (isset($type['requires_attachment']) && $type['requires_attachment']): ?>
-                                            <span class="badge bg-success">Yes</span>
+                                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Required</span>
                                         <?php else: ?>
-                                            <span class="badge bg-secondary">No</span>
+                                            <span class="badge bg-secondary"><i class="fas fa-times me-1"></i>Optional</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?php echo htmlspecialchars($type['accrual_method']); ?></td>
-                                    <td><?php echo $type['carry_forward_days']; ?> days</td>
-                                    <td><?php echo $type['max_consecutive_days']; ?> days</td>
+                                    <td>
+                                        <span class="badge bg-info"><?php echo htmlspecialchars($type['accrual_method']); ?></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark"><?php echo $type['carry_forward_days']; ?></span>
+                                        <?php if ($is_read_only): ?><small class="d-block text-muted">days max</small><?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-dark"><?php echo $type['max_consecutive_days']; ?></span>
+                                        <?php if ($is_read_only): ?><small class="d-block text-muted">days max</small><?php endif; ?>
+                                    </td>
                                     <td>
                                         <?php if ($type['is_active']): ?>
-                                            <span class="badge bg-success">Active</span>
+                                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Active</span>
                                         <?php else: ?>
-                                            <span class="badge bg-danger">Inactive</span>
+                                            <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Inactive</span>
                                         <?php endif; ?>
                                     </td>
+                                    <?php if (!$is_read_only): ?>
                                     <td>
                                         <button type="button" class="btn btn-sm btn-primary edit-leave-type"
                                             data-bs-toggle="modal" data-bs-target="#editLeaveTypeModal"
@@ -405,6 +470,7 @@ include '../includes/header.php';
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
                                     </td>
+                                    <?php endif; ?>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -440,6 +506,7 @@ include '../includes/header.php';
     </div>
 </div>
 
+<?php if (!$is_read_only): ?>
 <!-- Add Leave Type Modal -->
 <div class="modal fade" id="addLeaveTypeModal" tabindex="-1" aria-labelledby="addLeaveTypeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -622,5 +689,6 @@ include '../includes/header.php';
         });
     });
 </script>
+<?php endif; // End of !$is_read_only conditional for modals ?>
 
 <?php include '../includes/footer.php'; ?>

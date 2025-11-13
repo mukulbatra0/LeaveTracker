@@ -27,7 +27,7 @@ $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'];
 
 // Check if user has permission to access reports
-$allowed_roles = ['admin', 'department_head', 'dean', 'principal', 'hr_admin'];
+$allowed_roles = ['admin', 'head_of_department', 'director', 'dean', 'principal', 'hr_admin'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
@@ -179,7 +179,7 @@ if ($report_type == 'leave_utilization') {
     if ($department_filter != 'all') {
         $sql .= " AND u.department_id = :department_id";
         $params[':department_id'] = $department_filter;
-    } else if ($role == 'department_head') {
+    } else if ($role == 'head_of_department') {
         // Department heads can only see their department
         $user_dept_sql = "SELECT department_id FROM users WHERE id = :user_id";
         $user_dept_stmt = $conn->prepare($user_dept_sql);
@@ -254,7 +254,7 @@ if ($report_type == 'leave_utilization') {
     $params = [':start_date' => $start_date, ':end_date' => $end_date];
     
     // Department head can only see their department
-    if ($role == 'department_head') {
+    if ($role == 'head_of_department') {
         $user_dept_sql = "SELECT department_id FROM users WHERE id = :user_id";
         $user_dept_stmt = $conn->prepare($user_dept_sql);
         $user_dept_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
@@ -321,7 +321,7 @@ if ($report_type == 'leave_utilization') {
     if ($department_filter != 'all') {
         $sql .= " AND u.department_id = :department_id";
         $params[':department_id'] = $department_filter;
-    } else if ($role == 'department_head') {
+    } else if ($role == 'head_of_department') {
         // Department heads can only see their department
         $user_dept_sql = "SELECT department_id FROM users WHERE id = :user_id";
         $user_dept_stmt = $conn->prepare($user_dept_sql);
@@ -391,7 +391,7 @@ if ($report_type == 'leave_utilization') {
     if ($department_filter != 'all') {
         $sql .= " AND u.department_id = :department_id";
         $params[':department_id'] = $department_filter;
-    } else if ($role == 'department_head') {
+    } else if ($role == 'head_of_department') {
         // Department heads can only see their department
         $user_dept_sql = "SELECT department_id FROM users WHERE id = :user_id";
         $user_dept_stmt = $conn->prepare($user_dept_sql);

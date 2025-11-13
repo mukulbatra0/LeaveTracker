@@ -94,10 +94,11 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
                     // Update leave balance
                     $current_year = date('Y');
                     $update_balance_sql = "UPDATE leave_balances 
-                                         SET total_days = total_days - :days, used_days = used_days + :days 
+                                         SET total_days = total_days - :days_subtract, used_days = used_days + :days_add 
                                          WHERE user_id = :user_id AND leave_type_id = :leave_type_id AND year = :year";
                     $update_balance_stmt = $conn->prepare($update_balance_sql);
-                    $update_balance_stmt->bindParam(':days', $application['days'], PDO::PARAM_STR);
+                    $update_balance_stmt->bindParam(':days_subtract', $application['days'], PDO::PARAM_STR);
+                    $update_balance_stmt->bindParam(':days_add', $application['days'], PDO::PARAM_STR);
                     $update_balance_stmt->bindParam(':user_id', $application['user_id'], PDO::PARAM_INT);
                     $update_balance_stmt->bindParam(':leave_type_id', $application['leave_type_id'], PDO::PARAM_INT);
                     $update_balance_stmt->bindParam(':year', $current_year, PDO::PARAM_STR);
@@ -202,11 +203,12 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
                 // Log the action
                 $ip_address = $_SERVER['REMOTE_ADDR'];
                 $user_agent = $_SERVER['HTTP_USER_AGENT'];
+                $action_type = 'final_' . $action . '_leave';
                 $log_sql = "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details, ip_address, user_agent) 
                           VALUES (:user_id, :action, 'leave_applications', :entity_id, :details, :ip_address, :user_agent)";
                 $log_stmt = $conn->prepare($log_sql);
                 $log_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-                $log_stmt->bindParam(':action', 'final_' . $action . '_leave', PDO::PARAM_STR);
+                $log_stmt->bindParam(':action', $action_type, PDO::PARAM_STR);
                 $log_stmt->bindParam(':entity_id', $application_id, PDO::PARAM_INT);
                 $log_stmt->bindParam(':details', $reason, PDO::PARAM_STR);
                 $log_stmt->bindParam(':ip_address', $ip_address, PDO::PARAM_STR);

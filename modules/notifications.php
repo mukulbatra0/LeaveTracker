@@ -169,7 +169,9 @@ include '../includes/header.php';
                             </div>
                             <p class="mb-1"><?php echo htmlspecialchars($notification['message']); ?></p>
                             <div class="d-flex justify-content-between align-items-center mt-2">
-                                <?php if (!empty($notification['link'])): ?>
+                                <?php if (!empty($notification['related_to']) && !empty($notification['related_id'])): ?>
+                                    <a href="notification_handler.php?id=<?php echo $notification['id']; ?>" class="btn btn-sm btn-outline-primary">View Details</a>
+                                <?php elseif (!empty($notification['link'])): ?>
                                     <a href="<?php echo htmlspecialchars($notification['link']); ?>" class="btn btn-sm btn-outline-primary">View Details</a>
                                 <?php else: ?>
                                     <div></div>
