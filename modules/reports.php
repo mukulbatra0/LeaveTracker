@@ -676,6 +676,9 @@ include_once '../includes/header.php';
 
 <?php include_once '../includes/footer.php'; ?>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <!-- DataTables JS - Load after jQuery -->
 <script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
@@ -747,7 +750,23 @@ include_once '../includes/header.php';
                     }]
                 };
 
-                // Chart.js not available - chart disabled
+                new Chart(leaveTypeCtx, {
+                    type: 'doughnut',
+                    data: leaveTypeData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Leave Type Distribution'
+                            }
+                        }
+                    }
+                });
             <?php elseif ($report_type == 'department_summary'): ?>
                 // Department Summary Chart
                 const deptCtx = document.getElementById('departmentChart').getContext('2d');
@@ -782,7 +801,28 @@ include_once '../includes/header.php';
                     }]
                 };
 
-                // Chart.js not available - chart disabled
+                new Chart(deptCtx, {
+                    type: 'bar',
+                    data: deptData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Department Summary'
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
             <?php elseif ($report_type == 'monthly_trends'): ?>
                 // Monthly Trends Chart
                 const trendsCtx = document.getElementById('trendsChart').getContext('2d');
@@ -832,7 +872,40 @@ include_once '../includes/header.php';
                     }]
                 };
 
-                // Chart.js not available - chart disabled
+                new Chart(trendsCtx, {
+                    type: 'bar',
+                    data: trendsData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Monthly Trends'
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                beginAtZero: true
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                beginAtZero: true,
+                                grid: {
+                                    drawOnChartArea: false,
+                                }
+                            }
+                        }
+                    }
+                });
             <?php elseif ($report_type == 'leave_balance'): ?>
                 // Leave Balance Chart
                 const balanceCtx = document.getElementById('balanceChart').getContext('2d');
@@ -863,7 +936,32 @@ include_once '../includes/header.php';
                     }]
                 };
 
-                // Chart.js not available - chart disabled
+                new Chart(balanceCtx, {
+                    type: 'bar',
+                    data: balanceData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Leave Balance Overview'
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
             <?php endif; ?>
         <?php endif; ?>
     });

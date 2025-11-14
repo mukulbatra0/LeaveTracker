@@ -274,57 +274,58 @@ $department_filter = isset($_GET['department']) ? $_GET['department'] : '';
 $role_filter = isset($_GET['role']) ? $_GET['role'] : '';
 $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
 
-$where_clauses = [];
-$params = [];
+// Build WHERE clause and parameters
+$where_conditions = [];
+$bind_params = [];
 
 if (!empty($search)) {
-    $where_clauses[] = "(u.first_name LIKE :search OR u.last_name LIKE :search OR u.email LIKE :search)";
-    $params[':search'] = "%$search%";
+    $where_conditions[] = "(u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)";
+    $bind_params[] = "%$search%";
+    $bind_params[] = "%$search%";
+    $bind_params[] = "%$search%";
 }
 
 if (!empty($department_filter)) {
-    $where_clauses[] = "u.department_id = :department_id";
-    $params[':department_id'] = $department_filter;
+    $where_conditions[] = "u.department_id = ?";
+    $bind_params[] = $department_filter;
 }
 
 if (!empty($role_filter)) {
-    $where_clauses[] = "u.role = :role";
-    $params[':role'] = $role_filter;
+    $where_conditions[] = "u.role = ?";
+    $bind_params[] = $role_filter;
 }
 
 if (!empty($status_filter)) {
-    $where_clauses[] = "u.status = :status";
-    $params[':status'] = $status_filter;
+    $where_conditions[] = "u.status = ?";
+    $bind_params[] = $status_filter;
 }
 
-$where_sql = !empty($where_clauses) ? "WHERE " . implode(" AND ", $where_clauses) : "";
+$where_sql = !empty($where_conditions) ? "WHERE " . implode(" AND ", $where_conditions) : "";
 
+// Build the complete SQL query
 $users_sql = "SELECT u.*, d.name as department_name 
              FROM users u 
              LEFT JOIN departments d ON u.department_id = d.id 
              $where_sql 
              ORDER BY u.created_at DESC 
-             LIMIT :limit OFFSET :offset";
+             LIMIT ? OFFSET ?";
+
 $users_stmt = $conn->prepare($users_sql);
 
-foreach ($params as $key => $value) {
-    $users_stmt->bindValue($key, $value);
-}
-
-$users_stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-$users_stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-$users_stmt->execute();
+// Add limit and offset to parameters
+$all_params = array_merge($bind_params, [$limit, $offset]);
+$users_stmt->execute($all_params);
 $users = $users_stmt->fetchAll();
 
 // Get total users count for pagination
 $count_sql = "SELECT COUNT(*) FROM users u $where_sql";
 $count_stmt = $conn->prepare($count_sql);
 
-foreach ($params as $key => $value) {
-    $count_stmt->bindValue($key, $value);
+if (!empty($bind_params)) {
+    $count_stmt->execute($bind_params);
+} else {
+    $count_stmt->execute();
 }
-
-$count_stmt->execute();
 $total_users = $count_stmt->fetchColumn();
 $total_pages = ceil($total_users / $limit);
 

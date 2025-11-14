@@ -242,7 +242,7 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                         <a href="./modules/apply_leave.php" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus me-1"></i>Apply for Leave
                         </a>
-                        <a href="./modules/users.php" class="btn btn-outline-primary btn-sm">
+                        <a href="./modules/department_staff.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-users me-1"></i>Department Staff
                         </a>
                         <a href="./modules/leave_calendar.php" class="btn btn-outline-info btn-sm">

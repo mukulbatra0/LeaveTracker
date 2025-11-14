@@ -251,17 +251,19 @@ $event_type = isset($_GET['event_type']) ? $_GET['event_type'] : '';
 $academic_year = isset($_GET['academic_year']) ? $_GET['academic_year'] : '';
 
 
-$where_clause = [];
-$params = [];
+// Build WHERE clause and parameters
+$where_conditions = [];
+$bind_params = [];
 
 if (!empty($search)) {
-    $where_clause[] = "(event_name LIKE :search OR description LIKE :search)";
-    $params[':search'] = "%$search%";
+    $where_conditions[] = "(event_name LIKE ? OR description LIKE ?)";
+    $bind_params[] = "%$search%";
+    $bind_params[] = "%$search%";
 }
 
 if (!empty($event_type)) {
-    $where_clause[] = "event_type = :event_type";
-    $params[':event_type'] = $event_type;
+    $where_conditions[] = "event_type = ?";
+    $bind_params[] = $event_type;
 }
 
 if (!empty($academic_year)) {
@@ -275,42 +277,41 @@ if (!empty($academic_year)) {
         $academic_start = $start_year . '-08-01';
         $academic_end = $end_year . '-07-31';
         
-        $where_clause[] = "((start_date >= :academic_start AND start_date <= :academic_end) OR 
-                          (end_date >= :academic_start AND end_date <= :academic_end) OR 
-                          (start_date <= :academic_start AND end_date >= :academic_end))";
-        $params[':academic_start'] = $academic_start;
-        $params[':academic_end'] = $academic_end;
+        $where_conditions[] = "((start_date >= ? AND start_date <= ?) OR 
+                              (end_date >= ? AND end_date <= ?) OR 
+                              (start_date <= ? AND end_date >= ?))";
+        $bind_params[] = $academic_start;
+        $bind_params[] = $academic_end;
+        $bind_params[] = $academic_start;
+        $bind_params[] = $academic_end;
+        $bind_params[] = $academic_start;
+        $bind_params[] = $academic_end;
     }
 }
 
-
-
 $where_sql = '';
-if (!empty($where_clause)) {
-    $where_sql = "WHERE " . implode(' AND ', $where_clause);
+if (!empty($where_conditions)) {
+    $where_sql = "WHERE " . implode(' AND ', $where_conditions);
 }
 
-$events_sql = "SELECT * FROM academic_calendar $where_sql ORDER BY start_date ASC LIMIT :limit OFFSET :offset";
+// Get events with pagination
+$events_sql = "SELECT * FROM academic_calendar $where_sql ORDER BY start_date ASC LIMIT ? OFFSET ?";
 $events_stmt = $conn->prepare($events_sql);
 
-foreach ($params as $key => $value) {
-    $events_stmt->bindValue($key, $value);
-}
-
-$events_stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-$events_stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-$events_stmt->execute();
+// Add limit and offset to parameters
+$all_params = array_merge($bind_params, [$limit, $offset]);
+$events_stmt->execute($all_params);
 $events = $events_stmt->fetchAll();
 
 // Get total events count for pagination
 $count_sql = "SELECT COUNT(*) FROM academic_calendar $where_sql";
 $count_stmt = $conn->prepare($count_sql);
 
-foreach ($params as $key => $value) {
-    $count_stmt->bindValue($key, $value);
+if (!empty($bind_params)) {
+    $count_stmt->execute($bind_params);
+} else {
+    $count_stmt->execute();
 }
-
-$count_stmt->execute();
 $total_events = $count_stmt->fetchColumn();
 $total_pages = ceil($total_events / $limit);
 

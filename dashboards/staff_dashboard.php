@@ -167,7 +167,7 @@ $upcoming_holidays = $upcoming_holidays_stmt->fetchAll();
                                             </div>
                                         </div>
                                         <?php 
-                                        $percentage = ($balance['used'] / $balance['max_days']) * 100;
+                                        $percentage = ($balance['max_days'] > 0) ? ($balance['used'] / $balance['max_days']) * 100 : 0;
                                         if ($percentage > 75) {
                                             $color = 'danger';
                                         } elseif ($percentage > 50) {

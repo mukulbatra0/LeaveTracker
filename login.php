@@ -150,7 +150,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         .login-logo {
             font-size: 2.5rem;
-            color: #2c3e50;
             margin-bottom: 1rem;
         }
         .login-body {
@@ -234,10 +233,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
                         <button type="submit" class="btn btn-primary btn-lg">Login</button>
                     </div>
                 </form>
-                
-                <div class="text-center mt-3">
-                    <a href="auth/auth/forgot_password.php">Forgot Password?</a>
-                </div>
             </div>
         </div>
         

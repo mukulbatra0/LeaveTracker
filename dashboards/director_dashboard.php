@@ -263,9 +263,6 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                         <a href="./modules/reports.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-building me-1"></i>Institution Reports
                         </a>
-                        <a href="./modules/departments.php" class="btn btn-outline-info btn-sm">
-                            <i class="fas fa-sitemap me-1"></i>All Departments
-                        </a>
                         <a href="./modules/leave_history.php" class="btn btn-outline-success btn-sm">
                             <i class="fas fa-history me-1"></i>All Applications
                         </a>

@@ -242,7 +242,7 @@ include '../includes/header.php';
             <i class="fas fa-history me-1"></i>
             Leave Applications
             <div class="float-end">
-                <a href="./modules/apply_leave.php" class="btn btn-primary btn-sm">
+                <a href="./apply_leave.php" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Apply for Leave
                 </a>
             </div>

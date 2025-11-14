@@ -234,52 +234,51 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = 10;
 $offset = ($page - 1) * $limit;
 
-$search = isset($_GET['search']) ? $_GET['search'] : '';
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $status = isset($_GET['status']) ? $_GET['status'] : '';
 
-$where_clause = [];
-$params = [];
+// Build WHERE clause and parameters
+$where_conditions = [];
+$bind_params = [];
 
 if (!empty($search)) {
-    $where_clause[] = "(name LIKE :search OR description LIKE :search)";
-    $params[':search'] = "%$search%";
+    $where_conditions[] = "(name LIKE ? OR description LIKE ?)";
+    $bind_params[] = "%$search%";
+    $bind_params[] = "%$search%";
 }
 
 if ($status !== '') {
-    $where_clause[] = "is_active = :status";
-    $params[':status'] = $status;
+    $where_conditions[] = "is_active = ?";
+    $bind_params[] = (int)$status;
 }
 
 $where_sql = '';
-if (!empty($where_clause)) {
-    $where_sql = "WHERE " . implode(' AND ', $where_clause);
+if (!empty($where_conditions)) {
+    $where_sql = "WHERE " . implode(' AND ', $where_conditions);
 }
 
+// Get leave types with pagination
 $leave_types_sql = "SELECT * FROM leave_types $where_sql ORDER BY name ASC LIMIT $limit OFFSET $offset";
 $leave_types_stmt = $conn->prepare($leave_types_sql);
 
-// Only bind parameters if they exist in the query
-foreach ($params as $key => $value) {
-    if (strpos($leave_types_sql, $key) !== false) {
-        $leave_types_stmt->bindValue($key, $value);
-    }
+if (!empty($bind_params)) {
+    $leave_types_stmt->execute($bind_params);
+} else {
+    $leave_types_stmt->execute();
 }
 
-$leave_types_stmt->execute();
 $leave_types = $leave_types_stmt->fetchAll();
 
-// Get total leave types count for pagination
+// Get total count for pagination
 $count_sql = "SELECT COUNT(*) FROM leave_types $where_sql";
 $count_stmt = $conn->prepare($count_sql);
 
-// Only bind parameters if they exist in the query
-foreach ($params as $key => $value) {
-    if (strpos($count_sql, $key) !== false) {
-        $count_stmt->bindValue($key, $value);
-    }
+if (!empty($bind_params)) {
+    $count_stmt->execute($bind_params);
+} else {
+    $count_stmt->execute();
 }
 
-$count_stmt->execute();
 $total_leave_types = $count_stmt->fetchColumn();
 $total_pages = ceil($total_leave_types / $limit);
 
