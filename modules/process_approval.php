@@ -121,8 +121,8 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
             } elseif ($director_processed_count > 0) {
                 $permission_error = "This application has already been processed by a Director.";
             }
-        } elseif ($role == 'admin' || $role == 'hr_admin') {
-            // Admin/HR Admin can approve any application, including director applications
+        } elseif ($role == 'admin') {
+            // Admin can approve any application, including director applications
             // Check if this is a director application that needs admin approval
             $admin_approval_sql = "SELECT COUNT(*) as count FROM leave_approvals 
                                  WHERE leave_application_id = :app_id 
@@ -169,9 +169,6 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
                 if ($action == 'approve') {
                     // Determine the correct approver level
                     $approver_level = $role;
-                    if ($role == 'hr_admin') {
-                        $approver_level = 'admin'; // HR Admin acts as admin for approvals
-                    }
                     
                     // Check if there's an existing pending approval record to update
                     $existing_approval_sql = "SELECT id FROM leave_approvals 
@@ -206,8 +203,8 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
                         $approval_stmt->execute();
                     }
                     
-                    // Check if this is the final approval (director approval, admin approval, or hr_admin approval)
-                    if ($role == 'director' || $role == 'admin' || $role == 'hr_admin') {
+                    // Check if this is the final approval (director approval or admin approval)
+                    if ($role == 'director' || $role == 'admin') {
                         // Final approval - update application status
                         $update_app_sql = "UPDATE leave_applications SET status = 'approved' WHERE id = :app_id";
                         $update_app_stmt = $conn->prepare($update_app_sql);
@@ -303,9 +300,6 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
                 } elseif ($action == 'reject') {
                     // Determine the correct approver level for rejection
                     $approver_level = $role;
-                    if ($role == 'hr_admin') {
-                        $approver_level = 'admin'; // HR Admin acts as admin for approvals
-                    }
                     
                     // Check if there's an existing pending approval record to update
                     $existing_approval_sql = "SELECT id FROM leave_approvals 

@@ -14,11 +14,11 @@ require_once '../config/db.php';
 $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'];
 
-// Check if user is an admin or HR admin
-if ($role != 'admin' && $role != 'hr_admin') {
+// Check if user is an admin
+if ($role != 'admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: ../dashboards/admin_dashboard.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -398,10 +398,9 @@ include '../includes/header.php';
                         <select class="form-select" name="role">
                             <option value="">All Roles</option>
                             <option value="staff" <?php echo ($role_filter == 'staff') ? 'selected' : ''; ?>>Staff</option>
-                            <option value="department_head" <?php echo ($role_filter == 'department_head') ? 'selected' : ''; ?>>Department Head</option>
-                            <option value="dean" <?php echo ($role_filter == 'dean') ? 'selected' : ''; ?>>Dean</option>
-                            <option value="principal" <?php echo ($role_filter == 'principal') ? 'selected' : ''; ?>>Principal</option>
-                            <option value="hr_admin" <?php echo ($role_filter == 'hr_admin') ? 'selected' : ''; ?>>HR Admin</option>
+                            <option value="head_of_department" <?php echo ($role_filter == 'head_of_department') ? 'selected' : ''; ?>>Head of Department</option>
+                            <option value="director" <?php echo ($role_filter == 'director') ? 'selected' : ''; ?>>Director</option>
+                            <option value="admin" <?php echo ($role_filter == 'admin') ? 'selected' : ''; ?>>Admin</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-6 col-sm-12">
@@ -459,20 +458,17 @@ include '../includes/header.php';
                                             case 'staff':
                                                 echo '<span class="badge bg-primary">Staff</span>';
                                                 break;
-                                            case 'department_head':
-                                                echo '<span class="badge bg-success">Department Head</span>';
+                                            case 'head_of_department':
+                                                echo '<span class="badge bg-success">Head of Department</span>';
                                                 break;
-                                            case 'dean':
-                                                echo '<span class="badge bg-info">Dean</span>';
+                                            case 'director':
+                                                echo '<span class="badge bg-info">Director</span>';
                                                 break;
-                                            case 'principal':
-                                                echo '<span class="badge bg-warning">Principal</span>';
-                                                break;
-                                            case 'hr_admin':
-                                                echo '<span class="badge bg-danger">HR Admin</span>';
+                                            case 'admin':
+                                                echo '<span class="badge bg-danger">Admin</span>';
                                                 break;
                                             default:
-                                                echo '<span class="badge bg-secondary">' . ucfirst($u['role']) . '</span>';
+                                                echo '<span class="badge bg-secondary">' . ucfirst(str_replace('_', ' ', $u['role'])) . '</span>';
                                         }
                                         ?>
                                     </td>
@@ -611,10 +607,9 @@ include '../includes/header.php';
                             <select class="form-select" id="role" name="role" required>
                                 <option value="">Select Role</option>
                                 <option value="staff">Staff</option>
-                                <option value="department_head">Department Head</option>
-                                <option value="dean">Dean</option>
-                                <option value="principal">Principal</option>
-                                <option value="hr_admin">HR Admin</option>
+                                <option value="head_of_department">Head of Department</option>
+                                <option value="director">Director</option>
+                                <option value="admin">Admin</option>
                             </select>
                         </div>
                     </div>
@@ -680,10 +675,9 @@ include '../includes/header.php';
                             <select class="form-select" id="edit_role" name="role" required>
                                 <option value="">Select Role</option>
                                 <option value="staff">Staff</option>
-                                <option value="department_head">Department Head</option>
-                                <option value="dean">Dean</option>
-                                <option value="principal">Principal</option>
-                                <option value="hr_admin">HR Admin</option>
+                                <option value="head_of_department">Head of Department</option>
+                                <option value="director">Director</option>
+                                <option value="admin">Admin</option>
                             </select>
                         </div>
                         <div class="col-md-4">
