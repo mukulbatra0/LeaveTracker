@@ -601,9 +601,7 @@ body {
 }
 
 /* Professional Spacing */
-.container-fluid {
-    padding: 0.1rem;
-}
+
 
 .mb-professional {
     margin-bottom: 2rem;
@@ -1137,7 +1135,6 @@ Leave Types Director View Enhancements */
 
 /* Enhanced table styling for read-only views */
 .table-responsive .table th {
-    background-color: #f1f3f4;
     font-weight: 600;
     border-bottom: 2px solid #dee2e6;
 }
@@ -1286,8 +1283,6 @@ otification link styles */
     height: 18px;
     border-radius: 50%;
     position: absolute;
-    top: 8px;
-    right: 8px;
     transform: translate(50%, -50%);
     display: flex;
     align-items: center;

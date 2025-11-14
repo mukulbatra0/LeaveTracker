@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Add new department
     if (isset($_POST['add_department'])) {
         $name = trim($_POST['name']);
+        $code = trim($_POST['code']);
         $description = trim($_POST['description']);
         $head_id = !empty($_POST['head_id']) ? $_POST['head_id'] : null;
         
@@ -47,25 +48,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
+        if (empty($code)) {
+            $errors[] = "Department code is required";
+        } else {
+            // Check if department code already exists
+            $check_code_sql = "SELECT COUNT(*) FROM departments WHERE code = :code";
+            $check_code_stmt = $conn->prepare($check_code_sql);
+            $check_code_stmt->bindParam(':code', $code, PDO::PARAM_STR);
+            $check_code_stmt->execute();
+            
+            if ($check_code_stmt->fetchColumn() > 0) {
+                $errors[] = "Department code already exists";
+            }
+        }
+        
         // If no errors, insert new department
         if (empty($errors)) {
             try {
                 $conn->beginTransaction();
                 
-                $insert_sql = "INSERT INTO departments (name, description, head_id, created_at) 
-                              VALUES (:name, :description, :head_id, NOW())";
+                $insert_sql = "INSERT INTO departments (name, code, description, head_id, created_at) 
+                              VALUES (:name, :code, :description, :head_id, NOW())";
                 $insert_stmt = $conn->prepare($insert_sql);
                 $insert_stmt->bindParam(':name', $name, PDO::PARAM_STR);
+                $insert_stmt->bindParam(':code', $code, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':description', $description, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':head_id', $head_id, PDO::PARAM_INT);
                 $insert_stmt->execute();
                 
                 // Add audit log
-                $action = "Created new department: $name";
-                $audit_sql = "INSERT INTO audit_logs (user_id, action, created_at) VALUES (:user_id, :action, NOW())";
+                $action = "Created new department: $name ($code)";
+                $audit_sql = "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, created_at) VALUES (:user_id, :action, :entity_type, :entity_id, NOW())";
                 $audit_stmt = $conn->prepare($audit_sql);
+                $entity_type = 'department';
+                $new_dept_id = $conn->lastInsertId();
                 $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
                 $audit_stmt->bindParam(':action', $action, PDO::PARAM_STR);
+                $audit_stmt->bindParam(':entity_type', $entity_type, PDO::PARAM_STR);
+                $audit_stmt->bindParam(':entity_id', $new_dept_id, PDO::PARAM_INT);
                 $audit_stmt->execute();
                 
                 // If a department head is assigned, update their role
@@ -84,10 +104,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Add audit log for role change
                     $action = "Updated user {$head_name['first_name']} {$head_name['last_name']} role to department_head";
-                    $audit_sql = "INSERT INTO audit_logs (user_id, action, created_at) VALUES (:user_id, :action, NOW())";
+                    $audit_sql = "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, created_at) VALUES (:user_id, :action, :entity_type, :entity_id, NOW())";
                     $audit_stmt = $conn->prepare($audit_sql);
+                    $entity_type = 'user';
                     $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
                     $audit_stmt->bindParam(':action', $action, PDO::PARAM_STR);
+                    $audit_stmt->bindParam(':entity_type', $entity_type, PDO::PARAM_STR);
+                    $audit_stmt->bindParam(':entity_id', $head_id, PDO::PARAM_INT);
                     $audit_stmt->execute();
                 }
                 
@@ -95,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "Department added successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/departments.php");
+                header("Location: departments.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -108,6 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['edit_department'])) {
         $edit_dept_id = $_POST['edit_dept_id'];
         $name = trim($_POST['name']);
+        $code = trim($_POST['code']);
         $description = trim($_POST['description']);
         $head_id = !empty($_POST['head_id']) ? $_POST['head_id'] : null;
         
@@ -129,6 +153,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
+        if (empty($code)) {
+            $errors[] = "Department code is required";
+        } else {
+            // Check if department code already exists for other departments
+            $check_code_sql = "SELECT COUNT(*) FROM departments WHERE code = :code AND id != :dept_id";
+            $check_code_stmt = $conn->prepare($check_code_sql);
+            $check_code_stmt->bindParam(':code', $code, PDO::PARAM_STR);
+            $check_code_stmt->bindParam(':dept_id', $edit_dept_id, PDO::PARAM_INT);
+            $check_code_stmt->execute();
+            
+            if ($check_code_stmt->fetchColumn() > 0) {
+                $errors[] = "Department code already exists";
+            }
+        }
+        
         // If no errors, update department
         if (empty($errors)) {
             try {
@@ -144,23 +183,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Update department
                 $update_sql = "UPDATE departments SET 
                               name = :name, 
+                              code = :code,
                               description = :description, 
                               head_id = :head_id, 
                               updated_at = NOW() 
                               WHERE id = :dept_id";
                 $update_stmt = $conn->prepare($update_sql);
                 $update_stmt->bindParam(':name', $name, PDO::PARAM_STR);
+                $update_stmt->bindParam(':code', $code, PDO::PARAM_STR);
                 $update_stmt->bindParam(':description', $description, PDO::PARAM_STR);
                 $update_stmt->bindParam(':head_id', $head_id, PDO::PARAM_INT);
                 $update_stmt->bindParam(':dept_id', $edit_dept_id, PDO::PARAM_INT);
                 $update_stmt->execute();
                 
                 // Add audit log
-                $action = "Updated department ID $edit_dept_id: $name";
-                $audit_sql = "INSERT INTO audit_logs (user_id, action, created_at) VALUES (:user_id, :action, NOW())";
+                $action = "Updated department ID $edit_dept_id: $name ($code)";
+                $audit_sql = "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, created_at) VALUES (:user_id, :action, :entity_type, :entity_id, NOW())";
                 $audit_stmt = $conn->prepare($audit_sql);
+                $entity_type = 'department';
                 $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
                 $audit_stmt->bindParam(':action', $action, PDO::PARAM_STR);
+                $audit_stmt->bindParam(':entity_type', $entity_type, PDO::PARAM_STR);
+                $audit_stmt->bindParam(':entity_id', $edit_dept_id, PDO::PARAM_INT);
                 $audit_stmt->execute();
                 
                 // If department head has changed
@@ -189,10 +233,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             
                             // Add audit log for role change
                             $action = "Updated user {$old_head_name['first_name']} {$old_head_name['last_name']} role to staff";
-                            $audit_sql = "INSERT INTO audit_logs (user_id, action, created_at) VALUES (:user_id, :action, NOW())";
+                            $audit_sql = "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, created_at) VALUES (:user_id, :action, :entity_type, :entity_id, NOW())";
                             $audit_stmt = $conn->prepare($audit_sql);
+                            $entity_type = 'user';
                             $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
                             $audit_stmt->bindParam(':action', $action, PDO::PARAM_STR);
+                            $audit_stmt->bindParam(':entity_type', $entity_type, PDO::PARAM_STR);
+                            $audit_stmt->bindParam(':entity_id', $current_head_id, PDO::PARAM_INT);
                             $audit_stmt->execute();
                         }
                     }
@@ -213,10 +260,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         // Add audit log for role change
                         $action = "Updated user {$new_head_name['first_name']} {$new_head_name['last_name']} role to department_head";
-                        $audit_sql = "INSERT INTO audit_logs (user_id, action, created_at) VALUES (:user_id, :action, NOW())";
+                        $audit_sql = "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, created_at) VALUES (:user_id, :action, :entity_type, :entity_id, NOW())";
                         $audit_stmt = $conn->prepare($audit_sql);
+                        $entity_type = 'user';
                         $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
                         $audit_stmt->bindParam(':action', $action, PDO::PARAM_STR);
+                        $audit_stmt->bindParam(':entity_type', $entity_type, PDO::PARAM_STR);
+                        $audit_stmt->bindParam(':entity_id', $head_id, PDO::PARAM_INT);
                         $audit_stmt->execute();
                     }
                 }
@@ -225,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "Department updated successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/departments.php");
+                header("Location: departments.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -246,8 +296,10 @@ $where_clause = '';
 $params = [];
 
 if (!empty($search)) {
-    $where_clause = "WHERE d.name LIKE :search OR d.description LIKE :search";
-    $params[':search'] = "%$search%";
+    $where_clause = "WHERE d.name LIKE :search1 OR d.code LIKE :search2 OR d.description LIKE :search3";
+    $params[':search1'] = "%$search%";
+    $params[':search2'] = "%$search%";
+    $params[':search3'] = "%$search%";
 }
 
 $departments_sql = "SELECT d.*, 
@@ -261,8 +313,11 @@ $departments_sql = "SELECT d.*,
                    LIMIT :limit OFFSET :offset";
 $departments_stmt = $conn->prepare($departments_sql);
 
-foreach ($params as $key => $value) {
-    $departments_stmt->bindValue($key, $value);
+// Bind search parameters if they exist
+if (!empty($params)) {
+    foreach ($params as $key => $value) {
+        $departments_stmt->bindValue($key, $value);
+    }
 }
 
 $departments_stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
@@ -274,8 +329,11 @@ $departments = $departments_stmt->fetchAll();
 $count_sql = "SELECT COUNT(*) FROM departments d $where_clause";
 $count_stmt = $conn->prepare($count_sql);
 
-foreach ($params as $key => $value) {
-    $count_stmt->bindValue($key, $value);
+// Bind search parameters if they exist
+if (!empty($params)) {
+    foreach ($params as $key => $value) {
+        $count_stmt->bindValue($key, $value);
+    }
 }
 
 $count_stmt->execute();
@@ -336,7 +394,7 @@ include '../includes/header.php';
             <form method="GET" action="" class="mb-4">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <input type="text" class="form-control" name="search" placeholder="Search department name or description" value="<?php echo htmlspecialchars($search); ?>">
+                        <input type="text" class="form-control" name="search" placeholder="Search department name, code, or description" value="<?php echo htmlspecialchars($search); ?>">
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary me-2">
@@ -356,6 +414,7 @@ include '../includes/header.php';
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
+                            <th>Code</th>
                             <th>Description</th>
                             <th>Department Head</th>
                             <th>Staff Count</th>
@@ -366,13 +425,14 @@ include '../includes/header.php';
                     <tbody>
                         <?php if (empty($departments)): ?>
                             <tr>
-                                <td colspan="7" class="text-center">No departments found</td>
+                                <td colspan="8" class="text-center">No departments found</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($departments as $dept): ?>
                                 <tr>
                                     <td><?php echo $dept['id']; ?></td>
                                     <td><?php echo htmlspecialchars($dept['name']); ?></td>
+                                    <td><span class="badge bg-secondary"><?php echo htmlspecialchars($dept['code']); ?></span></td>
                                     <td><?php echo htmlspecialchars($dept['description'] ?? 'N/A'); ?></td>
                                     <td>
                                         <?php if (!empty($dept['head_first_name'])): ?>
@@ -390,6 +450,7 @@ include '../includes/header.php';
                                                 data-bs-toggle="modal" data-bs-target="#editDepartmentModal"
                                                 data-id="<?php echo $dept['id']; ?>"
                                                 data-name="<?php echo htmlspecialchars($dept['name']); ?>"
+                                                data-code="<?php echo htmlspecialchars($dept['code']); ?>"
                                                 data-description="<?php echo htmlspecialchars($dept['description'] ?? ''); ?>"
                                                 data-head-id="<?php echo $dept['head_id'] ?? ''; ?>">
                                             <i class="fas fa-edit"></i> Edit
@@ -442,10 +503,16 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="add_department" value="1">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="name" class="form-label">Department Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Department Code <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="code" name="code" required maxlength="20" style="text-transform: uppercase;" placeholder="e.g., CS, ENG, MATH">
+                        <div class="form-text">Short code for the department (max 20 characters)</div>
                     </div>
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
@@ -482,11 +549,17 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="edit_department" value="1">
                 <input type="hidden" name="edit_dept_id" id="edit_dept_id">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="edit_name" class="form-label">Department Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_code" class="form-label">Department Code <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_code" name="code" required maxlength="20" style="text-transform: uppercase;" placeholder="e.g., CS, ENG, MATH">
+                        <div class="form-text">Short code for the department (max 20 characters)</div>
                     </div>
                     <div class="mb-3">
                         <label for="edit_description" class="form-label">Description</label>
@@ -522,13 +595,23 @@ include '../includes/header.php';
             button.addEventListener('click', function() {
                 const id = this.getAttribute('data-id');
                 const name = this.getAttribute('data-name');
+                const code = this.getAttribute('data-code');
                 const description = this.getAttribute('data-description');
                 const headId = this.getAttribute('data-head-id');
                 
                 document.getElementById('edit_dept_id').value = id;
                 document.getElementById('edit_name').value = name;
+                document.getElementById('edit_code').value = code;
                 document.getElementById('edit_description').value = description;
                 document.getElementById('edit_head_id').value = headId;
+            });
+        });
+        
+        // Auto-uppercase department codes
+        const codeInputs = document.querySelectorAll('#code, #edit_code');
+        codeInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
             });
         });
     });

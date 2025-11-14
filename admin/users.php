@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "User added successfully. Default password has been set.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/users.php");
+                header("Location: users.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "User updated successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/users.php");
+                header("Location: users.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -255,7 +255,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $_SESSION['alert'] = "Password reset successfully. New password has been set.";
             $_SESSION['alert_type'] = "success";
-            header("Location: ../admin/users.php");
+            header("Location: users.php");
             exit;
         } catch (PDOException $e) {
             $conn->rollBack();
@@ -571,6 +571,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="add_user" value="1">
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-lg-6 col-md-12 mb-3">
@@ -638,6 +639,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="edit_user" value="1">
                 <input type="hidden" name="edit_user_id" id="edit_user_id">
                 <div class="modal-body">
                     <div class="row mb-3">
@@ -710,6 +712,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="reset_password" value="1">
                 <input type="hidden" name="reset_user_id" id="reset_user_id">
                 <div class="modal-body">
                     <p>Are you sure you want to reset the password for <strong id="reset_user_name"></strong>?</p>

@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_read_only) {
         $_POST['min_notice_days'] = $_POST['min_notice_days'] ?? 0;
         $_POST['max_days_per_request'] = $_POST['max_days_per_request'] ?? 0;
 
-        $edit_type_id = $_POST['edit_type_id'];
+        $edit_type_id = $_POST['edit_type_id'] ?? null;
         $name = trim($_POST['name']);
         $description = trim($_POST['description']);
         $default_days = (int)$_POST['default_days'];
@@ -516,6 +516,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="add_leave_type" value="1">
                 <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                 <div class="modal-body">
                     <div class="row mb-3">
@@ -592,6 +593,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="edit_leave_type" value="1">
                 <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                 <input type="hidden" name="edit_type_id" id="edit_type_id">
                 <div class="modal-body">

@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "Holiday added successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/holidays.php");
+                header("Location: holidays.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "Holiday updated successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/holidays.php");
+                header("Location: holidays.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -197,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $_SESSION['alert'] = "Holiday deleted successfully.";
             $_SESSION['alert_type'] = "success";
-            header("Location: ../admin/holidays.php");
+            header("Location: holidays.php");
             exit;
         } catch (PDOException $e) {
             $conn->rollBack();
@@ -430,6 +430,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="add_holiday" value="1">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="name" class="form-label">Holiday Name <span class="text-danger">*</span></label>
@@ -463,6 +464,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="edit_holiday" value="1">
                 <input type="hidden" name="edit_holiday_id" id="edit_holiday_id">
                 <div class="modal-body">
                     <div class="mb-3">
@@ -497,6 +499,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="delete_holiday" value="1">
                 <input type="hidden" name="delete_holiday_id" id="delete_holiday_id">
                 <div class="modal-body">
                     <p>Are you sure you want to delete the holiday: <strong id="delete_holiday_name"></strong>?</p>

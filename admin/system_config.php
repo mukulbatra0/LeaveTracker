@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "General settings updated successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/system_config.php");
+                header("Location: system_config.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -177,7 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "Leave settings updated successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/system_config.php");
+                header("Location: system_config.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -291,7 +291,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "Notification settings updated successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/system_config.php");
+                header("Location: system_config.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -371,7 +371,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "Security settings updated successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/system_config.php");
+                header("Location: system_config.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -506,6 +506,7 @@ include '../includes/header.php';
                         <!-- General Settings Tab -->
                         <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                             <form method="POST" action="">
+                                <input type="hidden" name="update_general_settings" value="1">
                                 <div class="row mb-3">
                                     <div class="col-12 col-md-6 mb-3">
                                         <label for="institution_name" class="form-label">Institution Name <span class="text-danger">*</span></label>
@@ -549,6 +550,7 @@ include '../includes/header.php';
                         <!-- Leave Settings Tab -->
                         <div class="tab-pane fade" id="leave" role="tabpanel" aria-labelledby="leave-tab">
                             <form method="POST" action="">
+                                <input type="hidden" name="update_leave_settings" value="1">
                                 <div class="row mb-3">
                                     <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="default_approval_chain" class="form-label">Default Approval Chain</label>
@@ -607,6 +609,7 @@ include '../includes/header.php';
                         <!-- Notification Settings Tab -->
                         <div class="tab-pane fade" id="notification" role="tabpanel" aria-labelledby="notification-tab">
                             <form method="POST" action="">
+                                <input type="hidden" name="update_notification_settings" value="1">
                                 <div class="row mb-3">
                                     <div class="col-lg-6 col-md-12 mb-3">
                                         <div class="form-check form-switch">
@@ -685,6 +688,7 @@ include '../includes/header.php';
                         <!-- Security Settings Tab -->
                         <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
                             <form method="POST" action="">
+                                <input type="hidden" name="update_security_settings" value="1">
                                 <div class="row mb-3">
                                     <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="password_min_length" class="form-label">Minimum Password Length</label>

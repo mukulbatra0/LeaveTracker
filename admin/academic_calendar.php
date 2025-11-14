@@ -31,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $end_date = $_POST['end_date'];
         $description = trim($_POST['description']);
         $event_type = $_POST['event_type'];
-        $restrict_leave = isset($_POST['restrict_leave']) ? 1 : 0;
         
         // Validate input
         $errors = [];
@@ -59,9 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Check for overlapping events of the same type
             $check_overlap_sql = "SELECT COUNT(*) FROM academic_calendar 
                                 WHERE event_type = :event_type 
-                                AND ((start_date <= :end_date AND end_date >= :start_date) 
-                                OR (start_date >= :start_date AND start_date <= :end_date) 
-                                OR (end_date >= :start_date AND end_date <= :end_date))";
+                                AND start_date <= :end_date AND end_date >= :start_date";
             $check_overlap_stmt = $conn->prepare($check_overlap_sql);
             $check_overlap_stmt->bindParam(':event_type', $event_type, PDO::PARAM_STR);
             $check_overlap_stmt->bindParam(':start_date', $start_date, PDO::PARAM_STR);
@@ -78,15 +75,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $conn->beginTransaction();
                 
-                $insert_sql = "INSERT INTO academic_calendar (name, start_date, end_date, description, event_type, restrict_leave, created_at) 
-                              VALUES (:name, :start_date, :end_date, :description, :event_type, :restrict_leave, NOW())";
+                $insert_sql = "INSERT INTO academic_calendar (event_name, start_date, end_date, description, event_type, created_at) 
+                              VALUES (:name, :start_date, :end_date, :description, :event_type, NOW())";
                 $insert_stmt = $conn->prepare($insert_sql);
                 $insert_stmt->bindParam(':name', $name, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':start_date', $start_date, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':end_date', $end_date, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':description', $description, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':event_type', $event_type, PDO::PARAM_STR);
-                $insert_stmt->bindParam(':restrict_leave', $restrict_leave, PDO::PARAM_INT);
+
                 $insert_stmt->execute();
                 
                 // Add audit log
@@ -101,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "Academic event added successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/academic_calendar.php");
+                header("Location: academic_calendar.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -118,7 +115,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $end_date = $_POST['end_date'];
         $description = trim($_POST['description']);
         $event_type = $_POST['event_type'];
-        $restrict_leave = isset($_POST['restrict_leave']) ? 1 : 0;
         
         // Validate input
         $errors = [];
@@ -147,9 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $check_overlap_sql = "SELECT COUNT(*) FROM academic_calendar 
                                 WHERE event_type = :event_type 
                                 AND id != :event_id 
-                                AND ((start_date <= :end_date AND end_date >= :start_date) 
-                                OR (start_date >= :start_date AND start_date <= :end_date) 
-                                OR (end_date >= :start_date AND end_date <= :end_date))";
+                                AND start_date <= :end_date AND end_date >= :start_date";
             $check_overlap_stmt = $conn->prepare($check_overlap_sql);
             $check_overlap_stmt->bindParam(':event_type', $event_type, PDO::PARAM_STR);
             $check_overlap_stmt->bindParam(':event_id', $edit_event_id, PDO::PARAM_INT);
@@ -168,12 +162,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $conn->beginTransaction();
                 
                 $update_sql = "UPDATE academic_calendar SET 
-                              name = :name, 
+                              event_name = :name, 
                               start_date = :start_date, 
                               end_date = :end_date, 
                               description = :description, 
                               event_type = :event_type, 
-                              restrict_leave = :restrict_leave, 
                               updated_at = NOW() 
                               WHERE id = :event_id";
                 $update_stmt = $conn->prepare($update_sql);
@@ -182,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_stmt->bindParam(':end_date', $end_date, PDO::PARAM_STR);
                 $update_stmt->bindParam(':description', $description, PDO::PARAM_STR);
                 $update_stmt->bindParam(':event_type', $event_type, PDO::PARAM_STR);
-                $update_stmt->bindParam(':restrict_leave', $restrict_leave, PDO::PARAM_INT);
+
                 $update_stmt->bindParam(':event_id', $edit_event_id, PDO::PARAM_INT);
                 $update_stmt->execute();
                 
@@ -198,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['alert'] = "Academic event updated successfully.";
                 $_SESSION['alert_type'] = "success";
-                header("Location: ../admin/academic_calendar.php");
+                header("Location: academic_calendar.php");
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
@@ -215,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->beginTransaction();
             
             // Get event details for audit log
-            $event_sql = "SELECT name, start_date, end_date FROM academic_calendar WHERE id = :event_id";
+            $event_sql = "SELECT event_name, start_date, end_date FROM academic_calendar WHERE id = :event_id";
             $event_stmt = $conn->prepare($event_sql);
             $event_stmt->bindParam(':event_id', $delete_event_id, PDO::PARAM_INT);
             $event_stmt->execute();
@@ -228,7 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $delete_stmt->execute();
             
             // Add audit log
-            $action = "Deleted academic event: {$event['name']} ({$event['start_date']} to {$event['end_date']})";
+            $action = "Deleted academic event: {$event['event_name']} ({$event['start_date']} to {$event['end_date']})";
             $audit_sql = "INSERT INTO audit_logs (user_id, action, created_at) VALUES (:user_id, :action, NOW())";
             $audit_stmt = $conn->prepare($audit_sql);
             $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
@@ -239,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $_SESSION['alert'] = "Academic event deleted successfully.";
             $_SESSION['alert_type'] = "success";
-            header("Location: ../admin/academic_calendar.php");
+            header("Location: academic_calendar.php");
             exit;
         } catch (PDOException $e) {
             $conn->rollBack();
@@ -256,13 +249,13 @@ $offset = ($page - 1) * $limit;
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $event_type = isset($_GET['event_type']) ? $_GET['event_type'] : '';
 $academic_year = isset($_GET['academic_year']) ? $_GET['academic_year'] : '';
-$restrict_leave = isset($_GET['restrict_leave']) ? $_GET['restrict_leave'] : '';
+
 
 $where_clause = [];
 $params = [];
 
 if (!empty($search)) {
-    $where_clause[] = "(name LIKE :search OR description LIKE :search)";
+    $where_clause[] = "(event_name LIKE :search OR description LIKE :search)";
     $params[':search'] = "%$search%";
 }
 
@@ -290,10 +283,7 @@ if (!empty($academic_year)) {
     }
 }
 
-if ($restrict_leave !== '') {
-    $where_clause[] = "restrict_leave = :restrict_leave";
-    $params[':restrict_leave'] = $restrict_leave;
-}
+
 
 $where_sql = '';
 if (!empty($where_clause)) {
@@ -339,7 +329,7 @@ $event_types = $event_types_stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // If no event types found, add default ones
 if (empty($event_types)) {
-    $event_types = ['Semester', 'Exam Period', 'Staff Development', 'Holiday', 'Other'];
+    $event_types = ['semester', 'exam', 'staff_development', 'restricted_leave_period'];
 }
 
 // Include header
@@ -393,8 +383,27 @@ include '../includes/header.php';
                         <select class="form-select" name="event_type">
                             <option value="">All Event Types</option>
                             <?php foreach ($event_types as $type): ?>
+                                <?php 
+                                $display_name = '';
+                                switch ($type) {
+                                    case 'semester':
+                                        $display_name = 'Semester';
+                                        break;
+                                    case 'exam':
+                                        $display_name = 'Exam Period';
+                                        break;
+                                    case 'staff_development':
+                                        $display_name = 'Staff Development';
+                                        break;
+                                    case 'restricted_leave_period':
+                                        $display_name = 'Restricted Leave Period';
+                                        break;
+                                    default:
+                                        $display_name = ucfirst(str_replace('_', ' ', $type));
+                                }
+                                ?>
                                 <option value="<?php echo $type; ?>" <?php echo $event_type == $type ? 'selected' : ''; ?>>
-                                    <?php echo $type; ?>
+                                    <?php echo $display_name; ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -409,14 +418,8 @@ include '../includes/header.php';
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <select class="form-select" name="restrict_leave">
-                            <option value="" <?php echo $restrict_leave === '' ? 'selected' : ''; ?>>All Leave Restrictions</option>
-                            <option value="1" <?php echo $restrict_leave === '1' ? 'selected' : ''; ?>>Restricted</option>
-                            <option value="0" <?php echo $restrict_leave === '0' ? 'selected' : ''; ?>>Not Restricted</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
+
+                    <div class="col-md-5">
                         <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-search"></i> Search
                         </button>
@@ -438,14 +441,14 @@ include '../includes/header.php';
                             <th>End Date</th>
                             <th>Duration</th>
                             <th>Event Type</th>
-                            <th>Leave Restriction</th>
+
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($events)): ?>
                             <tr>
-                                <td colspan="8" class="text-center">No academic events found</td>
+                                <td colspan="7" class="text-center">No academic events found</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($events as $event): ?>
@@ -457,63 +460,74 @@ include '../includes/header.php';
                                 // Determine row class based on event type
                                 $row_class = '';
                                 switch ($event['event_type']) {
-                                    case 'Exam Period':
+                                    case 'exam':
                                         $row_class = 'table-danger';
                                         break;
-                                    case 'Semester':
+                                    case 'semester':
                                         $row_class = 'table-primary';
                                         break;
-                                    case 'Staff Development':
+                                    case 'staff_development':
                                         $row_class = 'table-warning';
                                         break;
-                                    case 'Holiday':
-                                        $row_class = 'table-success';
+                                    case 'restricted_leave_period':
+                                        $row_class = 'table-info';
                                         break;
                                 }
                                 ?>
                                 <tr class="<?php echo $row_class; ?>">
                                     <td><?php echo $event['id']; ?></td>
-                                    <td><?php echo htmlspecialchars($event['name']); ?></td>
+                                    <td><?php echo htmlspecialchars($event['event_name']); ?></td>
                                     <td><?php echo $start->format('M d, Y'); ?></td>
                                     <td><?php echo $end->format('M d, Y'); ?></td>
                                     <td><?php echo $duration; ?> day<?php echo $duration > 1 ? 's' : ''; ?></td>
                                     <td>
-                                        <span class="badge bg-secondary"><?php echo $event['event_type']; ?></span>
+                                        <?php 
+                                        $display_type = '';
+                                        switch ($event['event_type']) {
+                                            case 'semester':
+                                                $display_type = 'Semester';
+                                                break;
+                                            case 'exam':
+                                                $display_type = 'Exam Period';
+                                                break;
+                                            case 'staff_development':
+                                                $display_type = 'Staff Development';
+                                                break;
+                                            case 'restricted_leave_period':
+                                                $display_type = 'Restricted Leave Period';
+                                                break;
+                                            default:
+                                                $display_type = ucfirst(str_replace('_', ' ', $event['event_type']));
+                                        }
+                                        ?>
+                                        <span class="badge bg-secondary"><?php echo $display_type; ?></span>
                                     </td>
-                                    <td>
-                                        <?php if ($event['restrict_leave']): ?>
-                                            <span class="badge bg-danger">Restricted</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-success">Allowed</span>
-                                        <?php endif; ?>
-                                    </td>
+
                                     <td>
                                         <button type="button" class="btn btn-sm btn-info view-event" 
                                                 data-bs-toggle="modal" data-bs-target="#viewEventModal"
                                                 data-id="<?php echo $event['id']; ?>"
-                                                data-name="<?php echo htmlspecialchars($event['name']); ?>"
+                                                data-name="<?php echo htmlspecialchars($event['event_name']); ?>"
                                                 data-start-date="<?php echo $event['start_date']; ?>"
                                                 data-end-date="<?php echo $event['end_date']; ?>"
                                                 data-description="<?php echo htmlspecialchars($event['description'] ?? ''); ?>"
-                                                data-event-type="<?php echo $event['event_type']; ?>"
-                                                data-restrict-leave="<?php echo $event['restrict_leave']; ?>">
+                                                data-event-type="<?php echo $event['event_type']; ?>">
                                             <i class="fas fa-eye"></i> View
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary1 edit-event" 
+                                        <button type="button" class="btn btn-sm btn-outline-primary edit-event" 
                                                 data-bs-toggle="modal" data-bs-target="#editEventModal"
                                                 data-id="<?php echo $event['id']; ?>"
-                                                data-name="<?php echo htmlspecialchars($event['name']); ?>"
+                                                data-name="<?php echo htmlspecialchars($event['event_name']); ?>"
                                                 data-start-date="<?php echo $event['start_date']; ?>"
                                                 data-end-date="<?php echo $event['end_date']; ?>"
                                                 data-description="<?php echo htmlspecialchars($event['description'] ?? ''); ?>"
-                                                data-event-type="<?php echo $event['event_type']; ?>"
-                                                data-restrict-leave="<?php echo $event['restrict_leave']; ?>">
+                                                data-event-type="<?php echo $event['event_type']; ?>">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
                                         <button type="button" class="btn btn-sm btn-danger delete-event" 
                                                 data-bs-toggle="modal" data-bs-target="#deleteEventModal"
                                                 data-id="<?php echo $event['id']; ?>"
-                                                data-name="<?php echo htmlspecialchars($event['name']); ?>">
+                                                data-name="<?php echo htmlspecialchars($event['event_name']); ?>">
                                             <i class="fas fa-trash"></i> Delete
                                         </button>
                                     </td>
@@ -529,19 +543,19 @@ include '../includes/header.php';
                 <nav aria-label="Page navigation">
                     <ul class="pagination justify-content-center">
                         <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&event_type=<?php echo urlencode($event_type); ?>&academic_year=<?php echo urlencode($academic_year); ?>&restrict_leave=<?php echo $restrict_leave; ?>" aria-label="Previous">
+                            <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&event_type=<?php echo urlencode($event_type); ?>&academic_year=<?php echo urlencode($academic_year); ?>" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
                         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                             <li class="page-item <?php echo ($page == $i) ? 'active' : ''; ?>">
-                                <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&event_type=<?php echo urlencode($event_type); ?>&academic_year=<?php echo urlencode($academic_year); ?>&restrict_leave=<?php echo $restrict_leave; ?>">
+                                <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&event_type=<?php echo urlencode($event_type); ?>&academic_year=<?php echo urlencode($academic_year); ?>">
                                     <?php echo $i; ?>
                                 </a>
                             </li>
                         <?php endfor; ?>
                         <li class="page-item <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&event_type=<?php echo urlencode($event_type); ?>&academic_year=<?php echo urlencode($academic_year); ?>&restrict_leave=<?php echo $restrict_leave; ?>" aria-label="Next">
+                            <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&event_type=<?php echo urlencode($event_type); ?>&academic_year=<?php echo urlencode($academic_year); ?>" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>
@@ -561,6 +575,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="add_event" value="1">
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-8">
@@ -571,11 +586,10 @@ include '../includes/header.php';
                             <label for="event_type" class="form-label">Event Type <span class="text-danger">*</span></label>
                             <select class="form-select" id="event_type" name="event_type" required>
                                 <option value="">Select Event Type</option>
-                                <option value="Semester">Semester</option>
-                                <option value="Exam Period">Exam Period</option>
-                                <option value="Staff Development">Staff Development</option>
-                                <option value="Holiday">Holiday</option>
-                                <option value="Other">Other</option>
+                                <option value="semester">Semester</option>
+                                <option value="exam">Exam Period</option>
+                                <option value="staff_development">Staff Development</option>
+                                <option value="restricted_leave_period">Restricted Leave Period</option>
                             </select>
                         </div>
                     </div>
@@ -593,11 +607,7 @@ include '../includes/header.php';
                         <label for="description" class="form-label">Description</label>
                         <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="restrict_leave" name="restrict_leave">
-                        <label class="form-check-label" for="restrict_leave">Restrict Leave Applications</label>
-                        <div class="form-text">If checked, staff will not be able to apply for leave during this period unless approved by HR admin.</div>
-                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -642,10 +652,7 @@ include '../includes/header.php';
                         <h6>Duration:</h6>
                         <p id="view_duration"></p>
                     </div>
-                    <div class="col-md-6">
-                        <h6>Leave Restriction:</h6>
-                        <p id="view_restrict_leave"></p>
-                    </div>
+
                 </div>
                 <div class="mb-3">
                     <h6>Description:</h6>
@@ -668,6 +675,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="edit_event" value="1">
                 <input type="hidden" name="edit_event_id" id="edit_event_id">
                 <div class="modal-body">
                     <div class="row mb-3">
@@ -679,11 +687,10 @@ include '../includes/header.php';
                             <label for="edit_event_type" class="form-label">Event Type <span class="text-danger">*</span></label>
                             <select class="form-select" id="edit_event_type" name="event_type" required>
                                 <option value="">Select Event Type</option>
-                                <option value="Semester">Semester</option>
-                                <option value="Exam Period">Exam Period</option>
-                                <option value="Staff Development">Staff Development</option>
-                                <option value="Holiday">Holiday</option>
-                                <option value="Other">Other</option>
+                                <option value="semester">Semester</option>
+                                <option value="exam">Exam Period</option>
+                                <option value="staff_development">Staff Development</option>
+                                <option value="restricted_leave_period">Restricted Leave Period</option>
                             </select>
                         </div>
                     </div>
@@ -701,11 +708,7 @@ include '../includes/header.php';
                         <label for="edit_description" class="form-label">Description</label>
                         <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="edit_restrict_leave" name="restrict_leave">
-                        <label class="form-check-label" for="edit_restrict_leave">Restrict Leave Applications</label>
-                        <div class="form-text">If checked, staff will not be able to apply for leave during this period unless approved by HR admin.</div>
-                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -725,6 +728,7 @@ include '../includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="">
+                <input type="hidden" name="delete_event" value="1">
                 <input type="hidden" name="delete_event_id" id="delete_event_id">
                 <div class="modal-body">
                     <p>Are you sure you want to delete the event: <strong id="delete_event_name"></strong>?</p>
@@ -751,7 +755,7 @@ include '../includes/header.php';
                 const endDate = this.getAttribute('data-end-date');
                 const description = this.getAttribute('data-description');
                 const eventType = this.getAttribute('data-event-type');
-                const restrictLeave = this.getAttribute('data-restrict-leave') === '1' ? 'Restricted' : 'Allowed';
+
                 
                 // Calculate duration
                 const start = new Date(startDate);
@@ -769,7 +773,7 @@ include '../includes/header.php';
                 document.getElementById('view_start_date').textContent = formattedStartDate;
                 document.getElementById('view_end_date').textContent = formattedEndDate;
                 document.getElementById('view_duration').textContent = duration;
-                document.getElementById('view_restrict_leave').textContent = restrictLeave;
+
                 document.getElementById('view_description').textContent = description || 'No description provided';
             });
         });
@@ -784,7 +788,7 @@ include '../includes/header.php';
                 const endDate = this.getAttribute('data-end-date');
                 const description = this.getAttribute('data-description');
                 const eventType = this.getAttribute('data-event-type');
-                const restrictLeave = this.getAttribute('data-restrict-leave') === '1';
+
                 
                 document.getElementById('edit_event_id').value = id;
                 document.getElementById('edit_name').value = name;
@@ -792,7 +796,7 @@ include '../includes/header.php';
                 document.getElementById('edit_end_date').value = endDate;
                 document.getElementById('edit_description').value = description;
                 document.getElementById('edit_event_type').value = eventType;
-                document.getElementById('edit_restrict_leave').checked = restrictLeave;
+
             });
         });
         

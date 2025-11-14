@@ -11,6 +11,7 @@ A comprehensive web-based leave management system built with PHP and MySQL, desi
 - **Approval Workflow** - Two-level approval process (Head of Department → Director)
 - **Leave Balance Tracking** - Automatic calculation and tracking of leave balances
 - **Email Notifications** - Automated email alerts for status changes
+- **Academic Calendar** - Manage academic events, semesters, and exam periods
 - **Audit Logging** - Complete audit trail of all system activities
 
 ### User Roles & Permissions
@@ -37,6 +38,7 @@ A comprehensive web-based leave management system built with PHP and MySQL, desi
 - Complete system administration
 - User and department management
 - Leave type and holiday configuration
+- Academic calendar management
 - System settings and maintenance
 - Emergency approval override capabilities
 
@@ -59,6 +61,7 @@ A comprehensive web-based leave management system built with PHP and MySQL, desi
 - **leave_balances** - User leave balance management
 - **notifications** - System notifications
 - **holidays** - Holiday calendar
+- **academic_calendar** - Academic events and semesters
 - **audit_logs** - System activity logging
 
 ## 📋 Installation
@@ -86,6 +89,10 @@ composer install
 ```bash
 mysql -u username -p leavetracker_db < config/leavetracker_db.sql
 ```
+3. (Optional) Load sample data:
+```bash
+mysql -u username -p leavetracker_db < config/mock_data.sql
+```
 
 ### Step 4: Configuration
 1. Copy `.env.example` to `.env`
@@ -106,6 +113,12 @@ php config/init_db.php
 ### Step 6: Web Server Configuration
 Point your web server document root to the project directory.
 
+### Step 7: Default Admin Account
+After installation, use these credentials to login as admin:
+- **Username**: admin
+- **Password**: admin123
+- **Important**: Change the default password immediately after first login
+
 ## 🔧 Configuration
 
 ### Email Settings
@@ -122,6 +135,13 @@ Default leave types included:
 - Conference Leave (15 days)
 - Maternity/Paternity Leave
 - Bereavement Leave
+
+### Academic Calendar
+Manage academic events through admin panel:
+- **Semesters** - Academic term periods
+- **Exam Periods** - Examination schedules
+- **Staff Development** - Training and development events
+- **Restricted Leave Periods** - Times when leave is limited
 
 ### System Settings
 Configurable through admin panel:
@@ -157,7 +177,8 @@ Configurable through admin panel:
 1. **User Management** - Create, edit, deactivate users
 2. **Department Setup** - Manage organizational structure
 3. **System Configuration** - Leave types, holidays, settings
-4. **Maintenance** - Database cleanup, audit logs
+4. **Academic Calendar** - Manage academic events and semesters
+5. **Maintenance** - Database cleanup, audit logs
 
 ## 🔄 Approval Workflow
 
@@ -182,6 +203,7 @@ Configurable through admin panel:
 - **Usage Statistics** - Leave utilization patterns
 - **Approval Analytics** - Processing times and patterns
 - **Department Summaries** - Comparative analysis
+- **Academic Calendar Reports** - Event schedules and conflicts
 - **Audit Reports** - System activity logs
 
 ### Export Options
@@ -247,13 +269,29 @@ Configurable through admin panel:
 - Verify table structure
 - Review error logs
 
+#### Academic Calendar Issues
+- Ensure database table `academic_calendar` exists
+- Check for proper event type values (semester, exam, staff_development, restricted_leave_period)
+- Verify date formats are correct (YYYY-MM-DD)
+
 ## 📁 Project Structure
 
 ```
 LeaveTracker/
 ├── admin/              # Admin panel modules
+│   ├── academic_calendar.php  # Academic calendar management
+│   ├── departments.php        # Department management
+│   ├── holidays.php          # Holiday management
+│   ├── leave_types.php       # Leave type configuration
+│   ├── system_config.php     # System settings
+│   └── users.php             # User management
+├── api/                # API endpoints
 ├── classes/            # PHP classes and utilities
 ├── config/             # Configuration files
+│   ├── db.php         # Database connection
+│   ├── leavetracker_db.sql   # Database schema
+│   ├── mock_data.sql  # Sample data
+│   └── init_db.php    # Database initialization
 ├── css/                # Stylesheets
 ├── dashboards/         # Role-specific dashboards
 ├── images/             # Static images
@@ -263,6 +301,8 @@ LeaveTracker/
 ├── reports/            # Report generation
 ├── uploads/            # File upload storage
 ├── vendor/             # Composer dependencies
+├── .env.example        # Environment configuration template
+├── composer.json       # PHP dependencies
 ├── index.php           # Main entry point
 ├── login.php           # Authentication
 ├── logout.php          # Session termination
@@ -271,7 +311,15 @@ LeaveTracker/
 
 ## 🔄 Version History
 
-### v2.0.0 (Current)
+### v2.1.0 (Current)
+- Added Academic Calendar management
+- Enhanced admin dashboard with calendar link
+- Improved database structure
+- Fixed PDO parameter binding issues
+- Cleaned up redundant files
+- Consolidated documentation
+
+### v2.0.0
 - Simplified role structure (4 roles)
 - Streamlined approval workflow (2 levels)
 - Enhanced dashboard interfaces
