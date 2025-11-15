@@ -1,3 +1,26 @@
+<?php
+// Better path detection for different server environments
+function getBasePath() {
+    $currentScript = $_SERVER['SCRIPT_NAME'];
+    $currentDir = dirname($currentScript);
+    
+    // Remove leading slash and count directory levels
+    $currentDir = ltrim($currentDir, '/');
+    $levels = empty($currentDir) ? 0 : substr_count($currentDir, '/');
+    
+    // Create relative path back to root
+    $basePath = str_repeat('../', $levels);
+    
+    // If we're in root directory, basePath should be empty or './'
+    if ($levels == 0) {
+        $basePath = './';
+    }
+    
+    return $basePath;
+}
+
+$basePath = getBasePath();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,22 +32,6 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
-    <?php
-    // Simple and reliable path detection for InfinityFree
-    $currentScript = $_SERVER['SCRIPT_NAME'];
-    $currentDir = dirname($currentScript);
-    
-    // Remove leading slash and count directory levels
-    $currentDir = ltrim($currentDir, '/');
-    $levels = empty($currentDir) ? 0 : substr_count($currentDir, '/');
-    
-    // Create relative path back to root
-    if ($levels == 0) {
-        $basePath = './';
-    } else {
-        $basePath = str_repeat('../', $levels);
-    }
-    ?>
     <link rel="stylesheet" href="<?php echo $basePath; ?>css/style.css">
     <!-- Responsive Override CSS -->
     <link rel="stylesheet" href="<?php echo $basePath; ?>css/responsive-override.css">
@@ -44,6 +51,10 @@
     <script src="<?php echo $basePath; ?>js/mobile-enhancements.js"></script>
     <!-- Notifications -->
     <script src="<?php echo $basePath; ?>js/notifications.js"></script>
+    
+    <!-- Debug info (remove in production) -->
+    <!-- Current Script: <?php echo $_SERVER['SCRIPT_NAME']; ?> -->
+    <!-- Base Path: <?php echo $basePath; ?> -->
 </head>
 <body>
 

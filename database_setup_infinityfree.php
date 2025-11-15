@@ -1,7 +1,7 @@
 <?php
 /**
- * Complete Database Setup Script for ELMS
- * This single script handles all database configuration and initialization
+ * InfinityFree Compatible Database Setup Script for ELMS
+ * This version works with InfinityFree hosting restrictions
  */
 
 // Display errors for debugging
@@ -26,7 +26,7 @@ define('DB_USERNAME', $_ENV['DB_USER'] ?? 'root');
 define('DB_PASSWORD', $_ENV['DB_PASS'] ?? '');
 define('DB_NAME', $_ENV['DB_NAME'] ?? 'elms_db');
 
-class DatabaseSetup {
+class InfinityFreeSetup {
     private $conn;
     private $isWebInterface = false;
     
@@ -46,32 +46,18 @@ class DatabaseSetup {
     
     public function connect() {
         try {
-            // First test connection to MySQL server
-            $test_conn = new PDO("mysql:host=" . DB_SERVER, DB_USERNAME, DB_PASSWORD);
-            $test_conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            
-            // Check if database exists, create if not
-            $stmt = $test_conn->prepare("SHOW DATABASES LIKE ?");
-            $stmt->execute([DB_NAME]);
-            
-            if ($stmt->rowCount() === 0) {
-                $test_conn->exec("CREATE DATABASE `" . DB_NAME . "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci");
-                $this->output("Database '" . DB_NAME . "' created successfully", 'success');
-            } else {
-                $this->output("Database '" . DB_NAME . "' already exists", 'info');
-            }
-            
-            // Connect to the specific database
+            // Connect directly to the database (InfinityFree databases are pre-created)
             $this->conn = new PDO("mysql:host=" . DB_SERVER . ";dbname=" . DB_NAME . ";charset=utf8mb4", DB_USERNAME, DB_PASSWORD);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
             
-            $this->output("Connected to database successfully", 'success');
+            $this->output("Connected to database '" . DB_NAME . "' successfully", 'success');
             return true;
             
         } catch(PDOException $e) {
             $this->output("Database connection failed: " . $e->getMessage(), 'error');
+            $this->output("Please check your database credentials in .env file", 'error');
             return false;
         }
     }
@@ -179,9 +165,7 @@ class DatabaseSetup {
                 `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 KEY `user_id` (`user_id`),
-                KEY `leave_type_id` (`leave_type_id`),
-                CONSTRAINT `leave_applications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-                CONSTRAINT `leave_applications_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`) ON DELETE CASCADE
+                KEY `leave_type_id` (`leave_type_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ", "Creating leave_applications table");
         
@@ -198,9 +182,7 @@ class DatabaseSetup {
                 `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 KEY `leave_application_id` (`leave_application_id`),
-                KEY `approver_id` (`approver_id`),
-                CONSTRAINT `leave_approvals_ibfk_1` FOREIGN KEY (`leave_application_id`) REFERENCES `leave_applications` (`id`) ON DELETE CASCADE,
-                CONSTRAINT `leave_approvals_ibfk_2` FOREIGN KEY (`approver_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+                KEY `approver_id` (`approver_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ", "Creating leave_approvals table");
         
@@ -218,9 +200,7 @@ class DatabaseSetup {
                 `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `user_leave_year` (`user_id`,`leave_type_id`,`year`),
-                KEY `leave_type_id` (`leave_type_id`),
-                CONSTRAINT `leave_balances_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-                CONSTRAINT `leave_balances_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`) ON DELETE CASCADE
+                KEY `leave_type_id` (`leave_type_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ", "Creating leave_balances table");
         
@@ -236,8 +216,7 @@ class DatabaseSetup {
                 `is_read` tinyint(1) NOT NULL DEFAULT '0',
                 `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
-                KEY `user_id` (`user_id`),
-                CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+                KEY `user_id` (`user_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ", "Creating notifications table");
         
@@ -268,9 +247,7 @@ class DatabaseSetup {
                 `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 KEY `leave_application_id` (`leave_application_id`),
-                KEY `uploaded_by` (`uploaded_by`),
-                CONSTRAINT `documents_ibfk_1` FOREIGN KEY (`leave_application_id`) REFERENCES `leave_applications` (`id`) ON DELETE CASCADE,
-                CONSTRAINT `documents_ibfk_2` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`) ON DELETE CASCADE
+                KEY `uploaded_by` (`uploaded_by`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ", "Creating documents table");
         
@@ -288,8 +265,7 @@ class DatabaseSetup {
                 `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 KEY `user_id` (`user_id`),
-                KEY `entity_type` (`entity_type`),
-                CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+                KEY `entity_type` (`entity_type`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ", "Creating audit_logs table");
         
@@ -413,39 +389,6 @@ class DatabaseSetup {
             $balance_count = $stmt->fetch()['count'];
             $this->output("Leave balances created: $balance_count", 'success');
             
-            if (!$this->isWebInterface) {
-                // Show test users
-                echo "\nTest Users Created:\n";
-                echo "==================\n";
-                $stmt = $this->conn->query("
-                    SELECT 
-                        employee_id,
-                        CONCAT(first_name, ' ', last_name) as full_name,
-                        email,
-                        role
-                    FROM users 
-                    ORDER BY 
-                        CASE role 
-                            WHEN 'admin' THEN 1
-                            WHEN 'director' THEN 2
-                            WHEN 'head_of_department' THEN 3
-                            WHEN 'staff' THEN 4
-                        END
-                ");
-                
-                while ($user = $stmt->fetch()) {
-                    echo sprintf("%-8s | %-25s | %-25s | %s\n", 
-                        $user['employee_id'],
-                        $user['full_name'],
-                        $user['email'],
-                        ucwords(str_replace('_', ' ', $user['role']))
-                    );
-                }
-                
-                echo "\nPassword for all test users: password123\n";
-                echo "\n✓ Database setup completed successfully!\n";
-            }
-            
             return true;
             
         } catch (Exception $e) {
@@ -468,97 +411,83 @@ class DatabaseSetup {
     }
 }
 
-// Check if running from command line or web interface
-if (php_sapi_name() === 'cli') {
-    // Command line execution
-    echo "=== ELMS Database Setup ===\n\n";
-    
-    $setup = new DatabaseSetup(false);
-    if ($setup->runSetup()) {
-        echo "\nSetup completed successfully!\n";
-        exit(0);
-    } else {
-        echo "\nSetup failed!\n";
-        exit(1);
-    }
-} else {
-    // Web interface execution
-    $setup = new DatabaseSetup(true);
-    $success = false;
-    
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['setup'])) {
-        $success = $setup->runSetup();
-    }
-    ?>
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>ELMS Database Setup</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
-            body { background-color: #f8f9fa; padding: 20px; }
-            .setup-container { max-width: 800px; margin: 0 auto; }
-            .setup-card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-            .setup-header { text-align: center; padding: 20px 0; }
-            .setup-logo { font-size: 2.5rem; color: #0d6efd; margin-bottom: 10px; }
-        </style>
-    </head>
-    <body>
-        <div class="setup-container">
-            <div class="card setup-card">
-                <div class="card-body">
-                    <div class="setup-header">
-                        <div class="setup-logo"><i class="fas fa-database"></i></div>
-                        <h2>ELMS Database Setup</h2>
-                        <p class="text-muted">Complete database configuration and initialization</p>
-                    </div>
-                    
-                    <?php if ($success): ?>
-                        <div class="alert alert-success">
-                            <h4 class="alert-heading">Setup Complete!</h4>
-                            <p>The database has been configured successfully. You can now use the system.</p>
-                            <hr>
-                            <p class="mb-0">Default login credentials:</p>
-                            <ul>
-                                <li><strong>Admin:</strong> admin@college.edu / password123</li>
-                                <li><strong>Director:</strong> director@college.edu / password123</li>
-                                <li><strong>HOD:</strong> hod@college.edu / password123</li>
-                                <li><strong>Staff:</strong> staff@college.edu / password123</li>
-                            </ul>
-                        </div>
-                    <?php elseif ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
-                        <div class="alert alert-danger">
-                            <h4 class="alert-heading">Setup Failed!</h4>
-                            <p>Please check the error messages above and try again.</p>
-                        </div>
-                    <?php else: ?>
-                        <form method="post">
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle"></i> This will create all necessary database tables and insert default data.
-                            </div>
-                            
-                            <div class="alert alert-warning">
-                                <strong>Database Configuration:</strong><br>
-                                Host: <?php echo DB_SERVER; ?><br>
-                                Database: <?php echo DB_NAME; ?><br>
-                                User: <?php echo DB_USERNAME; ?>
-                            </div>
-                            
-                            <div class="d-grid gap-2">
-                                <button type="submit" name="setup" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-play"></i> Setup Database
-                                </button>
-                            </div>
-                        </form>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-    <?php
+// Web interface execution
+$setup = new InfinityFreeSetup(true);
+$success = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['setup'])) {
+    $success = $setup->runSetup();
 }
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELMS Database Setup - InfinityFree</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; padding: 20px; }
+        .setup-container { max-width: 800px; margin: 0 auto; }
+        .setup-card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .setup-header { text-align: center; padding: 20px 0; }
+        .setup-logo { font-size: 2.5rem; color: #0d6efd; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="card setup-card">
+            <div class="card-body">
+                <div class="setup-header">
+                    <div class="setup-logo"><i class="fas fa-database"></i></div>
+                    <h2>ELMS Database Setup</h2>
+                    <p class="text-muted">InfinityFree Compatible Version</p>
+                </div>
+                
+                <?php if ($success): ?>
+                    <div class="alert alert-success">
+                        <h4 class="alert-heading">Setup Complete!</h4>
+                        <p>The database has been configured successfully. You can now use the system.</p>
+                        <hr>
+                        <p class="mb-0">Default login credentials:</p>
+                        <ul>
+                            <li><strong>Admin:</strong> admin@college.edu / password123</li>
+                            <li><strong>Director:</strong> director@college.edu / password123</li>
+                            <li><strong>HOD:</strong> hod@college.edu / password123</li>
+                            <li><strong>Staff:</strong> staff@college.edu / password123</li>
+                        </ul>
+                        <div class="mt-3">
+                            <a href="index.php" class="btn btn-primary">Go to Login Page</a>
+                        </div>
+                    </div>
+                <?php elseif ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
+                    <div class="alert alert-danger">
+                        <h4 class="alert-heading">Setup Failed!</h4>
+                        <p>Please check the error messages above and verify your database credentials.</p>
+                    </div>
+                <?php else: ?>
+                    <form method="post">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> This will create all necessary database tables and insert default data.
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <strong>Database Configuration:</strong><br>
+                            Host: <?php echo DB_SERVER; ?><br>
+                            Database: <?php echo DB_NAME; ?><br>
+                            User: <?php echo DB_USERNAME; ?>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="setup" class="btn btn-primary btn-lg">
+                                <i class="fas fa-play"></i> Setup Database
+                            </button>
+                        </div>
+                    </form>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

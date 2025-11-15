@@ -1,3 +1,35 @@
+<?php
+// Get the base URL for absolute paths
+function getBaseUrl() {
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    
+    // Get the directory path of the current script
+    $scriptPath = $_SERVER['SCRIPT_NAME'];
+    $scriptDir = dirname($scriptPath);
+    
+    // Calculate how many levels up we need to go to reach the root
+    $currentDir = trim($scriptDir, '/');
+    $levels = empty($currentDir) ? 0 : substr_count($currentDir, '/');
+    
+    // Build the base path
+    if ($levels == 0) {
+        $basePath = '/';
+    } else {
+        $pathParts = explode('/', $currentDir);
+        $rootParts = array_slice($pathParts, 0, -$levels);
+        $basePath = '/' . implode('/', $rootParts) . '/';
+    }
+    
+    // Clean up double slashes
+    $basePath = rtrim($basePath, '/') . '/';
+    if ($basePath == '//') $basePath = '/';
+    
+    return $basePath;
+}
+
+$basePath = getBaseUrl();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,42 +40,21 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
-    <?php
-    // Simple and reliable path detection for InfinityFree
-    $currentScript = $_SERVER['SCRIPT_NAME'];
-    $currentDir = dirname($currentScript);
-    
-    // Remove leading slash and count directory levels
-    $currentDir = ltrim($currentDir, '/');
-    $levels = empty($currentDir) ? 0 : substr_count($currentDir, '/');
-    
-    // Create relative path back to root
-    if ($levels == 0) {
-        $basePath = './';
-    } else {
-        $basePath = str_repeat('../', $levels);
-    }
-    ?>
+    <!-- Custom CSS with absolute paths -->
     <link rel="stylesheet" href="<?php echo $basePath; ?>css/style.css">
-    <!-- Responsive Override CSS -->
     <link rel="stylesheet" href="<?php echo $basePath; ?>css/responsive-override.css">
-    <!-- Mobile Table CSS -->
     <link rel="stylesheet" href="<?php echo $basePath; ?>css/mobile-tables.css">
     <!-- Favicon -->
     <link rel="icon" href="<?php echo $basePath; ?>images/favicon.ico" type="image/x-icon">
     
-    <!-- Mobile Detector - Load immediately -->
+    <!-- JavaScript files with absolute paths -->
     <script src="<?php echo $basePath; ?>js/mobile-detector.js"></script>
-    
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Responsive Helpers -->
     <script src="<?php echo $basePath; ?>js/responsive-helpers.js"></script>
-    <!-- Mobile Enhancements -->
     <script src="<?php echo $basePath; ?>js/mobile-enhancements.js"></script>
-    <!-- Notifications -->
     <script src="<?php echo $basePath; ?>js/notifications.js"></script>
+    
+    <!-- Debug: Base Path = <?php echo $basePath; ?> -->
 </head>
 <body>
 
