@@ -18,7 +18,7 @@ $role = $_SESSION['role'];
 if ($role != 'admin' && $role != 'hr_admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: ../dashboards/admin_dashboard.php');
+    header('Location: /dashboards/admin_dashboard.php');
     exit;
 }
 
@@ -441,7 +441,7 @@ include '../includes/header.php';
     </div>
     <h1 class="mt-4 d-none d-md-block">System Configuration</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">System Configuration</li>
     </ol>
     
@@ -743,7 +743,7 @@ include '../includes/header.php';
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Responsive Helpers -->
-<script src="../js/responsive-helpers.js"></script>
+<script src="/js/responsive-helpers.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

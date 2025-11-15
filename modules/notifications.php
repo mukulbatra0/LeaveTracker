@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../login.php');
+    header('Location: /login.php');
     exit;
 }
 
@@ -121,7 +121,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">Notifications</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">Notifications</li>
     </ol>
     

@@ -19,7 +19,7 @@ $allowed_roles = ['admin', 'hr_admin', 'director'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: ../index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -289,7 +289,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">Leave Types Management</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">Leave Types</li>
     </ol>
 

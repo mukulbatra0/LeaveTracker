@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../login.php');
+    header('Location: /login.php');
     exit;
 }
 
@@ -27,7 +27,7 @@ $allowed_roles = ['department_head', 'head_of_department', 'dean', 'principal', 
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page. Current role: " . $role;
     $_SESSION['alert_type'] = "danger";
-    header('Location: ../index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -105,7 +105,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">Department Staff</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">Department Staff</li>
     </ol>
 

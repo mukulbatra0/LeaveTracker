@@ -19,7 +19,7 @@ $allowed_roles = ['hr_admin', 'director', 'admin'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: ../index.php');
+    header('Location: /index.php');
     exit;
 }
 

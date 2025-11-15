@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in and has admin role
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header('Location: ../login.php');
+    header('Location: /login.php');
     exit;
 }
 
@@ -44,7 +44,7 @@ include_once '../includes/header.php';
         <span class="badge bg-danger ms-2"><?php echo count($director_approvals); ?> pending</span>
     </h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">Director Leave Approvals</li>
     </ol>
     
@@ -67,7 +67,7 @@ ass="card mb-4">
                     <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
                     <h4>No Pending Director Approvals</h4>
                     <p class="text-muted">All director leave applications have been processed.</p>
-                    <a href="../index.php" class="btn btn-primary">Back to Dashboard</a>
+                    <a href="/index.php" class="btn btn-primary">Back to Dashboard</a>
                 </div>
             <?php else: ?>
                 <div class="alert alert-info">

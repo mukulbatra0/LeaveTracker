@@ -9,7 +9,7 @@ session_start();
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['alert'] = "Please log in to access your profile";
     $_SESSION['alert_type'] = "warning";
-    header('Location: ../login.php');
+    header('Location: /login.php');
     exit;
 }
 
@@ -268,7 +268,7 @@ $user = $profile->getUserData();
 if (!$user) {
     $_SESSION['alert'] = "User not found";
     $_SESSION['alert_type'] = "danger";
-    header('Location: ../index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -305,7 +305,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4">My Profile</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">My Profile</li>
     </ol>
     
@@ -342,8 +342,8 @@ include '../includes/header.php';
                 <div class="card-body text-center">
                     <!-- Profile Picture -->
                     <div class="mb-3">
-                        <?php if (!empty($user['profile_picture']) && file_exists('../' . $user['profile_picture'])): ?>
-                            <img src="../<?php echo htmlspecialchars($user['profile_picture']); ?>" 
+                        <?php if (!empty($user['profile_picture']) && file_exists($user['profile_picture'])): ?>
+                            <img src="/<?php echo htmlspecialchars($user['profile_picture']); ?>" 
                                  alt="Profile Picture" 
                                  class="img-fluid rounded-circle profile-image">
                         <?php else: ?>

@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../login.php');
+    header('Location: /login.php');
     exit;
 }
 
@@ -23,7 +23,7 @@ $allowed_roles = ['head_of_department', 'director', 'admin'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: ../index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -60,7 +60,7 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
         if ($application['status'] !== 'pending') {
             $_SESSION['alert'] = "This application has already been " . $application['status'] . " and cannot be modified.";
             $_SESSION['alert_type'] = "warning";
-            header('Location: ../index.php');
+            header('Location: /index.php');
             exit;
         }
         
@@ -146,14 +146,14 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
             if (empty($user_id) || $user_id === null) {
                 $_SESSION['alert'] = "Error: User session invalid. Please log out and log in again.";
                 $_SESSION['alert_type'] = "danger";
-                header('Location: ../index.php');
+                header('Location: /index.php');
                 exit;
             }
             
             if (empty($application['user_id']) || $application['user_id'] === null) {
                 $_SESSION['alert'] = "Error: Application user data is missing.";
                 $_SESSION['alert_type'] = "danger";
-                header('Location: ../index.php');
+                header('Location: /index.php');
                 exit;
             }
             
@@ -416,6 +416,6 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
 }
 
 // Redirect back to dashboard
-header('Location: ../index.php');
+header('Location: /index.php');
 exit;
 ?>
