@@ -322,6 +322,61 @@ body {
     text-align: center;
 }
 
+/* Mobile login page fixes */
+@media (max-width: 768px) {
+    .login-container {
+        padding: 0.5rem;
+        max-width: 100%;
+    }
+    
+    .login-card {
+        border-radius: 10px;
+        margin: 0;
+    }
+    
+    .login-header {
+        padding: 1.5rem 1rem;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .login-body {
+        padding: 1.5rem 1rem;
+    }
+    
+    .login-body .form-control {
+        font-size: 16px; /* Prevents zoom on iOS */
+        min-height: 48px;
+        padding: 12px 15px;
+    }
+    
+    .login-body .input-group-text {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+    }
+    
+    .login-body .input-group {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+    }
+    
+    .login-body .input-group .form-control {
+        flex: 1;
+        border-left: none;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    
+    .login-body .input-group-text {
+        border-right: none;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .container-fluid {
@@ -763,16 +818,22 @@ body {
         margin-bottom: 1rem;
     }
     
-    .input-group {
+    /* Keep input groups horizontal on mobile for login forms */
+    .login-body .input-group {
+        flex-direction: row;
+    }
+    
+    /* Only apply column layout to complex forms, not login */
+    .complex-form .input-group {
         flex-direction: column;
     }
     
-    .input-group > * {
+    .complex-form .input-group > * {
         border-radius: 0.375rem !important;
         margin-bottom: 0.5rem;
     }
     
-    .input-group > *:last-child {
+    .complex-form .input-group > *:last-child {
         margin-bottom: 0;
     }
 }

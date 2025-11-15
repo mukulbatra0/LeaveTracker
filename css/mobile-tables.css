@@ -63,19 +63,7 @@
         display: none !important;
     }
     
-    /* Mobile table indicator */
-    .mobile-table-wrapper::before {
-        content: "📱 Mobile View";
-        display: block;
-        background: linear-gradient(135deg, #28a745, #20c997);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 8px 8px 0 0;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-align: center;
-        margin-bottom: 0;
-    }
+    /* Mobile table indicator - REMOVED */
 }
 
 /* Ensure normal table appearance on desktop and tablet */
@@ -128,8 +116,5 @@
         content: none !important;
     }
     
-    /* Remove mobile indicator on desktop */
-    .mobile-table-wrapper::before {
-        display: none !important;
-    }
+    /* Mobile indicator removed */
 }

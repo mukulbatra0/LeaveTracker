@@ -40,8 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add mobile navigation
         enhanceMobileNavigation();
         
-        // Show mobile indicator
-        showMobileIndicator();
+        // Mobile indicator removed
     }
     
     function addMobileClasses() {
@@ -72,11 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 table.parentNode.insertBefore(wrapper, table);
                 wrapper.appendChild(table);
                 
-                // Add mobile indicator
-                const indicator = document.createElement('div');
-                indicator.className = 'mobile-table-indicator';
-                indicator.innerHTML = '<i class="fas fa-mobile-alt"></i> Mobile View Active';
-                wrapper.insertBefore(indicator, table);
+                // Mobile indicator removed
             }
             
             // Add data labels to cells if not present
@@ -172,22 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function showMobileIndicator() {
-        // Add a temporary mobile indicator
-        const indicator = document.createElement('div');
-        indicator.className = 'mobile-active-indicator';
-        indicator.innerHTML = `
-            <div class="mobile-indicator-content">
-                <i class="fas fa-mobile-alt"></i>
-                <span>Mobile Mode Active</span>
-                <small>Screen: ${window.innerWidth}px</small>
-            </div>
-        `;
-        document.body.appendChild(indicator);
-        
-        // Remove after 3 seconds
-        setTimeout(() => {
-            indicator.remove();
-        }, 3000);
+        // Mobile indicator function removed
     }
     
     function handleResize() {
@@ -274,55 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        .mobile-table-indicator {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px 8px 0 0;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-align: center;
-        }
-        
-        .mobile-active-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            padding: 1rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 9999;
-            animation: slideIn 0.3s ease;
-        }
-        
-        .mobile-indicator-content {
-            text-align: center;
-        }
-        
-        .mobile-indicator-content i {
-            font-size: 1.5rem;
-            display: block;
-            margin-bottom: 0.5rem;
-        }
-        
-        .mobile-indicator-content small {
-            display: block;
-            opacity: 0.8;
-            font-size: 0.7rem;
-        }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
+        /* Mobile indicators removed */
         
         .mobile-nav-open .navbar-collapse {
             background: rgba(27, 60, 83, 0.95);

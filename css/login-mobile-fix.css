@@ -1,0 +1,141 @@
+/* Login Page Mobile Fix - Ensures input fields are visible on mobile */
+
+/* Mobile login page specific fixes */
+@media (max-width: 768px) {
+    /* Override any conflicting styles for login page */
+    body.login-page .container-fluid {
+        padding: 0.5rem !important;
+    }
+    
+    body.login-page .login-container {
+        max-width: 100% !important;
+        padding: 0.5rem !important;
+    }
+    
+    body.login-page .login-card {
+        border-radius: 10px !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    
+    body.login-page .login-header {
+        padding: 1.5rem 1rem !important;
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    body.login-page .login-body {
+        padding: 1.5rem 1rem !important;
+    }
+    
+    /* Ensure input groups display properly */
+    body.login-page .input-group {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    body.login-page .input-group-text {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 48px !important;
+        min-height: 48px !important;
+        background-color: #f8f9fa !important;
+        border: 2px solid #e9ecef !important;
+        border-right: none !important;
+        border-radius: 8px 0 0 8px !important;
+        color: #6c757d !important;
+    }
+    
+    body.login-page .form-control {
+        display: block !important;
+        width: 100% !important;
+        flex: 1 !important;
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        min-height: 48px !important;
+        padding: 12px 15px !important;
+        border: 2px solid #e9ecef !important;
+        border-left: none !important;
+        border-radius: 0 8px 8px 0 !important;
+        background-color: #ffffff !important;
+        color: #495057 !important;
+    }
+    
+    body.login-page .form-control:focus {
+        border-color: #3498db !important;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
+        outline: none !important;
+    }
+    
+    body.login-page .form-label {
+        display: block !important;
+        font-weight: 600 !important;
+        color: #2c3e50 !important;
+        margin-bottom: 0.5rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    /* Button fixes */
+    body.login-page .btn {
+        width: 100% !important;
+        padding: 12px 20px !important;
+        font-size: 1rem !important;
+        border-radius: 8px !important;
+        min-height: 48px !important;
+        margin-top: 1rem !important;
+    }
+    
+    /* Invalid feedback */
+    body.login-page .invalid-feedback {
+        display: block !important;
+        width: 100% !important;
+        margin-top: 0.25rem !important;
+        font-size: 0.875rem !important;
+        color: #dc3545 !important;
+    }
+    
+    body.login-page .form-control.is-invalid {
+        border-color: #dc3545 !important;
+    }
+    
+    body.login-page .input-group .form-control.is-invalid {
+        border-left: none !important;
+    }
+    
+    body.login-page .input-group .is-invalid ~ .input-group-text {
+        border-color: #dc3545 !important;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 576px) {
+    body.login-page .login-header {
+        padding: 1rem 0.75rem !important;
+    }
+    
+    body.login-page .login-body {
+        padding: 1rem 0.75rem !important;
+    }
+    
+    body.login-page .login-logo {
+        font-size: 2rem !important;
+    }
+    
+    body.login-page h2 {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    body.login-page .login-header {
+        padding: 1rem !important;
+    }
+    
+    body.login-page .login-logo {
+        font-size: 2rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+}
