@@ -115,10 +115,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // If rejected, update leave application status
                 if ($action == 'rejected') {
                     $update_application_sql = "UPDATE leave_applications 
-                                            SET status = 'rejected', rejection_reason = :rejection_reason, updated_at = NOW() 
+                                            SET status = 'rejected', updated_at = NOW() 
                                             WHERE id = :leave_application_id";
                     $update_application_stmt = $conn->prepare($update_application_sql);
-                    $update_application_stmt->bindParam(':rejection_reason', $comments, PDO::PARAM_STR);
                     $update_application_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
                     $update_application_stmt->execute();
                     
@@ -298,7 +297,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['alert_type'] = "danger";
         }
         
-        header('Location: ./modules/leave_approvals.php');
+        header('Location: ../modules/leave_approvals.php');
         exit;
     }
 }
@@ -350,6 +349,7 @@ include_once '../includes/header.php';
                                     </tr>
                                 </thead>
                                 <tbody>
+                                <?php $modals_html = ''; ?>
                                     <?php foreach ($pending_approvals as $approval): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($approval['first_name'] . ' ' . $approval['last_name']); ?></td>
@@ -380,23 +380,24 @@ include_once '../includes/header.php';
                                             <td><?php echo date('M d, Y', strtotime($approval['created_at'])); ?></td>
                                             <td>
                                                 <div class="btn-group">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#viewModal<?php echo $approval['id']; ?>">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#viewModal<?php echo $approval['approval_id']; ?>">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#approveModal<?php echo $approval['id']; ?>">
+                                                    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#approveModal<?php echo $approval['approval_id']; ?>">
                                                         <i class="fas fa-check"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal<?php echo $approval['id']; ?>">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal<?php echo $approval['approval_id']; ?>">
                                                         <i class="fas fa-times"></i>
                                                     </button>
                                                 </div>
                                                 
+                                                <?php ob_start(); ?>
                                                 <!-- View Modal -->
-                                                <div class="modal fade" id="viewModal<?php echo $approval['id']; ?>" tabindex="-1" aria-labelledby="viewModalLabel<?php echo $approval['id']; ?>" aria-hidden="true">
+                                                <div class="modal fade" id="viewModal<?php echo $approval['approval_id']; ?>" tabindex="-1" aria-labelledby="viewModalLabel<?php echo $approval['approval_id']; ?>" aria-hidden="true">
                                                     <div class="modal-dialog modal-lg">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h5 class="modal-title" id="viewModalLabel<?php echo $approval['id']; ?>">Leave Application Details</h5>
+                                                                <h5 class="modal-title" id="viewModalLabel<?php echo $approval['approval_id']; ?>">Leave Application Details</h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <div class="modal-body">
@@ -507,7 +508,8 @@ include_once '../includes/header.php';
                                                                             $balance_stmt = $conn->prepare($balance_sql);
                                                                             $balance_stmt->bindParam(':user_id', $approval['user_id'], PDO::PARAM_INT);
                                                                             $balance_stmt->bindParam(':leave_type_id', $approval['leave_type_id'], PDO::PARAM_INT);
-                                                                            $balance_stmt->bindParam(':year', date('Y'), PDO::PARAM_STR);
+                                                                            $current_year = date('Y');
+                                                                            $balance_stmt->bindParam(':year', $current_year, PDO::PARAM_STR);
                                                                             $balance_stmt->execute();
                                                                             
                                                                             if ($balance_stmt->rowCount() > 0) {
@@ -541,11 +543,17 @@ include_once '../includes/header.php';
                                                                 </div>
                                                             </div>
                                                             <div class="modal-footer">
+                                                                <a href="view_leave_form.php?id=<?php echo $approval['id']; ?>" class="btn btn-info me-auto" target="_blank">
+                                                                    <i class="fas fa-file-alt me-1"></i> View Form
+                                                                </a>
+                                                                <a href="download_leave_pdf.php?id=<?php echo $approval['id']; ?>" class="btn btn-success" target="_blank">
+                                                                    <i class="fas fa-download me-1"></i> Download PDF
+                                                                </a>
                                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal<?php echo $approval['id']; ?>" data-bs-dismiss="modal">
+                                                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal<?php echo $approval['approval_id']; ?>">
                                                                     <i class="fas fa-check me-1"></i> Approve
                                                                 </button>
-                                                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal<?php echo $approval['id']; ?>" data-bs-dismiss="modal">
+                                                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal<?php echo $approval['approval_id']; ?>">
                                                                     <i class="fas fa-times me-1"></i> Reject
                                                                 </button>
                                                             </div>
@@ -554,20 +562,20 @@ include_once '../includes/header.php';
                                                 </div>
                                                 
                                                 <!-- Approve Modal -->
-                                                <div class="modal fade" id="approveModal<?php echo $approval['id']; ?>" tabindex="-1" aria-labelledby="approveModalLabel<?php echo $approval['id']; ?>" aria-hidden="true">
+                                                <div class="modal fade" id="approveModal<?php echo $approval['approval_id']; ?>" tabindex="-1" aria-labelledby="approveModalLabel<?php echo $approval['approval_id']; ?>" aria-hidden="true">
                                                     <div class="modal-dialog">
                                                         <div class="modal-content">
                                                             <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                                                                 <div class="modal-header">
-                                                                    <h5 class="modal-title" id="approveModalLabel<?php echo $approval['id']; ?>">Approve Leave Application</h5>
+                                                                    <h5 class="modal-title" id="approveModalLabel<?php echo $approval['approval_id']; ?>">Approve Leave Application</h5>
                                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                                 </div>
                                                                 <div class="modal-body">
                                                                     <p>Are you sure you want to approve this leave application for <strong><?php echo htmlspecialchars($approval['first_name'] . ' ' . $approval['last_name']); ?></strong>?</p>
                                                                     
-                                                                    <div class="mb-3">
-                                                                        <label for="approve-comments<?php echo $approval['id']; ?>" class="form-label">Comments (Optional)</label>
-                                                                        <textarea class="form-control" id="approve-comments<?php echo $approval['id']; ?>" name="comments" rows="3"></textarea>
+                                                                <div class="mb-3">
+                                                                        <label for="approve-comments<?php echo $approval['approval_id']; ?>" class="form-label">Comments (Optional)</label>
+                                                                        <textarea class="form-control" id="approve-comments<?php echo $approval['approval_id']; ?>" name="comments" rows="3"></textarea>
                                                                     </div>
                                                                     
                                                                     <input type="hidden" name="approval_id" value="<?php echo $approval['approval_id']; ?>">
@@ -585,20 +593,20 @@ include_once '../includes/header.php';
                                                 </div>
                                                 
                                                 <!-- Reject Modal -->
-                                                <div class="modal fade" id="rejectModal<?php echo $approval['id']; ?>" tabindex="-1" aria-labelledby="rejectModalLabel<?php echo $approval['id']; ?>" aria-hidden="true">
+                                                <div class="modal fade" id="rejectModal<?php echo $approval['approval_id']; ?>" tabindex="-1" aria-labelledby="rejectModalLabel<?php echo $approval['approval_id']; ?>" aria-hidden="true">
                                                     <div class="modal-dialog">
                                                         <div class="modal-content">
                                                             <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                                                                 <div class="modal-header">
-                                                                    <h5 class="modal-title" id="rejectModalLabel<?php echo $approval['id']; ?>">Reject Leave Application</h5>
+                                                                    <h5 class="modal-title" id="rejectModalLabel<?php echo $approval['approval_id']; ?>">Reject Leave Application</h5>
                                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                                 </div>
                                                                 <div class="modal-body">
                                                                     <p>Are you sure you want to reject this leave application for <strong><?php echo htmlspecialchars($approval['first_name'] . ' ' . $approval['last_name']); ?></strong>?</p>
                                                                     
                                                                     <div class="mb-3">
-                                                                        <label for="reject-comments<?php echo $approval['id']; ?>" class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
-                                                                        <textarea class="form-control" id="reject-comments<?php echo $approval['id']; ?>" name="comments" rows="3" required></textarea>
+                                                                        <label for="reject-comments<?php echo $approval['approval_id']; ?>" class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
+                                                                        <textarea class="form-control" id="reject-comments<?php echo $approval['approval_id']; ?>" name="comments" rows="3" required></textarea>
                                                                     </div>
                                                                     
                                                                     <input type="hidden" name="approval_id" value="<?php echo $approval['approval_id']; ?>">
@@ -614,6 +622,7 @@ include_once '../includes/header.php';
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <?php $modals_html .= ob_get_clean(); ?>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -697,6 +706,12 @@ include_once '../includes/header.php';
         </div>
     </div>
 </div>
+
+<?php 
+if (isset($modals_html)) {
+    echo $modals_html;
+}
+?>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

@@ -63,7 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (!$valid_leave_type) {
         $_SESSION['alert'] = "Invalid leave type selected.";
         $_SESSION['alert_type'] = "danger";
-        header('Location: ./modules/apply_leave.php');
+        header('Location: apply_leave.php');
         exit;
     }
     
@@ -75,14 +75,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($start_timestamp < $current_timestamp) {
         $_SESSION['alert'] = "Start date cannot be in the past.";
         $_SESSION['alert_type'] = "danger";
-        header('Location: ./modules/apply_leave.php');
+        header('Location: apply_leave.php');
         exit;
     }
     
     if ($end_timestamp < $start_timestamp) {
         $_SESSION['alert'] = "End date cannot be before start date.";
         $_SESSION['alert_type'] = "danger";
-        header('Location: ./modules/apply_leave.php');
+        header('Location: apply_leave.php');
         exit;
     }
     
@@ -90,7 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (!is_numeric($days) || $days <= 0) {
         $_SESSION['alert'] = "Invalid number of days.";
         $_SESSION['alert_type'] = "danger";
-        header('Location: ./modules/apply_leave.php');
+        header('Location: apply_leave.php');
         exit;
     }
     
@@ -99,19 +99,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($days != 0.5) {
             $_SESSION['alert'] = "Half day leave must be exactly 0.5 days.";
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/apply_leave.php');
+            header('Location: apply_leave.php');
             exit;
         }
         if (!in_array($half_day_period, ['first_half', 'second_half'])) {
             $_SESSION['alert'] = "Please select first half or second half for half day leave.";
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/apply_leave.php');
+            header('Location: apply_leave.php');
             exit;
         }
         if ($start_date != $end_date) {
             $_SESSION['alert'] = "Half day leave must have same start and end date.";
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/apply_leave.php');
+            header('Location: apply_leave.php');
             exit;
         }
     }
@@ -131,7 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($days > $balance) {
             $_SESSION['alert'] = "Insufficient leave balance. You have {$balance} days available.";
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/apply_leave.php');
+            header('Location: apply_leave.php');
             exit;
         }
     } else {
@@ -154,7 +154,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($days > $max_days) {
             $_SESSION['alert'] = "Insufficient leave balance. You have {$max_days} days available.";
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/apply_leave.php');
+            header('Location: apply_leave.php');
             exit;
         }
     }
@@ -165,7 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!isset($_FILES['attachment']) || $_FILES['attachment']['error'] == UPLOAD_ERR_NO_FILE) {
             $_SESSION['alert'] = "Attachment is required for this leave type.";
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/apply_leave.php');
+            header('Location: apply_leave.php');
             exit;
         }
         
@@ -191,7 +191,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!in_array($file_ext, $allowed_types)) {
             $_SESSION['alert'] = "Invalid file type. Allowed types: " . implode(', ', $allowed_types);
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/apply_leave.php');
+            header('Location: apply_leave.php');
             exit;
         }
         
@@ -199,7 +199,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($file_size > $max_size) {
             $_SESSION['alert'] = "File is too large. Maximum size is {$max_size} bytes.";
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/apply_leave.php');
+            header('Location: apply_leave.php');
             exit;
         }
         
@@ -218,7 +218,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             $_SESSION['alert'] = "Failed to upload file.";
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/apply_leave.php');
+            header('Location: apply_leave.php');
             exit;
         }
     }
@@ -246,12 +246,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $leave_application_id = $conn->lastInsertId();
         
-        // Determine approval workflow based on applicant's role
+        // Get approval chain setting from system configuration
+        $approval_chain_sql = "SELECT setting_value FROM system_settings WHERE setting_key = 'default_approval_chain'";
+        $approval_chain_stmt = $conn->prepare($approval_chain_sql);
+        $approval_chain_stmt->execute();
+        $approval_chain_result = $approval_chain_stmt->fetch();
+        $approval_chain = $approval_chain_result ? $approval_chain_result['setting_value'] : 'hod,director';
+        
+        // Determine approval workflow based on applicant's role and approval chain setting
         $applicant_role = $_SESSION['role'];
         $applicant_user_id = $_SESSION['user_id'];
         
         if ($applicant_role == 'director') {
-            // Director applications go directly to admin/hr_admin for approval
+            // Director applications always go to admin for approval
             $admin_sql = "SELECT id, email, first_name, last_name FROM users WHERE role IN ('admin', 'hr_admin') AND status = 'active' ORDER BY role = 'admin' DESC LIMIT 1";
             $admin_stmt = $conn->prepare($admin_sql);
             $admin_stmt->execute();
@@ -290,35 +297,66 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['alert_type'] = "warning";
             }
         } elseif ($applicant_role == 'head_of_department') {
-            // Head of Department applications go directly to Director for approval
-            $director_sql = "SELECT id, email, first_name, last_name FROM users WHERE role = 'director' AND status = 'active' LIMIT 1";
-            $director_stmt = $conn->prepare($director_sql);
-            $director_stmt->execute();
-            
-            if ($director_stmt->rowCount() > 0) {
-                $director = $director_stmt->fetch();
+            // HOD applications depend on approval chain setting
+            if ($approval_chain == 'hod') {
+                // If chain is only HOD, then HOD leave goes to Admin
+                $admin_sql = "SELECT id, email, first_name, last_name FROM users WHERE role IN ('admin', 'hr_admin') AND status = 'active' ORDER BY role = 'admin' DESC LIMIT 1";
+                $admin_stmt = $conn->prepare($admin_sql);
+                $admin_stmt->execute();
                 
-                // Create approval record for director
-                $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
-                                VALUES (:leave_application_id, :approver_id, 'director')";
-                $approval_stmt = $conn->prepare($approval_sql);
-                $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
-                $approval_stmt->bindParam(':approver_id', $director['id'], PDO::PARAM_INT);
-                $approval_stmt->execute();
+                if ($admin_stmt->rowCount() > 0) {
+                    $admin = $admin_stmt->fetch();
+                    
+                    // Create approval record for admin
+                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
+                                    VALUES (:leave_application_id, :approver_id, 'admin')";
+                    $approval_stmt = $conn->prepare($approval_sql);
+                    $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
+                    $approval_stmt->bindParam(':approver_id', $admin['id'], PDO::PARAM_INT);
+                    $approval_stmt->execute();
+                    
+                    // Create notification for admin
+                    $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
+                                        VALUES (:user_id, 'HOD Leave Approval Required', 'A Head of Department leave application requires your approval.', 'leave_application', :related_id)";
+                    $notification_stmt = $conn->prepare($notification_sql);
+                    $notification_stmt->bindParam(':user_id', $admin['id'], PDO::PARAM_INT);
+                    $notification_stmt->bindParam(':related_id', $leave_application_id, PDO::PARAM_INT);
+                    $notification_stmt->execute();
+                    
+                    $approver_info = $admin;
+                    $approver_type = 'Admin';
+                }
+            } else {
+                // If chain includes Director, HOD leave goes to Director
+                $director_sql = "SELECT id, email, first_name, last_name FROM users WHERE role = 'director' AND status = 'active' LIMIT 1";
+                $director_stmt = $conn->prepare($director_sql);
+                $director_stmt->execute();
                 
-                // Create notification for director
-                $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
-                                    VALUES (:user_id, 'HOD Leave Approval Required', 'A Head of Department leave application requires your approval.', 'leave_application', :related_id)";
-                $notification_stmt = $conn->prepare($notification_sql);
-                $notification_stmt->bindParam(':user_id', $director['id'], PDO::PARAM_INT);
-                $notification_stmt->bindParam(':related_id', $leave_application_id, PDO::PARAM_INT);
-                $notification_stmt->execute();
-                
-                $approver_info = $director;
-                $approver_type = 'Director';
+                if ($director_stmt->rowCount() > 0) {
+                    $director = $director_stmt->fetch();
+                    
+                    // Create approval record for director
+                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
+                                    VALUES (:leave_application_id, :approver_id, 'director')";
+                    $approval_stmt = $conn->prepare($approval_sql);
+                    $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
+                    $approval_stmt->bindParam(':approver_id', $director['id'], PDO::PARAM_INT);
+                    $approval_stmt->execute();
+                    
+                    // Create notification for director
+                    $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
+                                        VALUES (:user_id, 'HOD Leave Approval Required', 'A Head of Department leave application requires your approval.', 'leave_application', :related_id)";
+                    $notification_stmt = $conn->prepare($notification_sql);
+                    $notification_stmt->bindParam(':user_id', $director['id'], PDO::PARAM_INT);
+                    $notification_stmt->bindParam(':related_id', $leave_application_id, PDO::PARAM_INT);
+                    $notification_stmt->execute();
+                    
+                    $approver_info = $director;
+                    $approver_type = 'Director';
+                }
             }
         } else {
-            // Regular staff - normal workflow (HOD then Director)
+            // Regular staff - workflow depends on approval chain setting
             $dept_id = $_SESSION['department_id'];
             $dept_head_sql = "SELECT head_id FROM departments WHERE id = :dept_id";
             $dept_head_stmt = $conn->prepare($dept_head_sql);
@@ -390,7 +428,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $_SESSION['alert'] = "Error: " . $e->getMessage();
         $_SESSION['alert_type'] = "danger";
-        header('Location: ./modules/apply_leave.php');
+        header('Location: apply_leave.php');
         exit;
     }
 }

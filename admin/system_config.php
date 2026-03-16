@@ -401,7 +401,7 @@ $fiscal_year_start = getSetting($conn, 'fiscal_year_start', '04-01'); // Default
 $academic_year_start = getSetting($conn, 'academic_year_start', '08-01'); // Default: August 1
 
 // Leave settings
-$default_approval_chain = getSetting($conn, 'default_approval_chain', 'department_head,dean,principal,hr_admin');
+$default_approval_chain = getSetting($conn, 'default_approval_chain', 'hod,director');
 $max_consecutive_leave_days = getSetting($conn, 'max_consecutive_leave_days', '30');
 $min_days_before_application = getSetting($conn, 'min_days_before_application', '3');
 $allow_weekend_holidays = getSetting($conn, 'allow_weekend_holidays', '0');
@@ -555,10 +555,8 @@ include '../includes/header.php';
                                     <div class="col-lg-6 col-md-12 mb-3">
                                         <label for="default_approval_chain" class="form-label">Default Approval Chain</label>
                                         <select class="form-select" id="default_approval_chain" name="default_approval_chain">
-                                            <option value="department_head,hr_admin" <?php echo $default_approval_chain == 'department_head,hr_admin' ? 'selected' : ''; ?>>Department Head → HR Admin</option>
-                                            <option value="department_head,dean,hr_admin" <?php echo $default_approval_chain == 'department_head,dean,hr_admin' ? 'selected' : ''; ?>>Department Head → Dean → HR Admin</option>
-                                            <option value="department_head,dean,principal,hr_admin" <?php echo $default_approval_chain == 'department_head,dean,principal,hr_admin' ? 'selected' : ''; ?>>Department Head → Dean → Principal → HR Admin</option>
-                                            <option value="department_head,principal,hr_admin" <?php echo $default_approval_chain == 'department_head,principal,hr_admin' ? 'selected' : ''; ?>>Department Head → Principal → HR Admin</option>
+                                            <option value="hod" <?php echo $default_approval_chain == 'hod' ? 'selected' : ''; ?>>Staff → HOD</option>
+                                            <option value="hod,director" <?php echo $default_approval_chain == 'hod,director' ? 'selected' : ''; ?>>Staff → HOD → Director</option>
                                         </select>
                                         <div class="form-text">Default approval workflow for leave applications</div>
                                     </div>

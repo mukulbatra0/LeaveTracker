@@ -135,6 +135,12 @@ include_once '../includes/header.php';
                     </div>
                     
                     <div class="text-end">
+                        <a href="view_leave_form.php?id=<?php echo $leave_id; ?>" class="btn btn-info" target="_blank">
+                            <i class="fas fa-file-alt me-1"></i>View Form
+                        </a>
+                        <a href="download_leave_pdf.php?id=<?php echo $leave_id; ?>" class="btn btn-success" target="_blank">
+                            <i class="fas fa-download me-1"></i>Download PDF
+                        </a>
                         <button onclick="history.back()" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-1"></i>Back
                         </button>

@@ -23,7 +23,7 @@ $allowed_roles = ['head_of_department', 'director', 'admin'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: /index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -60,7 +60,7 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
         if ($application['status'] !== 'pending') {
             $_SESSION['alert'] = "This application has already been " . $application['status'] . " and cannot be modified.";
             $_SESSION['alert_type'] = "warning";
-            header('Location: /index.php');
+            header('Location: ../index.php');
             exit;
         }
         
@@ -146,14 +146,14 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
             if (empty($user_id) || $user_id === null) {
                 $_SESSION['alert'] = "Error: User session invalid. Please log out and log in again.";
                 $_SESSION['alert_type'] = "danger";
-                header('Location: /index.php');
+                header('Location: ../index.php');
                 exit;
             }
             
             if (empty($application['user_id']) || $application['user_id'] === null) {
                 $_SESSION['alert'] = "Error: Application user data is missing.";
                 $_SESSION['alert_type'] = "danger";
-                header('Location: /index.php');
+                header('Location: ../index.php');
                 exit;
             }
             
@@ -203,8 +203,30 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
                         $approval_stmt->execute();
                     }
                     
-                    // Check if this is the final approval (director approval or admin approval)
-                    if ($role == 'director' || $role == 'admin') {
+                    // Get approval chain setting to determine if this is final approval
+                    $approval_chain_sql = "SELECT setting_value FROM system_settings WHERE setting_key = 'default_approval_chain'";
+                    $approval_chain_stmt = $conn->prepare($approval_chain_sql);
+                    $approval_chain_stmt->execute();
+                    $approval_chain_result = $approval_chain_stmt->fetch();
+                    $approval_chain = $approval_chain_result ? $approval_chain_result['setting_value'] : 'hod,director';
+                    
+                    // Determine if this is the final approval
+                    $is_final_approval = false;
+                    
+                    if ($role == 'admin') {
+                        // Admin approval is always final
+                        $is_final_approval = true;
+                    } elseif ($role == 'director') {
+                        // Director approval is always final
+                        $is_final_approval = true;
+                    } elseif ($role == 'head_of_department') {
+                        // HOD approval is final only if approval chain is 'hod' (single level)
+                        if ($approval_chain == 'hod') {
+                            $is_final_approval = true;
+                        }
+                    }
+                    
+                    if ($is_final_approval) {
                         // Final approval - update application status
                         $update_app_sql = "UPDATE leave_applications SET status = 'approved' WHERE id = :app_id";
                         $update_app_stmt = $conn->prepare($update_app_sql);
@@ -254,7 +276,8 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
                         
                         $message = "Leave application has been fully approved.";
                     } else {
-                        // Intermediate approval - notify next approver (director)
+                        // Intermediate approval (HOD approved, needs Director approval)
+                        // Forward to Director
                         $director_sql = "SELECT id, email, first_name, last_name FROM users WHERE role = 'director' AND status = 'active' LIMIT 1";
                         $director_stmt = $conn->prepare($director_sql);
                         $director_stmt->execute();
@@ -262,6 +285,25 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
                         if ($director_stmt->rowCount() > 0) {
                             $director = $director_stmt->fetch();
                             $director_id = $director['id'];
+                            
+                            // Create approval record for director if it doesn't exist
+                            $check_director_approval_sql = "SELECT COUNT(*) as count FROM leave_approvals 
+                                                           WHERE leave_application_id = :app_id 
+                                                           AND approver_level = 'director'";
+                            $check_director_approval_stmt = $conn->prepare($check_director_approval_sql);
+                            $check_director_approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                            $check_director_approval_stmt->execute();
+                            $director_approval_exists = $check_director_approval_stmt->fetch()['count'];
+                            
+                            if ($director_approval_exists == 0) {
+                                // Create new director approval record
+                                $create_director_approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, status) 
+                                                                VALUES (:app_id, :approver_id, 'director', 'pending')";
+                                $create_director_approval_stmt = $conn->prepare($create_director_approval_sql);
+                                $create_director_approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                                $create_director_approval_stmt->bindParam(':approver_id', $director_id, PDO::PARAM_INT);
+                                $create_director_approval_stmt->execute();
+                            }
                             
                             // Validate director ID before inserting notification
                             if (!empty($director_id) && $director_id > 0 && $application_id > 0) {
@@ -416,6 +458,6 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
 }
 
 // Redirect back to dashboard
-header('Location: /index.php');
+header('Location: ../index.php');
 exit;
 ?>

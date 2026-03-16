@@ -30,10 +30,11 @@ $pending_approvals_sql = "SELECT la.id, u.first_name, u.last_name, u.employee_id
                          WHERE u.department_id = :dept_id 
                          AND u.role = 'staff'
                          AND la.status = 'pending'
-                         AND NOT EXISTS (
+                         AND EXISTS (
                              SELECT 1 FROM leave_approvals lap 
                              WHERE lap.leave_application_id = la.id 
                              AND lap.approver_level = 'head_of_department'
+                             AND lap.status = 'pending'
                          )
                          ORDER BY la.created_at ASC";
 $pending_approvals_stmt = $conn->prepare($pending_approvals_sql);
@@ -203,14 +204,17 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                                             <td><?php echo (new DateTime($application['created_at']))->format('M d'); ?></td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    <button class="btn btn-success btn-sm" onclick="approveLeave(<?php echo $application['id']; ?>)">
+                                                    <a href="./modules/view_leave_form.php?id=<?php echo $application['id']; ?>" class="btn btn-info btn-sm" target="_blank" title="View Form">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="./modules/download_leave_pdf.php?id=<?php echo $application['id']; ?>" class="btn btn-success btn-sm" target="_blank" title="Download PDF">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                    <button class="btn btn-success btn-sm" onclick="approveLeave(<?php echo $application['id']; ?>)" title="Approve">
                                                         <i class="fas fa-check"></i>
                                                     </button>
-                                                    <button class="btn btn-danger btn-sm" onclick="rejectLeave(<?php echo $application['id']; ?>)">
+                                                    <button class="btn btn-danger btn-sm" onclick="rejectLeave(<?php echo $application['id']; ?>)" title="Reject">
                                                         <i class="fas fa-times"></i>
-                                                    </button>
-                                                    <button class="btn btn-info btn-sm" onclick="viewDetails(<?php echo $application['id']; ?>)">
-                                                        <i class="fas fa-eye"></i>
                                                     </button>
                                                 </div>
                                             </td>
@@ -241,6 +245,12 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                     <div class="d-grid gap-2">
                         <a href="./modules/apply_leave.php" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus me-1"></i>Apply for Leave
+                        </a>
+                        <a href="./modules/leave_approvals.php" class="btn btn-warning btn-sm">
+                            <i class="fas fa-tasks me-1"></i>Pending Approvals
+                        </a>
+                        <a href="./modules/department_applications.php" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-list me-1"></i>All Department Applications
                         </a>
                         <a href="./modules/department_staff.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-users me-1"></i>Department Staff
@@ -296,7 +306,9 @@ $leave_balances = $leave_balances_stmt->fetchAll();
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Department Applications</h5>
-                    <a href="./modules/leave_approvals.php" class="btn btn-sm btn-outline-primary">View All</a>
+                    <a href="./modules/department_applications.php" class="btn btn-sm btn-primary">
+                        <i class="fas fa-list me-1"></i>View All Applications
+                    </a>
                 </div>
                 <div class="card-body">
                     <?php if(count($recent_applications) > 0): ?>
@@ -310,6 +322,7 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                                         <th>Days</th>
                                         <th>Status</th>
                                         <th>Applied</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
