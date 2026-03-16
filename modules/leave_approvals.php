@@ -369,7 +369,14 @@ include_once '../includes/header.php';
                                                     }
                                                 ?>
                                             </td>
-                                            <td><?php echo $approval['days']; ?></td>
+                                            <td>
+                                                <?php echo $approval['days']; ?>
+                                                <?php if ($approval['is_half_day']): ?>
+                                                    <br><small class="badge bg-info">
+                                                        <?php echo $approval['half_day_period'] == 'first_half' ? '1st Half' : '2nd Half'; ?>
+                                                    </small>
+                                                <?php endif; ?>
+                                            </td>
                                             <td><?php echo date('M d, Y', strtotime($approval['created_at'])); ?></td>
                                             <td>
                                                 <div class="btn-group">
@@ -431,7 +438,14 @@ include_once '../includes/header.php';
                                                                             </tr>
                                                                             <tr>
                                                                                 <th>Days:</th>
-                                                                                <td><?php echo $approval['days']; ?></td>
+                                                                                <td>
+                                                                                    <?php echo $approval['days']; ?>
+                                                                                    <?php if ($approval['is_half_day']): ?>
+                                                                                        <span class="badge bg-info ms-2">
+                                                                                            <?php echo $approval['half_day_period'] == 'first_half' ? 'First Half (Morning)' : 'Second Half (Afternoon)'; ?>
+                                                                                        </span>
+                                                                                    <?php endif; ?>
+                                                                                </td>
                                                                             </tr>
                                                                             <tr>
                                                                                 <th>Applied On:</th>
@@ -446,6 +460,16 @@ include_once '../includes/header.php';
                                                                     <div class="col-md-6">
                                                                         <h6>Reason for Leave</h6>
                                                                         <p><?php echo nl2br(htmlspecialchars($approval['reason'])); ?></p>
+                                                                        
+                                                                        <?php if ($approval['mode_of_transport']): ?>
+                                                                            <h6 class="mt-3">Mode of Transport for Official Work</h6>
+                                                                            <p><?php echo nl2br(htmlspecialchars($approval['mode_of_transport'])); ?></p>
+                                                                        <?php endif; ?>
+                                                                        
+                                                                        <?php if ($approval['work_adjustment']): ?>
+                                                                            <h6 class="mt-3">Work Adjustment During Leave Period</h6>
+                                                                            <p><?php echo nl2br(htmlspecialchars($approval['work_adjustment'])); ?></p>
+                                                                        <?php endif; ?>
                                                                         
                                                                         <?php if ($approval['attachment']): ?>
                                                                             <h6 class="mt-3">Attachment</h6>

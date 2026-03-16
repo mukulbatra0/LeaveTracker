@@ -44,6 +44,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $end_date = trim($_POST['end_date']);
     $days = trim($_POST['days']);
     $reason = trim($_POST['reason']);
+    $is_half_day = isset($_POST['is_half_day']) ? 1 : 0;
+    $half_day_period = $is_half_day ? trim($_POST['half_day_period']) : null;
+    $mode_of_transport = !empty($_POST['mode_of_transport']) ? trim($_POST['mode_of_transport']) : null;
+    $work_adjustment = !empty($_POST['work_adjustment']) ? trim($_POST['work_adjustment']) : null;
     
     // Validate leave type
     $valid_leave_type = false;
@@ -88,6 +92,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['alert_type'] = "danger";
         header('Location: ./modules/apply_leave.php');
         exit;
+    }
+    
+    // Validate half day settings
+    if ($is_half_day) {
+        if ($days != 0.5) {
+            $_SESSION['alert'] = "Half day leave must be exactly 0.5 days.";
+            $_SESSION['alert_type'] = "danger";
+            header('Location: ./modules/apply_leave.php');
+            exit;
+        }
+        if (!in_array($half_day_period, ['first_half', 'second_half'])) {
+            $_SESSION['alert'] = "Please select first half or second half for half day leave.";
+            $_SESSION['alert_type'] = "danger";
+            header('Location: ./modules/apply_leave.php');
+            exit;
+        }
+        if ($start_date != $end_date) {
+            $_SESSION['alert'] = "Half day leave must have same start and end date.";
+            $_SESSION['alert_type'] = "danger";
+            header('Location: ./modules/apply_leave.php');
+            exit;
+        }
     }
     
     // Check leave balance
@@ -202,8 +228,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     try {
         // Insert leave application
-        $insert_sql = "INSERT INTO leave_applications (user_id, leave_type_id, start_date, end_date, days, reason, attachment) 
-                      VALUES (:user_id, :leave_type_id, :start_date, :end_date, :days, :reason, :attachment)";
+        $insert_sql = "INSERT INTO leave_applications (user_id, leave_type_id, start_date, end_date, days, reason, attachment, is_half_day, half_day_period, mode_of_transport, work_adjustment) 
+                      VALUES (:user_id, :leave_type_id, :start_date, :end_date, :days, :reason, :attachment, :is_half_day, :half_day_period, :mode_of_transport, :work_adjustment)";
         $insert_stmt = $conn->prepare($insert_sql);
         $insert_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
         $insert_stmt->bindParam(':leave_type_id', $leave_type_id, PDO::PARAM_INT);
@@ -212,6 +238,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $insert_stmt->bindParam(':days', $days, PDO::PARAM_STR);
         $insert_stmt->bindParam(':reason', $reason, PDO::PARAM_STR);
         $insert_stmt->bindParam(':attachment', $attachment, PDO::PARAM_STR);
+        $insert_stmt->bindParam(':is_half_day', $is_half_day, PDO::PARAM_INT);
+        $insert_stmt->bindParam(':half_day_period', $half_day_period, PDO::PARAM_STR);
+        $insert_stmt->bindParam(':mode_of_transport', $mode_of_transport, PDO::PARAM_STR);
+        $insert_stmt->bindParam(':work_adjustment', $work_adjustment, PDO::PARAM_STR);
         $insert_stmt->execute();
         
         $leave_application_id = $conn->lastInsertId();
@@ -382,59 +412,159 @@ include_once '../includes/header.php';
                             <i class="fas fa-exclamation-triangle me-2"></i> No leave types available for your role.
                         </div>
                     <?php else: ?>
+                        <?php
+                        // Get user details
+                        $user_details_sql = "SELECT u.first_name, u.last_name, u.email, u.role, d.name as department_name 
+                                            FROM users u 
+                                            LEFT JOIN departments d ON u.department_id = d.id 
+                                            WHERE u.id = :user_id";
+                        $user_details_stmt = $conn->prepare($user_details_sql);
+                        $user_details_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                        $user_details_stmt->execute();
+                        $user_details = $user_details_stmt->fetch();
+                        
+                        // Format role for display
+                        $role_display = ucwords(str_replace('_', ' ', $user_details['role']));
+                        ?>
                         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="leave_type_id" class="form-label">Leave Type <span class="text-danger">*</span></label>
-                                <select class="form-select" id="leave_type_id" name="leave_type_id" required>
-                                    <option value="">Select Leave Type</option>
-                                    <?php foreach($leave_types as $leave_type): ?>
-                                        <option value="<?php echo $leave_type['id']; ?>" data-requires-attachment="<?php echo $leave_type['requires_attachment']; ?>">
-                                            <?php echo htmlspecialchars($leave_type['name']); ?>
-                                            <?php if(!empty($leave_type['description'])): ?>
-                                                - <?php echo htmlspecialchars($leave_type['description']); ?>
-                                            <?php endif; ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="form-text" id="attachment-note" style="display: none;">
-                                    <i class="fas fa-info-circle me-1"></i> This leave type requires supporting documentation.
+                            <!-- Applicant Information Section -->
+                            <div class="mb-4">
+                                <h5 class="border-bottom pb-2 mb-3">Applicant Information</h5>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="applicant_name" class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="applicant_name" 
+                                               value="<?php echo htmlspecialchars($user_details['first_name'] . ' ' . $user_details['last_name']); ?>" 
+                                               readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="designation" class="form-label">Designation</label>
+                                        <input type="text" class="form-control" id="designation" 
+                                               value="<?php echo htmlspecialchars($role_display); ?>" 
+                                               readonly>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="department" class="form-label">Department</label>
+                                        <input type="text" class="form-control" id="department" 
+                                               value="<?php echo htmlspecialchars($user_details['department_name'] ?? 'N/A'); ?>" 
+                                               readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="application_date" class="form-label">Application Date</label>
+                                        <input type="text" class="form-control" id="application_date" 
+                                               value="<?php echo date('d/m/Y'); ?>" 
+                                               readonly>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="start_date" name="start_date" required min="<?php echo date('Y-m-d'); ?>">
+                            <!-- Leave Details Section -->
+                            <div class="mb-4">
+                                <h5 class="border-bottom pb-2 mb-3">Leave Details</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="leave_type_id" class="form-label">Type of Leave Required <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="leave_type_id" name="leave_type_id" required>
+                                        <option value="">Select Leave Type</option>
+                                        <?php foreach($leave_types as $leave_type): ?>
+                                            <option value="<?php echo $leave_type['id']; ?>" data-requires-attachment="<?php echo $leave_type['requires_attachment']; ?>">
+                                                <?php echo htmlspecialchars($leave_type['name']); ?>
+                                                <?php if(!empty($leave_type['description'])): ?>
+                                                    - <?php echo htmlspecialchars($leave_type['description']); ?>
+                                                <?php endif; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="form-text" id="attachment-note" style="display: none;">
+                                        <i class="fas fa-info-circle me-1"></i> This leave type requires supporting documentation.
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="end_date" class="form-label">End Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="end_date" name="end_date" required min="<?php echo date('Y-m-d'); ?>">
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_half_day" name="is_half_day" value="1">
+                                        <label class="form-check-label" for="is_half_day">
+                                            Apply for Half Day Leave
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="days" class="form-label">Number of Days <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="days" name="days" step="0.5" min="0.5" required readonly>
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i> This will be calculated automatically based on your date selection.
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label for="start_date" class="form-label">From Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date" required min="<?php echo date('Y-m-d'); ?>">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="end_date" class="form-label">To Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" id="end_date" name="end_date" required min="<?php echo date('Y-m-d'); ?>">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="days" class="form-label">Number of Days <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="days" name="days" step="0.5" min="0.5" required readonly>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3" id="half_day_period_field" style="display: none;">
+                                    <label class="form-label">Select Half Day Period <span class="text-danger">*</span></label>
+                                    <div class="d-flex gap-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="half_day_period" id="first_half" value="first_half">
+                                            <label class="form-check-label" for="first_half">
+                                                First Half (Morning)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="half_day_period" id="second_half" value="second_half">
+                                            <label class="form-check-label" for="second_half">
+                                                Second Half (Afternoon)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-text mb-3">
+                                    <i class="fas fa-info-circle me-1"></i> Number of days will be calculated automatically based on your date selection.
                                 </div>
                                 <div class="alert alert-warning mt-2" id="balance-warning" style="display: none;"></div>
                                 <div class="alert alert-info mt-2" id="holiday-note" style="display: none;"></div>
                                 <div class="alert alert-warning mt-2" id="academic-event-warning" style="display: none;"></div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="reason" class="form-label">Reason for Leave <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
-                            </div>
-                            
-                            <div class="mb-3" id="attachment-field" style="display: none;">
-                                <label for="attachment" class="form-label">Supporting Document <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control" id="attachment" name="attachment" onchange="previewDocument(this)">
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i> Allowed file types: pdf, doc, docx, jpg, jpeg, png. Maximum size: 5MB.
+                                
+                                <div class="mb-3">
+                                    <label for="reason" class="form-label">Reason for Leave <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="reason" name="reason" rows="4" 
+                                              placeholder="Please provide detailed reason for your leave application..." required></textarea>
                                 </div>
-                                <div id="document-preview" class="mt-3"></div>
+                                
+                                <div class="mb-3">
+                                    <label for="mode_of_transport" class="form-label">Mode of Transport for Official Work (if any)</label>
+                                    <input type="text" class="form-control" id="mode_of_transport" name="mode_of_transport" 
+                                           placeholder="e.g., Personal vehicle, Public transport, Flight, etc.">
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i> Specify if you'll be traveling for official work during leave period.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="work_adjustment" class="form-label">Work Adjustment During Leave Period (if any)</label>
+                                    <textarea class="form-control" id="work_adjustment" name="work_adjustment" rows="3" 
+                                              placeholder="Mention any work arrangements, handover details, or coverage plans..."></textarea>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i> Describe how your work will be managed during your absence.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3" id="attachment-field" style="display: none;">
+                                    <label for="attachment" class="form-label">Supporting Document <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control" id="attachment" name="attachment" onchange="previewDocument(this)">
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i> Allowed file types: pdf, doc, docx, jpg, jpeg, png. Maximum size: 5MB.
+                                    </div>
+                                    <div id="document-preview" class="mt-3"></div>
+                                </div>
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -473,10 +603,51 @@ include_once '../includes/header.php';
             }
         });
         
+        // Handle half day checkbox
+        var isHalfDayCheckbox = document.getElementById('is_half_day');
+        var halfDayPeriodField = document.getElementById('half_day_period_field');
+        var startDateInput = document.getElementById('start_date');
+        var endDateInput = document.getElementById('end_date');
+        var daysInput = document.getElementById('days');
+        var firstHalfRadio = document.getElementById('first_half');
+        var secondHalfRadio = document.getElementById('second_half');
+        
+        isHalfDayCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                halfDayPeriodField.style.display = 'block';
+                firstHalfRadio.required = true;
+                secondHalfRadio.required = true;
+                
+                // Set days to 0.5 and make end date same as start date
+                daysInput.value = '0.5';
+                if (startDateInput.value) {
+                    endDateInput.value = startDateInput.value;
+                    endDateInput.disabled = true;
+                }
+            } else {
+                halfDayPeriodField.style.display = 'none';
+                firstHalfRadio.required = false;
+                secondHalfRadio.required = false;
+                firstHalfRadio.checked = false;
+                secondHalfRadio.checked = false;
+                endDateInput.disabled = false;
+                
+                // Recalculate days
+                calculateDays();
+            }
+        });
+        
         // Calculate days automatically
         function calculateDays() {
-            var startDate = document.getElementById('start_date').value;
-            var endDate = document.getElementById('end_date').value;
+            var isHalfDay = isHalfDayCheckbox.checked;
+            
+            if (isHalfDay) {
+                daysInput.value = '0.5';
+                return;
+            }
+            
+            var startDate = startDateInput.value;
+            var endDate = endDateInput.value;
             
             if (startDate && endDate) {
                 var start = new Date(startDate);
@@ -485,22 +656,31 @@ include_once '../includes/header.php';
                 if (end >= start) {
                     var timeDiff = end.getTime() - start.getTime();
                     var daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
-                    document.getElementById('days').value = daysDiff;
+                    daysInput.value = daysDiff;
                 } else {
-                    document.getElementById('days').value = '';
+                    daysInput.value = '';
                 }
             } else {
-                document.getElementById('days').value = '';
+                daysInput.value = '';
             }
         }
         
         // Bind date change events
-        document.getElementById('start_date').addEventListener('change', function() {
-            calculateDays();
-            document.getElementById('end_date').setAttribute('min', this.value);
+        startDateInput.addEventListener('change', function() {
+            if (isHalfDayCheckbox.checked) {
+                endDateInput.value = this.value;
+                daysInput.value = '0.5';
+            } else {
+                calculateDays();
+                endDateInput.setAttribute('min', this.value);
+            }
         });
         
-        document.getElementById('end_date').addEventListener('change', calculateDays);
+        endDateInput.addEventListener('change', function() {
+            if (!isHalfDayCheckbox.checked) {
+                calculateDays();
+            }
+        });
     });
 </script>
 

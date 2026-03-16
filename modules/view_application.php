@@ -191,6 +191,28 @@ include_once '../includes/header.php';
                             </div>
                         </div>
                     </div>
+                    
+                    <?php if (!empty($application['mode_of_transport'])): ?>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <strong>Mode of Transport for Official Work:</strong><br>
+                            <div class="border rounded p-2 bg-light">
+                                <?php echo nl2br(htmlspecialchars($application['mode_of_transport'])); ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($application['work_adjustment'])): ?>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <strong>Work Adjustment During Leave Period:</strong><br>
+                            <div class="border rounded p-2 bg-light">
+                                <?php echo nl2br(htmlspecialchars($application['work_adjustment'])); ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
 
                     <div class="row mb-3">
                         <div class="col-md-6">

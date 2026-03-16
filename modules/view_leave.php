@@ -92,6 +92,11 @@ include_once '../includes/header.php';
                         <div class="col-md-4">
                             <strong>Duration:</strong><br>
                             <?php echo $leave['days']; ?> day(s)
+                            <?php if ($leave['is_half_day']): ?>
+                                <br><span class="badge bg-info mt-1">
+                                    <?php echo $leave['half_day_period'] == 'first_half' ? 'First Half (Morning)' : 'Second Half (Afternoon)'; ?>
+                                </span>
+                            <?php endif; ?>
                         </div>
                     </div>
                     
@@ -99,6 +104,20 @@ include_once '../includes/header.php';
                     <div class="mb-3">
                         <strong>Reason:</strong><br>
                         <p class="mt-2"><?php echo nl2br(htmlspecialchars($leave['reason'])); ?></p>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($leave['mode_of_transport']): ?>
+                    <div class="mb-3">
+                        <strong>Mode of Transport for Official Work:</strong><br>
+                        <p class="mt-2"><?php echo nl2br(htmlspecialchars($leave['mode_of_transport'])); ?></p>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($leave['work_adjustment']): ?>
+                    <div class="mb-3">
+                        <strong>Work Adjustment During Leave Period:</strong><br>
+                        <p class="mt-2"><?php echo nl2br(htmlspecialchars($leave['work_adjustment'])); ?></p>
                     </div>
                     <?php endif; ?>
                     

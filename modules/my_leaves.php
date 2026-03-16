@@ -214,7 +214,14 @@ include_once '../includes/header.php';
                                             }
                                         ?>
                                     </td>
-                                    <td><?php echo $leave['days']; ?></td>
+                                    <td>
+                                        <?php echo $leave['days']; ?>
+                                        <?php if ($leave['is_half_day']): ?>
+                                            <br><small class="badge bg-info">
+                                                <?php echo $leave['half_day_period'] == 'first_half' ? '1st Half' : '2nd Half'; ?>
+                                            </small>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?php echo date('M d, Y', strtotime($leave['created_at'])); ?></td>
                                     <td>
                                         <span class="badge <?php echo $status_class; ?>">

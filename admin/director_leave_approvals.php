@@ -16,7 +16,8 @@ $role = $_SESSION['role'];
 
 // Get all director leave applications pending admin approval (show all pending director applications)
 $director_approvals_sql = "SELECT la.id, u.first_name, u.last_name, u.employee_id, u.email, lt.name as leave_type, 
-                          la.start_date, la.end_date, la.days, la.reason, la.created_at, d.name as department,
+                          la.start_date, la.end_date, la.days, la.reason, la.mode_of_transport, la.work_adjustment, 
+                          la.is_half_day, la.half_day_period, la.created_at, d.name as department,
                           lap.id as approval_id, lap.created_at as approval_created, lap.approver_id,
                           approver.first_name as assigned_admin_name
                           FROM leave_applications la 
