@@ -8,26 +8,34 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS - Using absolute paths from domain root -->
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/responsive-override.css">
-    <link rel="stylesheet" href="/css/mobile-tables.css">
+    <!-- Custom CSS - Using dynamic paths -->
+    <?php 
+    // Determine the correct path based on current directory
+    $base_path = '';
+    $current_dir = dirname($_SERVER['PHP_SELF']);
+    if (strpos($current_dir, '/modules') !== false || strpos($current_dir, '/admin') !== false || strpos($current_dir, '/reports') !== false) {
+        $base_path = '../';
+    }
+    ?>
+    <link rel="stylesheet" href="<?php echo $base_path; ?>css/style.css">
+    <link rel="stylesheet" href="<?php echo $base_path; ?>css/responsive-override.css">
+    <link rel="stylesheet" href="<?php echo $base_path; ?>css/mobile-tables.css">
     <!-- Favicon -->
-    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?php echo $base_path; ?>images/favicon.ico" type="image/x-icon">
     
     <!-- JavaScript files -->
-    <script src="/js/mobile-detector.js"></script>
+    <script src="<?php echo $base_path; ?>js/mobile-detector.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/responsive-helpers.js"></script>
-    <script src="/js/mobile-enhancements.js"></script>
-    <script src="/js/notifications.js"></script>
+    <script src="<?php echo $base_path; ?>js/responsive-helpers.js"></script>
+    <script src="<?php echo $base_path; ?>js/mobile-enhancements.js"></script>
+    <script src="<?php echo $base_path; ?>js/notifications.js"></script>
 </head>
 <body>
 
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/index.php">
+            <a class="navbar-brand" href="<?php echo $base_path; ?>index.php">
                 <i class="fas fa-calendar-check me-2"></i>LeaveTracker
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,30 +45,30 @@
                 <?php if(isset($_SESSION['user_id'])): ?>
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/index.php"><i class="fas fa-home me-1"></i> Dashboard</a>
+                        <a class="nav-link" href="<?php echo $base_path; ?>index.php"><i class="fas fa-home me-1"></i> Dashboard</a>
                     </li>
                     
                     <?php if($_SESSION['role'] == 'staff' || $_SESSION['role'] == 'head_of_department' || $_SESSION['role'] == 'director' || $_SESSION['role'] == 'dean' || $_SESSION['role'] == 'principal'): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="/modules/apply_leave.php"><i class="fas fa-file-alt me-1"></i> Apply Leave</a>
+                        <a class="nav-link" href="<?php echo $base_path; ?>modules/apply_leave.php"><i class="fas fa-file-alt me-1"></i> Apply Leave</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/modules/my_leaves.php"><i class="fas fa-history me-1"></i> My Leaves</a>
+                        <a class="nav-link" href="<?php echo $base_path; ?>modules/my_leaves.php"><i class="fas fa-history me-1"></i> My Leaves</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/modules/leave_calendar.php"><i class="fas fa-calendar-alt me-1"></i> Leave Calendar</a>
+                        <a class="nav-link" href="<?php echo $base_path; ?>admin/academic_calendar_view.php"><i class="fas fa-graduation-cap me-1"></i> Academic Calendar</a>
                     </li>
                     <?php endif; ?>
                     
                     <?php if($_SESSION['role'] == 'head_of_department' || $_SESSION['role'] == 'director' || $_SESSION['role'] == 'dean' || $_SESSION['role'] == 'principal' || $_SESSION['role'] == 'hr_admin'): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="/modules/leave_approvals.php"><i class="fas fa-tasks me-1"></i> Pending Approvals</a>
+                        <a class="nav-link" href="<?php echo $base_path; ?>modules/leave_approvals.php"><i class="fas fa-tasks me-1"></i> Pending Approvals</a>
                     </li>
                     <?php endif; ?>
                     
                     <?php if($_SESSION['role'] == 'director' || $_SESSION['role'] == 'dean' || $_SESSION['role'] == 'principal' || $_SESSION['role'] == 'hr_admin'): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="/modules/reports.php"><i class="fas fa-chart-line me-1"></i> Reports</a>
+                        <a class="nav-link" href="<?php echo $base_path; ?>modules/reports.php"><i class="fas fa-chart-line me-1"></i> Reports</a>
                     </li>
                     <?php endif; ?>
                     
@@ -71,19 +79,18 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                             <?php if($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'hr_admin'): ?>
-                            <li><a class="dropdown-item" href="/admin/director_leave_approvals.php">
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/director_leave_approvals.php">
                                 <i class="fas fa-crown me-1"></i>Director Approvals
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <?php endif; ?>
-                            <li><a class="dropdown-item" href="/admin/users.php">Manage Users</a></li>
-                            <li><a class="dropdown-item" href="/admin/departments.php">Manage Departments</a></li>
-                            <li><a class="dropdown-item" href="/admin/leave_types.php">Manage Leave Types</a></li>
-                            <li><a class="dropdown-item" href="/admin/holidays.php">Manage Holidays</a></li>
-                            <li><a class="dropdown-item" href="/admin/academic_calendar.php">Academic Calendar</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/users.php">Manage Users</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/departments.php">Manage Departments</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/leave_types.php">Manage Leave Types</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/academic_calendar.php">Academic Calendar</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/reports/leave_report.php">Reports</a></li>
-                            <li><a class="dropdown-item" href="/admin/system_config.php">System Settings</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>reports/leave_report.php">Reports</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/system_config.php">System Settings</a></li>
                         </ul>
                     </li>
                     <?php endif; ?>
@@ -91,7 +98,7 @@
                 
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/modules/notifications.php" id="notificationLink">
+                        <a class="nav-link" href="<?php echo $base_path; ?>modules/notifications.php" id="notificationLink">
                             <i class="fas fa-bell me-1"></i>
                             <span class="badge bg-danger notification-badge" id="notification-count" style="display: none;">0</span>
                         </a>
@@ -101,10 +108,10 @@
                             <i class="fas fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['first_name'] . ' ' . $_SESSION['last_name']); ?>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="/modules/profile.php"><i class="fas fa-user me-1"></i> My Profile</a></li>
-                            <li><a class="dropdown-item" href="/modules/change_password.php"><i class="fas fa-key me-1"></i> Change Password</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>modules/profile.php"><i class="fas fa-user me-1"></i> My Profile</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>modules/change_password.php"><i class="fas fa-key me-1"></i> Change Password</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout.php"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>logout.php"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
                         </ul>
                     </li>
                 </ul>

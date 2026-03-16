@@ -245,9 +245,6 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                         <a href="./modules/department_staff.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-users me-1"></i>Department Staff
                         </a>
-                        <a href="./modules/leave_calendar.php" class="btn btn-outline-info btn-sm">
-                            <i class="fas fa-calendar me-1"></i>Department Calendar
-                        </a>
                         <a href="./modules/reports.php" class="btn btn-outline-success btn-sm">
                             <i class="fas fa-chart-bar me-1"></i>Department Reports
                         </a>

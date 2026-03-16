@@ -11,40 +11,51 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Custom JS -->
-    <script src="/js/script.js"></script>
+    <?php 
+    // Determine the correct path based on current directory
+    $base_path = '';
+    $current_dir = dirname($_SERVER['PHP_SELF']);
+    if (strpos($current_dir, '/modules') !== false || strpos($current_dir, '/admin') !== false || strpos($current_dir, '/reports') !== false) {
+        $base_path = '../';
+    }
+    ?>
+    <script src="<?php echo $base_path; ?>js/script.js"></script>
     
     <!-- Notification Loader Script -->
     <?php if(isset($_SESSION['user_id'])): ?>
     <script>
+        // Set base path for AJAX calls
+        window.basePath = '<?php echo $base_path; ?>';
+        
         // Function to load notifications
         function loadNotifications() {
             $.ajax({
-                url: '/modules/get_notifications.php',
+                url: window.basePath + 'api/get_notifications.php',
                 type: 'GET',
                 dataType: 'json',
                 success: function(data) {
-                    if (data.count > 0) {
-                        $('#notification-count').text(data.count).show();
+                    if (data.unread_count > 0) {
+                        $('#notification-count').text(data.unread_count).show();
                         
                         // Clear existing notifications
                         $('#notification-list').empty();
                         
                         // Add new notifications
-                        $.each(data.notifications, function(index, notification) {
-                            var unreadClass = notification.is_read ? '' : ' unread';
+                        $.each(data.notifications.slice(0, 5), function(index, notification) {
+                            var unreadClass = notification.is_read == 0 ? ' unread' : '';
                             var notificationHtml = '<li class="dropdown-item notification-item' + unreadClass + '">' +
-                                '<a href="' + notification.link + '" class="notification-link">' +
+                                '<div class="notification-content">' +
                                 '<div class="notification-title">' + notification.title + '</div>' +
                                 '<div class="notification-message">' + notification.message + '</div>' +
-                                '<div class="notification-time">' + notification.time_ago + '</div>' +
-                                '</a></li>';
+                                '<div class="notification-time">' + new Date(notification.created_at).toLocaleDateString() + '</div>' +
+                                '</div></li>';
                             $('#notification-list').append(notificationHtml);
                         });
                         
                         // Add view all link
                         $('#notification-list').append(
                             '<li><hr class="dropdown-divider"></li>' +
-                            '<li class="dropdown-item text-center"><a href="/modules/notifications.php">View All</a></li>'
+                            '<li class="dropdown-item text-center"><a href="' + window.basePath + 'modules/notifications.php">View All</a></li>'
                         );
                     } else {
                         $('#notification-count').text('0').hide();
@@ -53,6 +64,8 @@
                 },
                 error: function() {
                     console.error('Failed to load notifications');
+                    $('#notification-count').hide();
+                    $('#notification-list').html('<li class="dropdown-item text-center text-muted">Unable to load notifications</li>');
                 }
             });
         }

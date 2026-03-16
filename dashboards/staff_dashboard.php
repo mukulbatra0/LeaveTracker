@@ -40,14 +40,7 @@ $recent_applications_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
 $recent_applications_stmt->execute();
 $recent_applications = $recent_applications_stmt->fetchAll();
 
-// Get upcoming holidays
-$upcoming_holidays_sql = "SELECT name, date, description 
-                         FROM holidays 
-                         WHERE date >= CURDATE() 
-                         ORDER BY date ASC LIMIT 5";
-$upcoming_holidays_stmt = $conn->prepare($upcoming_holidays_sql);
-$upcoming_holidays_stmt->execute();
-$upcoming_holidays = $upcoming_holidays_stmt->fetchAll();
+
 ?>
 
 <div class="container-fluid">
@@ -58,11 +51,8 @@ $upcoming_holidays = $upcoming_holidays_stmt->fetchAll();
             <p class="text-muted">Welcome back, <?php echo htmlspecialchars($_SESSION['first_name']); ?>!</p>
         </div>
         <div class="col-md-4 text-end">
-            <a href="./modules/apply_leave.php" class="btn btn-primary me-2">
+            <a href="./modules/apply_leave.php" class="btn btn-primary">
                 <i class="fas fa-plus-circle me-1"></i> Apply Leave
-            </a>
-            <a href="./modules/leave_calendar.php" class="btn btn-outline-info">
-                <i class="fas fa-calendar-alt me-1"></i> Calendar
             </a>
         </div>
     </div>
@@ -116,19 +106,7 @@ $upcoming_holidays = $upcoming_holidays_stmt->fetchAll();
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4><?php echo count($upcoming_holidays); ?></h4>
-                            <p class="mb-0">Upcoming Holidays</p>
-                        </div>
-                        <i class="fas fa-umbrella-beach fa-2x opacity-75"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+
     </div>
     
     <!-- Main Content Row -->
@@ -209,38 +187,11 @@ $upcoming_holidays = $upcoming_holidays_stmt->fetchAll();
                         <a href="./modules/my_leaves.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-list me-1"></i>My Applications
                         </a>
-                        <a href="./modules/leave_calendar.php" class="btn btn-outline-info btn-sm">
-                            <i class="fas fa-calendar me-1"></i>Leave Calendar
-                        </a>
                     </div>
                 </div>
             </div>
             
-            <!-- Upcoming Holidays -->
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Upcoming Holidays</h6>
-                </div>
-                <div class="card-body">
-                    <?php if(count($upcoming_holidays) > 0): ?>
-                        <?php foreach(array_slice($upcoming_holidays, 0, 3) as $holiday): ?>
-                            <?php 
-                            $holiday_date = new DateTime($holiday['date']);
-                            $days_until = $holiday_date->diff(new DateTime())->days;
-                            ?>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div>
-                                    <strong><?php echo htmlspecialchars($holiday['name']); ?></strong>
-                                    <small class="d-block text-muted"><?php echo $holiday_date->format('M d, Y'); ?></small>
-                                </div>
-                                <span class="badge bg-info"><?php echo $days_until; ?> days</span>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <p class="text-muted mb-0">No upcoming holidays</p>
-                    <?php endif; ?>
-                </div>
-            </div>
+
         </div>
     </div>
     

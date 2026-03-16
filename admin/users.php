@@ -30,6 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $last_name = trim($_POST['last_name']);
         $email = trim($_POST['email']);
         $phone = trim($_POST['phone']);
+        $employee_id = trim($_POST['employee_id']);
+        $staff_type = $_POST['staff_type'];
         $department_id = $_POST['department_id'];
         $role = $_POST['role'];
         $default_password = $_ENV['DEFAULT_PASSWORD'] ?? 'TempPass123!';
@@ -40,10 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (empty($first_name)) {
             $errors[] = "First name is required";
-        }
-        
-        if (empty($last_name)) {
-            $errors[] = "Last name is required";
         }
         
         if (empty($email)) {
@@ -62,6 +60,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
+        if (empty($employee_id)) {
+            $errors[] = "Employee ID is required";
+        } else {
+            // Check if employee_id already exists
+            $check_emp_sql = "SELECT COUNT(*) FROM users WHERE employee_id = :employee_id";
+            $check_emp_stmt = $conn->prepare($check_emp_sql);
+            $check_emp_stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_STR);
+            $check_emp_stmt->execute();
+            
+            if ($check_emp_stmt->fetchColumn() > 0) {
+                $errors[] = "Employee ID already exists";
+            }
+        }
+        
+        if (empty($staff_type)) {
+            $errors[] = "Staff type is required";
+        }
+        
         if (empty($department_id)) {
             $errors[] = "Department is required";
         }
@@ -75,8 +91,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $conn->beginTransaction();
                 
-                $insert_sql = "INSERT INTO users (first_name, last_name, email, phone, department_id, role, password, created_at) 
-                              VALUES (:first_name, :last_name, :email, :phone, :department_id, :role, :password, NOW())";
+                $insert_sql = "INSERT INTO users (first_name, last_name, email, phone, department_id, role, password, employee_id, staff_type, created_at) 
+                              VALUES (:first_name, :last_name, :email, :phone, :department_id, :role, :password, :employee_id, :staff_type, NOW())";
                 $insert_stmt = $conn->prepare($insert_sql);
                 $insert_stmt->bindParam(':first_name', $first_name, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':last_name', $last_name, PDO::PARAM_STR);
@@ -85,6 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $insert_stmt->bindParam(':department_id', $department_id, PDO::PARAM_INT);
                 $insert_stmt->bindParam(':role', $role, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':password', $password, PDO::PARAM_STR);
+                $insert_stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_STR);
+                $insert_stmt->bindParam(':staff_type', $staff_type, PDO::PARAM_STR);
                 $insert_stmt->execute();
                 
                 $new_user_id = $conn->lastInsertId();
@@ -104,9 +122,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $leave_types = $leave_types_stmt->fetchAll(PDO::FETCH_COLUMN);
                 
                 foreach ($leave_types as $leave_type_id) {
-                    $balance_sql = "INSERT INTO leave_balances (user_id, leave_type_id, year, balance, used) 
+                    $balance_sql = "INSERT INTO leave_balances (user_id, leave_type_id, year, total_days, used_days, created_at) 
                                    VALUES (:user_id, :leave_type_id, YEAR(CURDATE()), 
-                                   (SELECT default_days FROM leave_types WHERE id = :leave_type_id2), 0)";
+                                   (SELECT default_days FROM leave_types WHERE id = :leave_type_id2), 0, NOW())";
                     $balance_stmt = $conn->prepare($balance_sql);
                     $balance_stmt->bindParam(':user_id', $new_user_id, PDO::PARAM_INT);
                     $balance_stmt->bindParam(':leave_type_id', $leave_type_id, PDO::PARAM_INT);
@@ -134,6 +152,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $last_name = trim($_POST['last_name']);
         $email = trim($_POST['email']);
         $phone = trim($_POST['phone']);
+        $employee_id = trim($_POST['employee_id']);
+        $staff_type = $_POST['staff_type'];
         $department_id = $_POST['department_id'];
         $role = $_POST['role'];
         $status = $_POST['status'];
@@ -143,10 +163,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (empty($first_name)) {
             $errors[] = "First name is required";
-        }
-        
-        if (empty($last_name)) {
-            $errors[] = "Last name is required";
         }
         
         if (empty($email)) {
@@ -164,6 +180,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($check_email_stmt->fetchColumn() > 0) {
                 $errors[] = "Email already exists";
             }
+        }
+        
+        if (empty($employee_id)) {
+            $errors[] = "Employee ID is required";
+        } else {
+            // Check if employee_id already exists for other users
+            $check_emp_sql = "SELECT COUNT(*) FROM users WHERE employee_id = :employee_id AND id != :user_id";
+            $check_emp_stmt = $conn->prepare($check_emp_sql);
+            $check_emp_stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_STR);
+            $check_emp_stmt->bindParam(':user_id', $edit_user_id, PDO::PARAM_INT);
+            $check_emp_stmt->execute();
+            
+            if ($check_emp_stmt->fetchColumn() > 0) {
+                $errors[] = "Employee ID already exists";
+            }
+        }
+        
+        if (empty($staff_type)) {
+            $errors[] = "Staff type is required";
         }
         
         if (empty($department_id)) {
@@ -184,6 +219,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                               last_name = :last_name, 
                               email = :email, 
                               phone = :phone, 
+                              employee_id = :employee_id,
+                              staff_type = :staff_type,
                               department_id = :department_id, 
                               role = :role, 
                               status = :status, 
@@ -194,6 +231,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_stmt->bindParam(':last_name', $last_name, PDO::PARAM_STR);
                 $update_stmt->bindParam(':email', $email, PDO::PARAM_STR);
                 $update_stmt->bindParam(':phone', $phone, PDO::PARAM_STR);
+                $update_stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_STR);
+                $update_stmt->bindParam(':staff_type', $staff_type, PDO::PARAM_STR);
                 $update_stmt->bindParam(':department_id', $department_id, PDO::PARAM_INT);
                 $update_stmt->bindParam(':role', $role, PDO::PARAM_STR);
                 $update_stmt->bindParam(':status', $status, PDO::PARAM_STR);
@@ -489,6 +528,8 @@ include '../includes/header.php';
                                                     data-last-name="<?php echo htmlspecialchars($u['last_name']); ?>"
                                                     data-email="<?php echo htmlspecialchars($u['email']); ?>"
                                                     data-phone="<?php echo htmlspecialchars($u['phone'] ?? ''); ?>"
+                                                    data-employee-id="<?php echo htmlspecialchars($u['employee_id'] ?? ''); ?>"
+                                                    data-staff-type="<?php echo htmlspecialchars($u['staff_type'] ?? ''); ?>"
                                                     data-department="<?php echo $u['department_id']; ?>"
                                                     data-role="<?php echo $u['role']; ?>"
                                                     data-status="<?php echo $u['status']; ?>">
@@ -509,6 +550,8 @@ include '../includes/header.php';
                                                     data-last-name="<?php echo htmlspecialchars($u['last_name']); ?>"
                                                     data-email="<?php echo htmlspecialchars($u['email']); ?>"
                                                     data-phone="<?php echo htmlspecialchars($u['phone'] ?? ''); ?>"
+                                                    data-employee-id="<?php echo htmlspecialchars($u['employee_id'] ?? ''); ?>"
+                                                    data-staff-type="<?php echo htmlspecialchars($u['staff_type'] ?? ''); ?>"
                                                     data-department="<?php echo $u['department_id']; ?>"
                                                     data-role="<?php echo $u['role']; ?>"
                                                     data-status="<?php echo $u['status']; ?>"
@@ -576,8 +619,8 @@ include '../includes/header.php';
                             <input type="text" class="form-control" id="first_name" name="first_name" required>
                         </div>
                         <div class="col-lg-6 col-md-12 mb-3">
-                            <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name">
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -588,6 +631,20 @@ include '../includes/header.php';
                         <div class="col-lg-6 col-md-12 mb-3">
                             <label for="phone" class="form-label">Phone</label>
                             <input type="text" class="form-control" id="phone" name="phone">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg-6 col-md-12 mb-3">
+                            <label for="employee_id" class="form-label">Employee ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id" required>
+                        </div>
+                        <div class="col-lg-6 col-md-12 mb-3">
+                            <label for="staff_type" class="form-label">Staff Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="staff_type" name="staff_type" required>
+                                <option value="">Select Staff Type</option>
+                                <option value="teaching">Teaching Staff</option>
+                                <option value="non_teaching">Non-Teaching Staff</option>
+                            </select>
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -644,8 +701,8 @@ include '../includes/header.php';
                             <input type="text" class="form-control" id="edit_first_name" name="first_name" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="edit_last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="edit_last_name" name="last_name" required>
+                            <label for="edit_last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="edit_last_name" name="last_name">
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -659,7 +716,21 @@ include '../includes/header.php';
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
+                            <label for="edit_employee_id" class="form-label">Employee ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_employee_id" name="employee_id" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_staff_type" class="form-label">Staff Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_staff_type" name="staff_type" required>
+                                <option value="">Select Staff Type</option>
+                                <option value="teaching">Teaching Staff</option>
+                                <option value="non_teaching">Non-Teaching Staff</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
                             <label for="edit_department_id" class="form-label">Department <span class="text-danger">*</span></label>
                             <select class="form-select" id="edit_department_id" name="department_id" required>
                                 <option value="">Select Department</option>
@@ -670,7 +741,7 @@ include '../includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="edit_role" class="form-label">Role <span class="text-danger">*</span></label>
                             <select class="form-select" id="edit_role" name="role" required>
                                 <option value="">Select Role</option>
@@ -680,7 +751,9 @@ include '../includes/header.php';
                                 <option value="admin">Admin</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
                             <label for="edit_status" class="form-label">Status <span class="text-danger">*</span></label>
                             <select class="form-select" id="edit_status" name="status" required>
                                 <option value="active">Active</option>
@@ -735,6 +808,8 @@ include '../includes/header.php';
                 const lastName = this.getAttribute('data-last-name');
                 const email = this.getAttribute('data-email');
                 const phone = this.getAttribute('data-phone');
+                const employeeId = this.getAttribute('data-employee-id');
+                const staffType = this.getAttribute('data-staff-type');
                 const department = this.getAttribute('data-department');
                 const role = this.getAttribute('data-role');
                 const status = this.getAttribute('data-status');
@@ -744,6 +819,8 @@ include '../includes/header.php';
                 document.getElementById('edit_last_name').value = lastName;
                 document.getElementById('edit_email').value = email;
                 document.getElementById('edit_phone').value = phone;
+                document.getElementById('edit_employee_id').value = employeeId;
+                document.getElementById('edit_staff_type').value = staffType;
                 document.getElementById('edit_department_id').value = department;
                 document.getElementById('edit_role').value = role;
                 document.getElementById('edit_status').value = status;

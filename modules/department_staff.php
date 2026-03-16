@@ -259,12 +259,6 @@ include '../includes/header.php';
                                                class="btn btn-outline-primary" title="View Leave History">
                                                 <i class="fas fa-history"></i>
                                             </a>
-                                            <?php if (in_array($role, ['department_head', 'head_of_department']) || $role == 'hr_admin'): ?>
-                                                <a href="leave_calendar.php?user_id=<?php echo $staff['id']; ?>" 
-                                                   class="btn btn-outline-info" title="View Calendar">
-                                                    <i class="fas fa-calendar"></i>
-                                                </a>
-                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>

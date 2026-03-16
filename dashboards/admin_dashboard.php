@@ -222,9 +222,6 @@ $dept_stats = $dept_stats_stmt->fetchAll();
                         <a href="./admin/leave_types.php" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-list me-1"></i>Leave Types
                         </a>
-                        <a href="./admin/holidays.php" class="btn btn-outline-info btn-sm">
-                            <i class="fas fa-calendar me-1"></i>Holidays
-                        </a>
                         <a href="./admin/academic_calendar.php" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-calendar-alt me-1"></i>Academic Calendar
                         </a>
