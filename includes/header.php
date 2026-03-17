@@ -87,6 +87,7 @@
                             <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/users.php">Manage Users</a></li>
                             <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/departments.php">Manage Departments</a></li>
                             <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/leave_types.php">Manage Leave Types</a></li>
+                            <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/leave_policies.php"><i class="fas fa-balance-scale me-1"></i>Leave Policies</a></li>
                             <li><a class="dropdown-item" href="<?php echo $base_path; ?>admin/academic_calendar.php">Academic Calendar</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="<?php echo $base_path; ?>reports/leave_report.php">Reports</a></li>

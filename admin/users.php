@@ -32,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $phone = trim($_POST['phone']);
         $employee_id = trim($_POST['employee_id']);
         $staff_type = $_POST['staff_type'];
+        $gender = $_POST['gender'];
+        $employment_type = $_POST['employment_type'] ?? 'full_time';
         $department_id = $_POST['department_id'];
         $role = $_POST['role'];
         $default_password = $_ENV['DEFAULT_PASSWORD'] ?? 'TempPass123!';
@@ -78,6 +80,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = "Staff type is required";
         }
         
+        if (empty($gender)) {
+            $errors[] = "Gender is required";
+        }
+        
         if (empty($department_id)) {
             $errors[] = "Department is required";
         }
@@ -91,8 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $conn->beginTransaction();
                 
-                $insert_sql = "INSERT INTO users (first_name, last_name, email, phone, department_id, role, password, employee_id, staff_type, created_at) 
-                              VALUES (:first_name, :last_name, :email, :phone, :department_id, :role, :password, :employee_id, :staff_type, NOW())";
+                $insert_sql = "INSERT INTO users (first_name, last_name, email, phone, department_id, role, password, employee_id, staff_type, gender, employment_type, created_at) 
+                              VALUES (:first_name, :last_name, :email, :phone, :department_id, :role, :password, :employee_id, :staff_type, :gender, :employment_type, NOW())";
                 $insert_stmt = $conn->prepare($insert_sql);
                 $insert_stmt->bindParam(':first_name', $first_name, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':last_name', $last_name, PDO::PARAM_STR);
@@ -103,6 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $insert_stmt->bindParam(':password', $password, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':staff_type', $staff_type, PDO::PARAM_STR);
+                $insert_stmt->bindParam(':gender', $gender, PDO::PARAM_STR);
+                $insert_stmt->bindParam(':employment_type', $employment_type, PDO::PARAM_STR);
                 $insert_stmt->execute();
                 
                 $new_user_id = $conn->lastInsertId();
@@ -115,20 +123,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $audit_stmt->bindParam(':action', $action, PDO::PARAM_STR);
                 $audit_stmt->execute();
                 
-                // Create leave balances for the new user
-                $leave_types_sql = "SELECT id FROM leave_types";
-                $leave_types_stmt = $conn->prepare($leave_types_sql);
-                $leave_types_stmt->execute();
-                $leave_types = $leave_types_stmt->fetchAll(PDO::FETCH_COLUMN);
+                // Create leave balances for the new user based on leave policy rules
+                // First, find matching policy rules based on staff_type, gender, employment_type
+                $policy_sql = "SELECT lpr.leave_type_id, lpr.allocated_days 
+                              FROM leave_policy_rules lpr 
+                              JOIN leave_types lt ON lpr.leave_type_id = lt.id 
+                              WHERE lpr.is_active = 1 
+                              AND lt.is_active = 1
+                              AND (lpr.staff_type = :staff_type OR lpr.staff_type = 'all')
+                              AND (lpr.gender = :gender OR lpr.gender = 'all')
+                              AND (lpr.employment_type = :employment_type OR lpr.employment_type = 'all')
+                              ORDER BY 
+                                CASE WHEN lpr.staff_type != 'all' THEN 0 ELSE 1 END,
+                                CASE WHEN lpr.gender != 'all' THEN 0 ELSE 1 END,
+                                CASE WHEN lpr.employment_type != 'all' THEN 0 ELSE 1 END";
+                $policy_stmt = $conn->prepare($policy_sql);
+                $policy_stmt->bindParam(':staff_type', $staff_type, PDO::PARAM_STR);
+                $policy_stmt->bindParam(':gender', $gender, PDO::PARAM_STR);
+                $policy_stmt->bindParam(':employment_type', $employment_type, PDO::PARAM_STR);
+                $policy_stmt->execute();
+                $policies = $policy_stmt->fetchAll();
                 
-                foreach ($leave_types as $leave_type_id) {
+                // Group by leave_type_id, taking the most specific match (first one due to ORDER BY)
+                $allocated = [];
+                foreach ($policies as $p) {
+                    if (!isset($allocated[$p['leave_type_id']])) {
+                        $allocated[$p['leave_type_id']] = $p['allocated_days'];
+                    }
+                }
+                
+                foreach ($allocated as $lt_id => $days) {
                     $balance_sql = "INSERT INTO leave_balances (user_id, leave_type_id, year, total_days, used_days, created_at) 
-                                   VALUES (:user_id, :leave_type_id, YEAR(CURDATE()), 
-                                   (SELECT default_days FROM leave_types WHERE id = :leave_type_id2), 0, NOW())";
+                                   VALUES (:user_id, :leave_type_id, YEAR(CURDATE()), :total_days, 0, NOW())
+                                   ON DUPLICATE KEY UPDATE total_days = :total_days2";
                     $balance_stmt = $conn->prepare($balance_sql);
                     $balance_stmt->bindParam(':user_id', $new_user_id, PDO::PARAM_INT);
-                    $balance_stmt->bindParam(':leave_type_id', $leave_type_id, PDO::PARAM_INT);
-                    $balance_stmt->bindParam(':leave_type_id2', $leave_type_id, PDO::PARAM_INT);
+                    $balance_stmt->bindParam(':leave_type_id', $lt_id, PDO::PARAM_INT);
+                    $balance_stmt->bindParam(':total_days', $days);
+                    $balance_stmt->bindParam(':total_days2', $days);
                     $balance_stmt->execute();
                 }
                 
@@ -154,6 +186,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $phone = trim($_POST['phone']);
         $employee_id = trim($_POST['employee_id']);
         $staff_type = $_POST['staff_type'];
+        $gender = $_POST['gender'];
+        $employment_type = $_POST['employment_type'] ?? 'full_time';
         $department_id = $_POST['department_id'];
         $role = $_POST['role'];
         $status = $_POST['status'];
@@ -201,6 +235,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = "Staff type is required";
         }
         
+        if (empty($gender)) {
+            $errors[] = "Gender is required";
+        }
+        
         if (empty($department_id)) {
             $errors[] = "Department is required";
         }
@@ -221,6 +259,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                               phone = :phone, 
                               employee_id = :employee_id,
                               staff_type = :staff_type,
+                              gender = :gender,
+                              employment_type = :employment_type,
                               department_id = :department_id, 
                               role = :role, 
                               status = :status, 
@@ -233,6 +273,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_stmt->bindParam(':phone', $phone, PDO::PARAM_STR);
                 $update_stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_STR);
                 $update_stmt->bindParam(':staff_type', $staff_type, PDO::PARAM_STR);
+                $update_stmt->bindParam(':gender', $gender, PDO::PARAM_STR);
+                $update_stmt->bindParam(':employment_type', $employment_type, PDO::PARAM_STR);
                 $update_stmt->bindParam(':department_id', $department_id, PDO::PARAM_INT);
                 $update_stmt->bindParam(':role', $role, PDO::PARAM_STR);
                 $update_stmt->bindParam(':status', $status, PDO::PARAM_STR);
@@ -530,6 +572,8 @@ include '../includes/header.php';
                                                     data-phone="<?php echo htmlspecialchars($u['phone'] ?? ''); ?>"
                                                     data-employee-id="<?php echo htmlspecialchars($u['employee_id'] ?? ''); ?>"
                                                     data-staff-type="<?php echo htmlspecialchars($u['staff_type'] ?? ''); ?>"
+                                                    data-gender="<?php echo htmlspecialchars($u['gender'] ?? ''); ?>"
+                                                    data-employment-type="<?php echo htmlspecialchars($u['employment_type'] ?? 'full_time'); ?>"
                                                     data-department="<?php echo $u['department_id']; ?>"
                                                     data-role="<?php echo $u['role']; ?>"
                                                     data-status="<?php echo $u['status']; ?>">
@@ -552,6 +596,8 @@ include '../includes/header.php';
                                                     data-phone="<?php echo htmlspecialchars($u['phone'] ?? ''); ?>"
                                                     data-employee-id="<?php echo htmlspecialchars($u['employee_id'] ?? ''); ?>"
                                                     data-staff-type="<?php echo htmlspecialchars($u['staff_type'] ?? ''); ?>"
+                                                    data-gender="<?php echo htmlspecialchars($u['gender'] ?? ''); ?>"
+                                                    data-employment-type="<?php echo htmlspecialchars($u['employment_type'] ?? 'full_time'); ?>"
                                                     data-department="<?php echo $u['department_id']; ?>"
                                                     data-role="<?php echo $u['role']; ?>"
                                                     data-status="<?php echo $u['status']; ?>"
@@ -649,6 +695,24 @@ include '../includes/header.php';
                     </div>
                     <div class="row mb-3">
                         <div class="col-lg-6 col-md-12 mb-3">
+                            <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                            <select class="form-select" id="gender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-6 col-md-12 mb-3">
+                            <label for="employment_type" class="form-label">Employment Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="employment_type" name="employment_type" required>
+                                <option value="full_time">Full Time</option>
+                                <option value="part_time">Part Time</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg-6 col-md-12 mb-3">
                             <label for="department_id" class="form-label">Department <span class="text-danger">*</span></label>
                             <select class="form-select" id="department_id" name="department_id" required>
                                 <option value="">Select Department</option>
@@ -726,6 +790,24 @@ include '../includes/header.php';
                                 <option value="">Select Staff Type</option>
                                 <option value="teaching">Teaching Staff</option>
                                 <option value="non_teaching">Non-Teaching Staff</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_gender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_employment_type" class="form-label">Employment Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_employment_type" name="employment_type" required>
+                                <option value="full_time">Full Time</option>
+                                <option value="part_time">Part Time</option>
                             </select>
                         </div>
                     </div>
@@ -810,6 +892,8 @@ include '../includes/header.php';
                 const phone = this.getAttribute('data-phone');
                 const employeeId = this.getAttribute('data-employee-id');
                 const staffType = this.getAttribute('data-staff-type');
+                const gender = this.getAttribute('data-gender');
+                const employmentType = this.getAttribute('data-employment-type');
                 const department = this.getAttribute('data-department');
                 const role = this.getAttribute('data-role');
                 const status = this.getAttribute('data-status');
@@ -821,6 +905,8 @@ include '../includes/header.php';
                 document.getElementById('edit_phone').value = phone;
                 document.getElementById('edit_employee_id').value = employeeId;
                 document.getElementById('edit_staff_type').value = staffType;
+                document.getElementById('edit_gender').value = gender;
+                document.getElementById('edit_employment_type').value = employmentType;
                 document.getElementById('edit_department_id').value = department;
                 document.getElementById('edit_role').value = role;
                 document.getElementById('edit_status').value = status;

@@ -391,6 +391,18 @@ include '../includes/header.php';
                             <span class="value"><?php echo ucfirst(str_replace('_', ' ', $user['role'])); ?></span>
                         </div>
                         <div class="info-item">
+                            <span class="label">Staff Type:</span>
+                            <span class="value"><?php echo ucwords(str_replace('_', '-', $user['staff_type'] ?? 'N/A')); ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Gender:</span>
+                            <span class="value"><?php echo ucfirst($user['gender'] ?? 'N/A'); ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Employment:</span>
+                            <span class="value"><?php echo ucwords(str_replace('_', ' ', $user['employment_type'] ?? 'N/A')); ?></span>
+                        </div>
+                        <div class="info-item">
                             <span class="label">Joined:</span>
                             <span class="value"><?php echo date('M d, Y', strtotime($user['created_at'])); ?></span>
                         </div>

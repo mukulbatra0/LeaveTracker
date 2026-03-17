@@ -135,12 +135,48 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit;
         }
     } else {
-        // If no balance record exists, create one
-        $leave_type_sql = "SELECT max_days FROM leave_types WHERE id = :id";
-        $leave_type_stmt = $conn->prepare($leave_type_sql);
-        $leave_type_stmt->bindParam(':id', $leave_type_id, PDO::PARAM_INT);
-        $leave_type_stmt->execute();
-        $max_days = $leave_type_stmt->fetch()['max_days'];
+        // If no balance record exists, create one based on policy rules
+        // Get user details first
+        $user_sql = "SELECT staff_type, gender, employment_type FROM users WHERE id = :uid";
+        $user_stmt = $conn->prepare($user_sql);
+        $user_stmt->execute([':uid' => $user_id]);
+        $user_info = $user_stmt->fetch();
+        
+        $u_staff = $user_info['staff_type'] ?? 'teaching';
+        $u_gender = $user_info['gender'] ?? 'male';
+        $u_emp = $user_info['employment_type'] ?? 'full_time';
+        
+        // Find matching policy
+        $policy_sql = "SELECT allocated_days FROM leave_policy_rules 
+                      WHERE leave_type_id = :ltid AND is_active = 1
+                      AND (staff_type = :staff_type OR staff_type = 'all')
+                      AND (gender = :gender OR gender = 'all')
+                      AND (employment_type = :employment_type OR employment_type = 'all')
+                      ORDER BY 
+                        CASE WHEN staff_type != 'all' THEN 0 ELSE 1 END,
+                        CASE WHEN gender != 'all' THEN 0 ELSE 1 END,
+                        CASE WHEN employment_type != 'all' THEN 0 ELSE 1 END
+                      LIMIT 1";
+        $policy_stmt = $conn->prepare($policy_sql);
+        $policy_stmt->execute([
+            ':ltid' => $leave_type_id,
+            ':staff_type' => $u_staff,
+            ':gender' => $u_gender,
+            ':employment_type' => $u_emp
+        ]);
+        
+        $policy = $policy_stmt->fetch();
+        
+        if ($policy) {
+            $max_days = $policy['allocated_days'];
+        } else {
+            // Fallback to default_days if no policy found
+            $leave_type_sql = "SELECT default_days as max_days FROM leave_types WHERE id = :id";
+            $leave_type_stmt = $conn->prepare($leave_type_sql);
+            $leave_type_stmt->bindParam(':id', $leave_type_id, PDO::PARAM_INT);
+            $leave_type_stmt->execute();
+            $max_days = $leave_type_stmt->fetch()['max_days'] ?? 0;
+        }
         
         $insert_balance_sql = "INSERT INTO leave_balances (user_id, leave_type_id, total_days, used_days, year) 
                               VALUES (:user_id, :leave_type_id, :balance, 0, :year)";
