@@ -170,13 +170,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         
         // Get allowed attachment types from settings
-        $settings_sql = "SELECT setting_value FROM settings WHERE setting_key = 'allowed_attachment_types'";
+        $settings_sql = "SELECT setting_value FROM system_settings WHERE setting_key = 'allowed_attachment_types'";
         $settings_stmt = $conn->prepare($settings_sql);
         $settings_stmt->execute();
         $allowed_types = explode(',', $settings_stmt->fetch()['setting_value']);
         
         // Get max attachment size from settings (in MB)
-        $settings_sql = "SELECT setting_value FROM settings WHERE setting_key = 'max_attachment_size'";
+        $settings_sql = "SELECT setting_value FROM system_settings WHERE setting_key = 'max_attachment_size'";
         $settings_stmt = $conn->prepare($settings_sql);
         $settings_stmt->execute();
         $max_size = (int)$settings_stmt->fetch()['setting_value'] * 1024 * 1024; // Convert to bytes

@@ -675,10 +675,13 @@ include '../includes/header.php';
                                     </div>
                                 </div>
                                 
-                                <div class="mt-4 d-grid d-md-block">
+                                <div class="mt-4 d-grid d-md-flex gap-2">
                                     <button type="submit" name="update_notification_settings" class="btn btn-primary">
                                         <i class="fas fa-save me-1"></i> Save Notification Settings
                                     </button>
+                                    <a href="/test-email.php" class="btn btn-outline-success">
+                                        <i class="fas fa-paper-plane me-1"></i> Test Email Configuration
+                                    </a>
                                 </div>
                             </form>
                         </div>

@@ -1,0 +1,93 @@
+# ======================
+# OS & Editor Files
+# ======================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ======================
+# Logs & Debug Files
+# ======================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ======================
+# Environment Files
+# ======================
+.env
+.env.*
+config.php
+database.php
+
+# ======================
+# Dependency Directories
+# ======================
+/vendor/
+/node_modules/
+
+# ======================
+# Composer Files (optional)
+# ======================
+composer.lock
+
+# ======================
+# Cache & Temp Files
+# ======================
+/cache/
+/tmp/
+/temp/
+/storage/*.key
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# ======================
+# Uploads (User Files)
+# ======================
+/uploads/
+/public/uploads/
+/images/uploads/
+
+# ======================
+# Database Files
+# ======================
+*.sql
+*.sqlite
+*.db
+
+# ======================
+# PHPUnit & Testing
+# ======================
+/phpunit.xml
+/.phpunit.result.cache
+
+# ======================
+# Build / Compiled Files
+# ======================
+/dist/
+/build/
+
+# ======================
+# Laravel Specific (if used)
+# ======================
+/bootstrap/cache/
+/storage/*.key
+
+# ======================
+# XAMPP / Local Server Files
+# ======================
+/xampp/
+/htdocs/
+
+# ======================
+# Misc
+# ======================
+*.bak
+*.backup
+*.old
