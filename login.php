@@ -200,7 +200,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="card login-card">
             <div class="login-header">
                 <div class="login-logo">
-                    <i class="fas fa-calendar-check"></i>
+                    <img src="images/logo.png" alt="College Logo" style="max-height: 80px; width: auto; max-width: 100%;">
                 </div>
                 <h2 class="mb-0">LeaveTracker</h2>
                 <p class="mb-0 mt-2">Employee Leave Management System</p>
@@ -227,6 +227,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-lock"></i></span>
                             <input type="password" name="password" id="password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="border-color: #dee2e6; color: #6c757d;">
+                                <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                            </button>
                             <div class="invalid-feedback"><?php echo $password_err; ?></div>
                         </div>
                     </div>
@@ -245,5 +248,21 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const password = document.getElementById('password');
+            const icon = document.getElementById('togglePasswordIcon');
+            
+            if (password.type === 'password') {
+                password.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                password.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    </script>
 </body>
 </html>

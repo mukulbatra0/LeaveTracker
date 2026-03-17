@@ -4,7 +4,7 @@
     <!-- Footer -->
     <footer class="footer mt-auto py-4">
         <div class="container text-center">
-            <span class="text-footer">© <?php echo date('Y'); ?> ELMS - Employee Leave Management System | Developed for College Staff</span>
+            <span class="text-footer">© <?php echo date('Y'); ?> LeaveTracker - Employee Leave Management System | Developed for College Staff | Developed by Jatin & <a style = "text-decoration: none; color: white" href ="https://mukulbatra.netlify.app/">Mukul Batra</a></span>
         </div>
     </footer>
 

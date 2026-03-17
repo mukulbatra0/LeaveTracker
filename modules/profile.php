@@ -9,7 +9,7 @@ session_start();
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['alert'] = "Please log in to access your profile";
     $_SESSION['alert_type'] = "warning";
-    header('Location: /login.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -268,7 +268,7 @@ $user = $profile->getUserData();
 if (!$user) {
     $_SESSION['alert'] = "User not found";
     $_SESSION['alert_type'] = "danger";
-    header('Location: /index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -342,15 +342,41 @@ include '../includes/header.php';
                 <div class="card-body text-center">
                     <!-- Profile Picture -->
                     <div class="mb-3">
-                        <?php if (!empty($user['profile_picture']) && file_exists($user['profile_picture'])): ?>
-                            <img src="/<?php echo htmlspecialchars($user['profile_picture']); ?>" 
-                                 alt="Profile Picture" 
-                                 class="img-fluid rounded-circle profile-image">
-                        <?php else: ?>
-                            <div class="profile-avatar">
-                                <?php echo strtoupper(substr($user['first_name'], 0, 1) . substr($user['last_name'], 0, 1)); ?>
-                            </div>
-                        <?php endif; ?>
+                        <div id="profile-container" class="position-relative">
+                            <?php 
+                            $show_image = false;
+                            $image_src = '';
+                            
+                            if (!empty($user['profile_picture'])) {
+                                // The database already has the correct path: uploads/profile_pictures/filename
+                                $db_path = $user['profile_picture'];
+                                
+                                // Check if file exists (from modules directory, need to go up one level)
+                                $file_path = '../' . $db_path;
+                                
+                                if (file_exists($file_path)) {
+                                    $show_image = true;
+                                    $image_src = '../' . $db_path; // Use the correct relative path from modules directory
+                                }
+                            }
+                            ?>
+                            
+                            <?php if ($show_image): ?>
+                                <img id="current-profile-img" src="<?php echo htmlspecialchars($image_src); ?>" 
+                                     alt="Profile Picture" 
+                                     class="img-fluid rounded-circle profile-image"
+                                     onerror="console.log('Image failed to load: <?php echo $image_src; ?>'); this.style.display='none'; document.getElementById('profile-avatar').style.display='flex';">
+                            <?php endif; ?>
+                            
+                            <?php if (!$show_image): ?>
+                                <div id="profile-avatar" class="profile-avatar">
+                                    <?php echo strtoupper(substr($user['first_name'], 0, 1) . substr($user['last_name'], 0, 1)); ?>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <img id="preview-profile-img" src="" alt="Preview" 
+                                 class="img-fluid rounded-circle profile-image" style="display: none;">
+                        </div>
                     </div>
                     
                     <!-- User Info -->
@@ -616,8 +642,12 @@ include '../includes/header.php';
 document.addEventListener('DOMContentLoaded', function() {
 
     
-    // File upload validation
+    // File upload validation and preview
     const profilePictureInput = document.getElementById('profile_picture');
+    const currentProfileImg = document.getElementById('current-profile-img');
+    const profileAvatar = document.getElementById('profile-avatar');
+    const previewProfileImg = document.getElementById('preview-profile-img');
+    
     if (profilePictureInput) {
         profilePictureInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -626,6 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (file.size > 5 * 1024 * 1024) {
                     alert('File size must be less than 5MB');
                     this.value = '';
+                    resetProfileDisplay();
                     return;
                 }
                 
@@ -634,10 +665,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!allowedTypes.includes(file.type)) {
                     alert('Only JPG, JPEG, and PNG files are allowed');
                     this.value = '';
+                    resetProfileDisplay();
                     return;
                 }
+                
+                // Show image preview in the profile circle
+                showImageInProfileCircle(file);
+            } else {
+                resetProfileDisplay();
             }
         });
+    }
+    
+    function showImageInProfileCircle(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Hide current profile elements
+            if (currentProfileImg) currentProfileImg.style.display = 'none';
+            if (profileAvatar) profileAvatar.style.display = 'none';
+            
+            // Show preview image in the circle
+            previewProfileImg.src = e.target.result;
+            previewProfileImg.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    function resetProfileDisplay() {
+        // Hide preview image
+        previewProfileImg.style.display = 'none';
+        previewProfileImg.src = '';
+        
+        // Show original profile elements
+        if (currentProfileImg) {
+            currentProfileImg.style.display = 'block';
+        } else if (profileAvatar) {
+            profileAvatar.style.display = 'flex';
+        }
+    }
+    
+    // Handle successful upload - refresh the page to show new image
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('uploaded') === 'success') {
+        // Remove the parameter from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
     
     // Form submission confirmation

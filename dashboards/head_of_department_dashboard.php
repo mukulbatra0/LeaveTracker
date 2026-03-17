@@ -366,6 +366,13 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                                                 </span>
                                             </td>
                                             <td><?php echo (new DateTime($application['created_at']))->format('M d'); ?></td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-info btn-sm" onclick="viewDetails(<?php echo $application['id']; ?>)" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>

@@ -46,8 +46,16 @@ $params = [];
 
 // Role-based filtering
 if ($role == 'head_of_department') {
-    $sql .= " AND u.department_id = (SELECT department_id FROM users WHERE id = :user_id)";
-    $params[':user_id'] = $user_id;
+    // Get the HOD's department first
+    $dept_check_sql = "SELECT department_id FROM users WHERE id = ?";
+    $dept_check_stmt = $conn->prepare($dept_check_sql);
+    $dept_check_stmt->execute([$user_id]);
+    $hod_dept_id = $dept_check_stmt->fetchColumn();
+    
+    if ($hod_dept_id) {
+        $sql .= " AND u.department_id = :hod_dept_id";
+        $params[':hod_dept_id'] = $hod_dept_id;
+    }
 }
 
 // Status filter
@@ -64,15 +72,25 @@ if (!empty($filter_leave_type)) {
 
 // Search filter
 if (!empty($search)) {
-    $sql .= " AND (u.first_name LIKE :search OR u.last_name LIKE :search OR u.employee_id LIKE :search)";
-    $params[':search'] = "%$search%";
+    $sql .= " AND (u.first_name LIKE :search1 OR u.last_name LIKE :search2 OR u.employee_id LIKE :search3)";
+    $params[':search1'] = "%$search%";
+    $params[':search2'] = "%$search%";
+    $params[':search3'] = "%$search%";
 }
 
 $sql .= " ORDER BY la.created_at DESC";
 
+// Debug: Uncomment to see SQL and params
+// echo "<pre>SQL: " . $sql . "\n\nParams: "; print_r($params); echo "</pre>"; exit;
+
 $stmt = $conn->prepare($sql);
+// Bind parameters explicitly with correct types
 foreach ($params as $key => $value) {
-    $stmt->bindValue($key, $value);
+    if ($key === ':hod_dept_id' || $key === ':leave_type_id') {
+        $stmt->bindValue($key, $value, PDO::PARAM_INT);
+    } else {
+        $stmt->bindValue($key, $value, PDO::PARAM_STR);
+    }
 }
 $stmt->execute();
 $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);

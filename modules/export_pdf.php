@@ -15,7 +15,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -31,7 +31,7 @@ $allowed_roles = ['admin', 'head_of_department', 'director', 'dean', 'principal'
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -580,3 +580,4 @@ header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
 // Ensure no further output
 exit;
 ?>
+

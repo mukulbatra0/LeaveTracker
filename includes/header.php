@@ -35,8 +35,8 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="<?php echo $base_path; ?>index.php">
-                <i class="fas fa-calendar-check me-2"></i>LeaveTracker
+            <a class="navbar-brand d-flex align-items-center" href="<?php echo $base_path; ?>index.php">
+                <img src="<?php echo $base_path; ?>images/logo.png" alt="College Logo" style="height: 30px; width: auto;" class="me-2">LeaveTracker
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>

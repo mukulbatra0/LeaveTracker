@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -22,7 +22,7 @@ $role = $_SESSION['role'];
 if ($role == 'hr_admin') {
     $_SESSION['alert'] = "HR Admins cannot apply for leave through this system.";
     $_SESSION['alert_type'] = "warning";
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -643,7 +643,7 @@ include_once '../includes/header.php';
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a href="index.php" class="btn btn-secondary me-md-2">
+                                <a href="../index.php" class="btn btn-secondary me-md-2">
                                     <i class="fas fa-times me-1"></i> Cancel
                                 </a>
                                 <button type="submit" class="btn btn-primary" id="submit-btn">

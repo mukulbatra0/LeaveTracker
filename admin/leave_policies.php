@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ $role = $_SESSION['role'];
 if ($role != 'admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: /index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -669,3 +669,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../includes/footer.php'; ?>
+
+

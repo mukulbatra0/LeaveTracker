@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -153,7 +153,7 @@ if (isset($_GET['cancel']) && is_numeric($_GET['cancel'])) {
         if (!$application) {
             $_SESSION['alert'] = "Leave application not found.";
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/leave_history.php');
+            header('Location: leave_history.php');
             exit;
         }
         
@@ -173,7 +173,7 @@ if (isset($_GET['cancel']) && is_numeric($_GET['cancel'])) {
         if (!$can_cancel) {
             $_SESSION['alert'] = "You don't have permission to cancel this application or it's already processed.";
             $_SESSION['alert_type'] = "danger";
-            header('Location: ./modules/leave_history.php');
+            header('Location: leave_history.php');
             exit;
         }
         
@@ -197,13 +197,13 @@ if (isset($_GET['cancel']) && is_numeric($_GET['cancel'])) {
         
         $_SESSION['alert'] = "Leave application cancelled successfully.";
         $_SESSION['alert_type'] = "success";
-        header('Location: ./modules/leave_history.php');
+        header('Location: leave_history.php');
         exit;
     } catch (PDOException $e) {
         $conn->rollBack();
         $_SESSION['alert'] = "Error: " . $e->getMessage();
         $_SESSION['alert_type'] = "danger";
-        header('Location: ./modules/leave_history.php');
+        header('Location: leave_history.php');
         exit;
     }
 }

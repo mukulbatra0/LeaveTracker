@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ $role = $_SESSION['role'];
 if ($role != 'hr_admin') {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "User created successfully!";
                 $_SESSION['alert_type'] = "success";
-                header('Location: ./modules/users.php');
+                header('Location: users.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -241,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "User updated successfully!";
                 $_SESSION['alert_type'] = "success";
-                header('Location: ./modules/users.php');
+                header('Location: users.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -321,7 +321,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "User deleted successfully!";
                 $_SESSION['alert_type'] = "success";
-                header('Location: ./modules/users.php');
+                header('Location: users.php');
                 exit;
                 
             } catch (PDOException $e) {

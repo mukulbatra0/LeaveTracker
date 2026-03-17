@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -19,7 +19,7 @@ $allowed_roles = ['hr_admin', 'director', 'admin'];
 if (!in_array($role, $allowed_roles)) {
     $_SESSION['alert'] = "You don't have permission to access this page.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: /index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Department created successfully!";
                 $_SESSION['alert_type'] = "success";
-                header('Location: ./modules/departments.php');
+            header('Location: departments.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -188,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $_SESSION['alert'] = "Department updated successfully!";
                 $_SESSION['alert_type'] = "success";
-                header('Location: ./modules/departments.php');
+            header('Location: departments.php');
                 exit;
                 
             } catch (PDOException $e) {
@@ -250,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             $_SESSION['alert'] = "Department deleted successfully!";
             $_SESSION['alert_type'] = "success";
-            header('Location: ./modules/departments.php');
+        header('Location: departments.php');
             exit;
             
         } catch (Exception $e) {
@@ -562,3 +562,4 @@ include_once '../includes/header.php';
 // Include footer
 include_once '../includes/footer.php';
 ?>
+

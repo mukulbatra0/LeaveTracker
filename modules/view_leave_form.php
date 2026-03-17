@@ -10,7 +10,7 @@ require_once '../config/db.php';
 
 $leave_id = $_GET['id'] ?? null;
 if (!$leave_id) {
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -31,7 +31,7 @@ $leave = $stmt->fetch();
 if (!$leave) {
     $_SESSION['alert'] = "Leave application not found.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -75,7 +75,7 @@ if ($role == 'head_of_department') {
 if (!$can_view) {
     $_SESSION['alert'] = "You don't have permission to view this leave application.";
     $_SESSION['alert_type'] = "danger";
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -335,3 +335,4 @@ include_once '../includes/header.php';
 </div>
 
 <?php include_once '../includes/footer.php'; ?>
+
