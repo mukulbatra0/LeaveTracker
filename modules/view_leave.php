@@ -121,6 +121,21 @@ include_once '../includes/header.php';
                     </div>
                     <?php endif; ?>
                     
+                    <?php if ($leave['attachment']): ?>
+                    <div class="mb-3">
+                        <strong>Attachment:</strong><br>
+                        <div class="border rounded p-2 bg-light mt-2">
+                            <i class="fas fa-paperclip"></i> 
+                            <a href="../uploads/<?php echo htmlspecialchars($leave['attachment']); ?>" target="_blank" class="text-decoration-none">
+                                <?php echo htmlspecialchars($leave['attachment']); ?>
+                            </a>
+                            <a href="../uploads/<?php echo htmlspecialchars($leave['attachment']); ?>" download class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <strong>Applied On:</strong><br>

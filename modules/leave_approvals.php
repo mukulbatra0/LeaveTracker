@@ -14,6 +14,10 @@ require_once '../config/db.php';
 require_once '../classes/EmailNotification.php';
 $emailNotification = new EmailNotification($conn);
 
+// Include PDF generator class
+require_once '../classes/LeaveApplicationPDF.php';
+$pdfGenerator = new LeaveApplicationPDF($conn);
+
 // Get user information
 $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'];
@@ -153,6 +157,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $leave_info = $leave_info_stmt->fetch();
                     
                     if ($applicant_info && $leave_info) {
+                        // Generate PDF for email attachment
+                        $pdf_path = '';
+                        $pdf_filename = '';
+                        try {
+                            $pdf_path = $pdfGenerator->generatePDFToFile($leave_application_id);
+                            $pdf_filename = $pdfGenerator->getFilename($leave_application_id);
+                        } catch (Exception $pdf_e) {
+                            error_log("PDF generation failed for email attachment (leave_approvals rejection): " . $pdf_e->getMessage());
+                        }
+                        
                         $emailNotification->sendLeaveStatusNotification(
                             $applicant_info['email'],
                             $applicant_info['first_name'] . ' ' . $applicant_info['last_name'],
@@ -160,7 +174,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             $leave_info['leave_type_name'],
                             $leave_info['start_date'],
                             $leave_info['end_date'],
-                            $comments
+                            $comments,
+                            $pdf_path,
+                            $pdf_filename
                         );
                     }
                 } 
@@ -222,6 +238,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $leave_info = $leave_info_stmt->fetch();
                         
                         if ($applicant_info && $leave_info) {
+                            // Generate PDF for email attachment
+                            $pdf_path = '';
+                            $pdf_filename = '';
+                            try {
+                                $pdf_path = $pdfGenerator->generatePDFToFile($leave_application_id);
+                                $pdf_filename = $pdfGenerator->getFilename($leave_application_id);
+                            } catch (Exception $pdf_e) {
+                                error_log("PDF generation failed for email attachment (leave_approvals approval): " . $pdf_e->getMessage());
+                            }
+                            
                             $emailNotification->sendLeaveStatusNotification(
                                 $applicant_info['email'],
                                 $applicant_info['first_name'] . ' ' . $applicant_info['last_name'],
@@ -229,7 +255,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 $leave_info['leave_type_name'],
                                 $leave_info['start_date'],
                                 $leave_info['end_date'],
-                                $comments
+                                $comments,
+                                $pdf_path,
+                                $pdf_filename
                             );
                         }
                     } else {

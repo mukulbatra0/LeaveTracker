@@ -96,16 +96,33 @@ try {
     die('Error: TCPDF library not found. Please run: composer require tecnickcom/tcpdf');
 }
 
-// Create custom PDF class
-class LeaveFormPDF extends TCPDF {
-    public function Header() {
-        // No header for leave form
-    }
+// Check if FPDI is available for PDF merging
+$fpdi_available = class_exists('setasign\Fpdi\Tcpdf\Fpdi');
 
-    public function Footer() {
-        $this->SetY(-15);
-        $this->SetFont('helvetica', 'I', 8);
-        $this->Cell(0, 10, 'Page '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
+// Create custom PDF class
+if ($fpdi_available) {
+    class LeaveFormPDF extends \setasign\Fpdi\Tcpdf\Fpdi {
+        public function Header() {
+            // No header for leave form
+        }
+
+        public function Footer() {
+            $this->SetY(-15);
+            $this->SetFont('helvetica', 'I', 8);
+            $this->Cell(0, 10, 'Page '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
+        }
+    }
+} else {
+    class LeaveFormPDF extends TCPDF {
+        public function Header() {
+            // No header for leave form
+        }
+
+        public function Footer() {
+            $this->SetY(-15);
+            $this->SetFont('helvetica', 'I', 8);
+            $this->Cell(0, 10, 'Page '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
+        }
     }
 }
 
@@ -396,7 +413,55 @@ try {
                 
                 $pdf->Image($attachment_path, 15, $pdf->GetY(), $new_width, $new_height);
             }
-            // For PDF and other file types, add a reference page
+            // For PDF attachments, try to import pages if FPDI is available
+            else if ($file_extension == 'pdf' && $fpdi_available) {
+                try {
+                    // Get the number of pages in the source PDF
+                    $pageCount = $pdf->setSourceFile($attachment_path);
+                    
+                    // Import each page
+                    for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                        $pdf->AddPage();
+                        
+                        // Add header for first page of attachment
+                        if ($pageNo == 1) {
+                            $pdf->SetFont('helvetica', 'B', 12);
+                            $pdf->Cell(0, 10, 'Attached Document', 0, 1, 'C');
+                            $pdf->Ln(2);
+                        }
+                        
+                        // Import the page
+                        $tplIdx = $pdf->importPage($pageNo);
+                        $size = $pdf->getTemplateSize($tplIdx);
+                        
+                        // Calculate scaling to fit page
+                        $pageWidth = $pdf->getPageWidth() - 20; // 10mm margins on each side
+                        $pageHeight = $pdf->getPageHeight() - 30; // margins
+                        
+                        $scale = min($pageWidth / $size['width'], $pageHeight / $size['height']);
+                        
+                        $x = ($pdf->getPageWidth() - ($size['width'] * $scale)) / 2;
+                        $y = ($pageNo == 1) ? 30 : 15;
+                        
+                        $pdf->useTemplate($tplIdx, $x, $y, $size['width'] * $scale, $size['height'] * $scale);
+                    }
+                } catch (Exception $e) {
+                    // If PDF import fails, add a reference page
+                    error_log("PDF import error: " . $e->getMessage());
+                    $pdf->AddPage();
+                    $pdf->SetFont('helvetica', 'B', 14);
+                    $pdf->Cell(0, 10, 'Attached Document', 0, 1, 'C');
+                    $pdf->SetFont('helvetica', '', 10);
+                    $pdf->Ln(5);
+                    $pdf->Cell(0, 10, 'Filename: ' . $leave['attachment'], 0, 1, 'L');
+                    $pdf->Cell(0, 10, 'File Type: PDF', 0, 1, 'L');
+                    $pdf->Ln(5);
+                    $pdf->MultiCell(0, 10, 'Note: The attached PDF document could not be embedded automatically. Please download the attachment separately from the system to view the complete documentation.', 0, 'L');
+                    $pdf->Ln(5);
+                    $pdf->Cell(0, 10, 'Download from: View Application > Download Attachment', 0, 1, 'L');
+                }
+            }
+            // For PDF without FPDI or other file types, add a reference page
             else {
                 $pdf->AddPage();
                 $pdf->SetFont('helvetica', 'B', 14);
@@ -408,13 +473,25 @@ try {
                 $pdf->Ln(5);
                 
                 if ($file_extension == 'pdf') {
-                    $pdf->MultiCell(0, 10, 'Note: The attached PDF document is available separately. To view the complete application with the PDF attachment, please download both files from the system.', 0, 'L');
+                    $pdf->MultiCell(0, 10, 'Note: PDF merging library (FPDI) is not installed. To include PDF attachments in the generated PDF, please run: composer require setasign/fpdi', 0, 'L');
                     $pdf->Ln(5);
-                    $pdf->Cell(0, 10, 'File Location: uploads/' . $leave['attachment'], 0, 1, 'L');
+                    $pdf->MultiCell(0, 10, 'You can download the attachment separately from the View Application page.', 0, 'L');
                 } else {
-                    $pdf->Cell(0, 10, 'Note: This file type cannot be embedded in the PDF. Please refer to the original file.', 0, 1, 'L');
+                    $pdf->MultiCell(0, 10, 'Note: This file type cannot be embedded in the PDF. Please download the attachment separately from the system.', 0, 'L');
                 }
+                $pdf->Ln(5);
+                $pdf->Cell(0, 10, 'Download from: View Application > Download Attachment', 0, 1, 'L');
             }
+        } else {
+            // File not found
+            $pdf->AddPage();
+            $pdf->SetFont('helvetica', 'B', 14);
+            $pdf->Cell(0, 10, 'Attachment Error', 0, 1, 'C');
+            $pdf->SetFont('helvetica', '', 10);
+            $pdf->Ln(5);
+            $pdf->Cell(0, 10, 'Filename: ' . $leave['attachment'], 0, 1, 'L');
+            $pdf->Ln(5);
+            $pdf->MultiCell(0, 10, 'Warning: The attachment file could not be found on the server. Please contact the system administrator.', 0, 'L');
         }
     }
 

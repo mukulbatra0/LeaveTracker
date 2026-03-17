@@ -170,13 +170,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         
         // Get allowed attachment types from settings
-        $settings_sql = "SELECT setting_value FROM system_settings WHERE setting_key = 'allowed_attachment_types'";
+        $settings_sql = "SELECT setting_value FROM system_settings WHERE setting_key = 'allowed_file_types'";
         $settings_stmt = $conn->prepare($settings_sql);
         $settings_stmt->execute();
         $allowed_types = explode(',', $settings_stmt->fetch()['setting_value']);
         
         // Get max attachment size from settings (in MB)
-        $settings_sql = "SELECT setting_value FROM system_settings WHERE setting_key = 'max_attachment_size'";
+        $settings_sql = "SELECT setting_value FROM system_settings WHERE setting_key = 'max_file_size'";
         $settings_stmt = $conn->prepare($settings_sql);
         $settings_stmt->execute();
         $max_size = (int)$settings_stmt->fetch()['setting_value'] * 1024 * 1024; // Convert to bytes
@@ -509,14 +509,15 @@ include_once '../includes/header.php';
                                     <select class="form-select" id="leave_type_id" name="leave_type_id" required>
                                         <option value="">Select Leave Type</option>
                                         <?php foreach($leave_types as $leave_type): ?>
-                                            <option value="<?php echo $leave_type['id']; ?>" data-requires-attachment="<?php echo $leave_type['requires_attachment']; ?>">
+                                            <option value="<?php echo $leave_type['id']; ?>" 
+                                                    data-requires-attachment="<?php echo $leave_type['requires_attachment']; ?>"
+                                                    data-description="<?php echo htmlspecialchars($leave_type['description']); ?>">
                                                 <?php echo htmlspecialchars($leave_type['name']); ?>
-                                                <?php if(!empty($leave_type['description'])): ?>
-                                                    - <?php echo htmlspecialchars($leave_type['description']); ?>
-                                                <?php endif; ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
+                                    <div class="form-text" id="leave-description" style="display: none; margin-top: 0.5rem;">
+                                    </div>
                                     <div class="form-text" id="attachment-note" style="display: none;">
                                         <i class="fas fa-info-circle me-1"></i> This leave type requires supporting documentation.
                                     </div>
@@ -625,10 +626,21 @@ include_once '../includes/header.php';
     document.addEventListener('DOMContentLoaded', function() {
         // Show/hide attachment field based on leave type selection
         document.getElementById('leave_type_id').addEventListener('change', function() {
-            var requiresAttachment = this.options[this.selectedIndex].getAttribute('data-requires-attachment');
+            var selectedOption = this.options[this.selectedIndex];
+            var requiresAttachment = selectedOption.getAttribute('data-requires-attachment');
+            var description = selectedOption.getAttribute('data-description');
             var attachmentField = document.getElementById('attachment-field');
             var attachmentNote = document.getElementById('attachment-note');
             var attachmentInput = document.getElementById('attachment');
+            var leaveDescription = document.getElementById('leave-description');
+            
+            // Show/hide description
+            if (description && description.trim() !== '') {
+                leaveDescription.innerHTML = '<i class="fas fa-info-circle me-1"></i>' + description;
+                leaveDescription.style.display = 'block';
+            } else {
+                leaveDescription.style.display = 'none';
+            }
             
             if (requiresAttachment == 1) {
                 attachmentField.style.display = 'block';

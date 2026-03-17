@@ -236,7 +236,13 @@ include_once '../includes/header.php';
                         <div class="col-12">
                             <strong>Attachment:</strong><br>
                             <div class="border rounded p-2 bg-light">
-                                <i class="fas fa-paperclip"></i> <?php echo htmlspecialchars($application['attachment']); ?>
+                                <i class="fas fa-paperclip"></i> 
+                                <a href="../uploads/<?php echo htmlspecialchars($application['attachment']); ?>" target="_blank" class="text-decoration-none">
+                                    <?php echo htmlspecialchars($application['attachment']); ?>
+                                </a>
+                                <a href="../uploads/<?php echo htmlspecialchars($application['attachment']); ?>" download class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
                             </div>
                         </div>
                     </div>

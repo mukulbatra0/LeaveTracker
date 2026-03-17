@@ -101,7 +101,7 @@ class EmailNotification {
         return $this->sendEmail($approver_email, $subject, $message);
     }
     
-    public function sendLeaveStatusNotification($applicant_email, $applicant_name, $status, $leave_type, $start_date, $end_date, $comments = '') {
+    public function sendLeaveStatusNotification($applicant_email, $applicant_name, $status, $leave_type, $start_date, $end_date, $comments = '', $pdf_attachment_path = '', $pdf_filename = '') {
         $subject = "Leave Application " . ucfirst($status) . " - " . $leave_type;
         $status_message = $status === 'approved' ? 'has been approved' : 'has been rejected';
         
@@ -119,9 +119,13 @@ class EmailNotification {
             $message .= "<p><strong>Comments:</strong> {$comments}</p>";
         }
         
+        if (!empty($pdf_attachment_path)) {
+            $message .= "<p><strong>📎 Attached:</strong> Your leave application form is attached as a PDF for your records.</p>";
+        }
+        
         $message .= "<p>Please log in to the ELMS system for more details.</p>";
         
-        return $this->sendEmail($applicant_email, $subject, $message);
+        return $this->sendEmail($applicant_email, $subject, $message, $pdf_attachment_path, $pdf_filename);
     }
     
     /**
@@ -268,7 +272,7 @@ class EmailNotification {
         }
     }
     
-    private function sendEmail($to, $subject, $message) {
+    private function sendEmail($to, $subject, $message, $attachment_path = '', $attachment_name = '') {
         $this->last_error = '';
         
         // Check if email notifications are enabled
@@ -279,10 +283,12 @@ class EmailNotification {
             
             if (!$enabled || $enabled === '0' || $enabled === 'false') {
                 error_log("Email notifications are disabled in system settings");
+                $this->cleanupTempFile($attachment_path);
                 return true; // Return true to not break the workflow
             }
         } catch (\Exception $e) {
             error_log("Could not check email notification settings: " . $e->getMessage());
+            $this->cleanupTempFile($attachment_path);
             return true; // Return true to not break the workflow
         }
         
@@ -290,6 +296,7 @@ class EmailNotification {
         if (empty($this->smtp_host) || empty($this->smtp_username) || empty($this->smtp_password)) {
             $this->last_error = "SMTP not fully configured (missing host, username, or password)";
             error_log("Email not sent: " . $this->last_error);
+            $this->cleanupTempFile($attachment_path);
             return true; // Return true to not break the workflow, but log the issue
         }
         
@@ -297,6 +304,7 @@ class EmailNotification {
         if (empty($this->from_email) || empty($to)) {
             $this->last_error = "Invalid email configuration - missing from_email or recipient";
             error_log("Email not sent: " . $this->last_error);
+            $this->cleanupTempFile($attachment_path);
             return true; // Return true to not break the workflow
         }
         
@@ -304,6 +312,7 @@ class EmailNotification {
         if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
             $this->last_error = "PHPMailer not found. Please run: php install-phpmailer.php";
             error_log($this->last_error);
+            $this->cleanupTempFile($attachment_path);
             return $this->sendEmailBasic($to, $subject, $message);
         }
         
@@ -338,7 +347,7 @@ class EmailNotification {
             );
             
             // Set timeout
-            $mail->Timeout = 15;
+            $mail->Timeout = 30; // Increased timeout for attachments
             
             // Recipients
             $mail->setFrom($this->from_email, $this->from_name);
@@ -350,12 +359,22 @@ class EmailNotification {
             $mail->Body = $message;
             $mail->AltBody = strip_tags($message);
             
+            // Add PDF attachment if provided
+            if (!empty($attachment_path) && file_exists($attachment_path)) {
+                $file_name = !empty($attachment_name) ? $attachment_name : basename($attachment_path);
+                $mail->addAttachment($attachment_path, $file_name, 'base64', 'application/pdf');
+                error_log("PDF attachment added to email: {$file_name}");
+            }
+            
             // Send email
             $result = $mail->send();
             
             if ($result) {
-                error_log("Email sent successfully to {$to}");
+                error_log("Email sent successfully to {$to}" . (!empty($attachment_path) ? ' (with PDF attachment)' : ''));
             }
+            
+            // Cleanup temp file after sending
+            $this->cleanupTempFile($attachment_path);
             
             return $result;
             
@@ -363,9 +382,20 @@ class EmailNotification {
             $this->last_error = isset($mail) ? $mail->ErrorInfo : $e->getMessage();
             error_log("PHPMailer Error: " . $this->last_error);
             error_log("Exception: " . $e->getMessage());
+            // Cleanup temp file even on failure
+            $this->cleanupTempFile($attachment_path);
             // Return true for workflow emails so the leave application still goes through
             // The email failure is logged for admin to investigate
             return true;
+        }
+    }
+    
+    /**
+     * Cleanup a temporary PDF file after email sending
+     */
+    private function cleanupTempFile($file_path) {
+        if (!empty($file_path) && file_exists($file_path) && strpos($file_path, sys_get_temp_dir()) !== false) {
+            @unlink($file_path);
         }
     }
     
