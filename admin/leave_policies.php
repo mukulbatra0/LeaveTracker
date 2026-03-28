@@ -256,7 +256,7 @@ include '../includes/header.php';
 <div class="container-fluid px-4">
     <h1 class="mt-4"><i class="fas fa-balance-scale me-2"></i>Leave Policy Rules</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="/index.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="../index.php">Dashboard</a></li>
         <li class="breadcrumb-item active">Leave Policies</li>
     </ol>
 

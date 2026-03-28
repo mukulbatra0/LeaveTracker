@@ -187,9 +187,7 @@ include_once '../includes/header.php';
                     <a href="download_leave_pdf.php?id=<?php echo $leave_id; ?>" class="btn btn-success" target="_blank">
                         <i class="fas fa-download me-1"></i>Download PDF
                     </a>
-                    <button onclick="history.back()" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Back
-                    </button>
+
                 </div>
             </div>
         </div>
