@@ -44,15 +44,29 @@ class LeaveApplicationPDF {
         try {
             $pdf_string = $this->generatePDFString($leave_id);
             if ($pdf_string === false) {
+                error_log("LeaveApplicationPDF: generatePDFString returned false for leave ID: $leave_id");
                 return false;
             }
             
             $temp_file = tempnam(sys_get_temp_dir(), 'leave_pdf_');
+            if ($temp_file === false) {
+                error_log("LeaveApplicationPDF: Failed to create temp file");
+                return false;
+            }
+            
             $temp_file .= '.pdf';
-            file_put_contents($temp_file, $pdf_string);
+            $result = file_put_contents($temp_file, $pdf_string);
+            
+            if ($result === false) {
+                error_log("LeaveApplicationPDF: Failed to write PDF to temp file: $temp_file");
+                return false;
+            }
+            
+            error_log("LeaveApplicationPDF: Successfully generated PDF to file: $temp_file (size: " . strlen($pdf_string) . " bytes)");
             return $temp_file;
         } catch (\Exception $e) {
             error_log("LeaveApplicationPDF temp file Error: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             return false;
         }
     }
@@ -89,118 +103,147 @@ class LeaveApplicationPDF {
      * @return object|false TCPDF object or false on failure
      */
     private function createPDF($leave_id) {
-        // Get leave application details
-        $sql = "SELECT la.*, lt.name as leave_type_name, 
-                u.first_name, u.last_name, u.email, u.employee_id, u.phone, u.role,
-                d.name as department_name
-                FROM leave_applications la 
-                JOIN leave_types lt ON la.leave_type_id = lt.id 
-                JOIN users u ON la.user_id = u.id 
-                JOIN departments d ON u.department_id = d.id
-                WHERE la.id = :id";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':id', $leave_id, PDO::PARAM_INT);
-        $stmt->execute();
-        $leave = $stmt->fetch();
-        
-        if (!$leave) {
-            error_log("LeaveApplicationPDF: Leave application not found for ID: $leave_id");
-            return false;
-        }
-        
-        // Get approval history
-        $approval_sql = "SELECT lap.*, u.first_name, u.last_name, lap.approver_level
-                        FROM leave_approvals lap
-                        JOIN users u ON lap.approver_id = u.id
-                        WHERE lap.leave_application_id = :application_id
-                        ORDER BY lap.created_at ASC";
-        $approval_stmt = $this->conn->prepare($approval_sql);
-        $approval_stmt->bindParam(':application_id', $leave_id, PDO::PARAM_INT);
-        $approval_stmt->execute();
-        $approvals = $approval_stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Check if required libraries exist
-        if (!class_exists('TCPDF')) {
-            error_log("LeaveApplicationPDF: TCPDF not found");
-            return false;
-        }
-        
-        // Create PDF using simple TCPDF (no FPDI needed for email attachments)
-        $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-        
-        // Remove default header/footer
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(true);
-        
-        // Set document information
-        $pdf->SetCreator('Leave Management System');
-        $pdf->SetAuthor($leave['first_name'] . ' ' . $leave['last_name']);
-        $pdf->SetTitle('Leave Application - ' . $leave['first_name'] . ' ' . $leave['last_name']);
-        $pdf->SetSubject('Leave Application Form');
-        
-        // Set margins
-        $pdf->SetMargins(15, 15, 15);
-        $pdf->SetHeaderMargin(5);
-        $pdf->SetFooterMargin(10);
-        
-        // Set auto page breaks
-        $pdf->SetAutoPageBreak(TRUE, 15);
-        
-        // Add a page
-        $pdf->AddPage();
-        
-        // Set font
-        $pdf->SetFont('helvetica', '', 10);
-        
-        // Build the HTML content
-        $html = $this->buildHTML($leave, $approvals);
-        
-        // Write the HTML content
-        $pdf->writeHTML($html, true, false, true, false, '');
-        
-        // If there's an image attachment, include it
-        if (!empty($leave['attachment'])) {
-            $attachment_path = __DIR__ . '/../uploads/' . $leave['attachment'];
+        try {
+            // Get leave application details
+            $sql = "SELECT la.*, lt.name as leave_type_name, 
+                    u.first_name, u.last_name, u.email, u.employee_id, u.phone, u.role,
+                    d.name as department_name
+                    FROM leave_applications la 
+                    JOIN leave_types lt ON la.leave_type_id = lt.id 
+                    JOIN users u ON la.user_id = u.id 
+                    JOIN departments d ON u.department_id = d.id
+                    WHERE la.id = :id";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':id', $leave_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $leave = $stmt->fetch();
             
-            if (file_exists($attachment_path)) {
-                $file_extension = strtolower(pathinfo($attachment_path, PATHINFO_EXTENSION));
+            if (!$leave) {
+                error_log("LeaveApplicationPDF: Leave application not found for ID: $leave_id");
+                return false;
+            }
+            
+            // Get approval history
+            $approval_sql = "SELECT lap.*, u.first_name, u.last_name, lap.approver_level
+                            FROM leave_approvals lap
+                            JOIN users u ON lap.approver_id = u.id
+                            WHERE lap.leave_application_id = :application_id
+                            ORDER BY lap.created_at ASC";
+            $approval_stmt = $this->conn->prepare($approval_sql);
+            $approval_stmt->bindParam(':application_id', $leave_id, PDO::PARAM_INT);
+            $approval_stmt->execute();
+            $approvals = $approval_stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Check if required libraries exist
+            if (!class_exists('TCPDF')) {
+                error_log("LeaveApplicationPDF: TCPDF not found");
+                return false;
+            }
+            
+            // Create PDF using simple TCPDF (no FPDI needed for email attachments)
+            $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+            
+            // Remove default header/footer
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(true);
+            
+            // Set document information
+            $pdf->SetCreator('Leave Management System');
+            $pdf->SetAuthor($leave['first_name'] . ' ' . $leave['last_name']);
+            $pdf->SetTitle('Leave Application - ' . $leave['first_name'] . ' ' . $leave['last_name']);
+            $pdf->SetSubject('Leave Application Form');
+            
+            // Set margins
+            $pdf->SetMargins(15, 15, 15);
+            $pdf->SetHeaderMargin(5);
+            $pdf->SetFooterMargin(10);
+            
+            // Set auto page breaks
+            $pdf->SetAutoPageBreak(TRUE, 15);
+            
+            // Add a page
+            $pdf->AddPage();
+            
+            // Set font
+            $pdf->SetFont('helvetica', '', 10);
+            
+            // Build the HTML content
+            $html = $this->buildHTML($leave, $approvals);
+            
+            // Write the HTML content
+            $pdf->writeHTML($html, true, false, true, false, '');
+            
+            // If there's an image attachment, include it
+            if (!empty($leave['attachment'])) {
+                // Try multiple possible paths for the attachment
+                $possible_paths = [
+                    __DIR__ . '/../uploads/' . $leave['attachment'],
+                    __DIR__ . '/../uploads/documents/' . $leave['attachment'],
+                    $_SERVER['DOCUMENT_ROOT'] . '/uploads/' . $leave['attachment'],
+                    $_SERVER['DOCUMENT_ROOT'] . '/uploads/documents/' . $leave['attachment']
+                ];
                 
-                // Handle image attachments
-                if (in_array($file_extension, ['jpg', 'jpeg', 'png', 'gif'])) {
-                    $pdf->AddPage();
-                    $pdf->SetFont('helvetica', 'B', 14);
-                    $pdf->Cell(0, 10, 'Attached Document', 0, 1, 'C');
-                    $pdf->Ln(5);
+                $attachment_path = null;
+                foreach ($possible_paths as $path) {
+                    if (file_exists($path)) {
+                        $attachment_path = $path;
+                        break;
+                    }
+                }
+                
+                if ($attachment_path && file_exists($attachment_path)) {
+                    $file_extension = strtolower(pathinfo($attachment_path, PATHINFO_EXTENSION));
                     
-                    // Get image dimensions and fit to page
-                    $img_size = @getimagesize($attachment_path);
-                    if ($img_size) {
-                        list($width, $height) = $img_size;
-                        $max_width = 180;
-                        $max_height = 250;
-                        
-                        $ratio = min($max_width / $width, $max_height / $height);
-                        $new_width = $width * $ratio;
-                        $new_height = $height * $ratio;
-                        
-                        $pdf->Image($attachment_path, 15, $pdf->GetY(), $new_width, $new_height);
+                    // Handle image attachments
+                    if (in_array($file_extension, ['jpg', 'jpeg', 'png', 'gif'])) {
+                        try {
+                            $pdf->AddPage();
+                            $pdf->SetFont('helvetica', 'B', 14);
+                            $pdf->Cell(0, 10, 'Attached Document', 0, 1, 'C');
+                            $pdf->Ln(5);
+                            
+                            // Get image dimensions and fit to page
+                            $img_size = @getimagesize($attachment_path);
+                            if ($img_size) {
+                                list($width, $height) = $img_size;
+                                $max_width = 180;
+                                $max_height = 250;
+                                
+                                $ratio = min($max_width / $width, $max_height / $height);
+                                $new_width = $width * $ratio;
+                                $new_height = $height * $ratio;
+                                
+                                $pdf->Image($attachment_path, 15, $pdf->GetY(), $new_width, $new_height);
+                            }
+                        } catch (\Exception $img_e) {
+                            error_log("Failed to add image to PDF: " . $img_e->getMessage());
+                            // Continue without the image rather than failing the whole PDF
+                        }
+                    } else {
+                        // For non-image files, add a note
+                        $pdf->AddPage();
+                        $pdf->SetFont('helvetica', 'B', 14);
+                        $pdf->Cell(0, 10, 'Attached Document', 0, 1, 'C');
+                        $pdf->SetFont('helvetica', '', 10);
+                        $pdf->Ln(5);
+                        $pdf->Cell(0, 10, 'Filename: ' . $leave['attachment'], 0, 1, 'L');
+                        $pdf->Cell(0, 10, 'File Type: ' . strtoupper($file_extension), 0, 1, 'L');
+                        $pdf->Ln(5);
+                        $pdf->MultiCell(0, 10, 'Note: This file is attached separately. Please download from the ELMS system.', 0, 'L');
                     }
                 } else {
-                    // For non-image files, add a note
-                    $pdf->AddPage();
-                    $pdf->SetFont('helvetica', 'B', 14);
-                    $pdf->Cell(0, 10, 'Attached Document', 0, 1, 'C');
-                    $pdf->SetFont('helvetica', '', 10);
-                    $pdf->Ln(5);
-                    $pdf->Cell(0, 10, 'Filename: ' . $leave['attachment'], 0, 1, 'L');
-                    $pdf->Cell(0, 10, 'File Type: ' . strtoupper($file_extension), 0, 1, 'L');
-                    $pdf->Ln(5);
-                    $pdf->MultiCell(0, 10, 'Note: This file is attached separately. Please download from the ELMS system.', 0, 'L');
+                    // Log that attachment file was not found
+                    error_log("Attachment file not found for leave application ID {$leave_id}: " . $leave['attachment']);
                 }
             }
+            
+            return $pdf;
+            
+        } catch (\Exception $e) {
+            error_log("LeaveApplicationPDF createPDF Error: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return false;
         }
-        
-        return $pdf;
     }
     
     /**
