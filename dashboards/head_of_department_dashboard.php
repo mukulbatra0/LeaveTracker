@@ -42,19 +42,32 @@ $pending_approvals_stmt->bindParam(':dept_id', $department_id, PDO::PARAM_INT);
 $pending_approvals_stmt->execute();
 $pending_approvals = $pending_approvals_stmt->fetchAll();
 
-// Get department statistics
-$dept_stats_sql = "SELECT 
-    COUNT(CASE WHEN u.role = 'staff' THEN 1 END) as staff_count,
+// Get department staff count
+$staff_count_sql = "SELECT COUNT(*) as staff_count
+    FROM users u
+    WHERE u.department_id = :dept_id 
+    AND u.role IN ('staff', 'department_head', 'head_of_department')
+    AND u.status = 'active'";
+$staff_count_stmt = $conn->prepare($staff_count_sql);
+$staff_count_stmt->bindParam(':dept_id', $department_id, PDO::PARAM_INT);
+$staff_count_stmt->execute();
+$staff_count = $staff_count_stmt->fetchColumn();
+
+// Get leave application statistics
+$leave_stats_sql = "SELECT 
     COUNT(CASE WHEN la.status = 'pending' THEN 1 END) as pending_applications,
     COUNT(CASE WHEN la.status = 'approved' AND MONTH(la.created_at) = MONTH(CURDATE()) THEN 1 END) as monthly_approved,
     COUNT(CASE WHEN la.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 END) as weekly_applications
-    FROM users u
-    LEFT JOIN leave_applications la ON u.id = la.user_id
-    WHERE u.department_id = :dept_id AND u.status = 'active'";
-$dept_stats_stmt = $conn->prepare($dept_stats_sql);
-$dept_stats_stmt->bindParam(':dept_id', $department_id, PDO::PARAM_INT);
-$dept_stats_stmt->execute();
-$dept_stats = $dept_stats_stmt->fetch();
+    FROM leave_applications la
+    JOIN users u ON la.user_id = u.id
+    WHERE u.department_id = :dept_id";
+$leave_stats_stmt = $conn->prepare($leave_stats_sql);
+$leave_stats_stmt->bindParam(':dept_id', $department_id, PDO::PARAM_INT);
+$leave_stats_stmt->execute();
+$leave_stats = $leave_stats_stmt->fetch();
+
+// Combine stats
+$dept_stats = array_merge(['staff_count' => $staff_count], $leave_stats);
 
 // Get count of staff on leave today
 $on_leave_today_sql = "SELECT COUNT(DISTINCT la.user_id) as on_leave_count

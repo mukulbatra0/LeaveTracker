@@ -307,12 +307,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $admin = $admin_stmt->fetch();
                 
                 try {
+                    // Generate email token for one-click action
+                    $email_token = bin2hex(random_bytes(32));
+                    $token_expires = date('Y-m-d H:i:s', strtotime('+48 hours'));
+                    
                     // Create approval record for admin
-                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
-                                    VALUES (:leave_application_id, :approver_id, 'admin')";
+                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, email_token, token_expires_at) 
+                                    VALUES (:leave_application_id, :approver_id, 'admin', :token, :expires)";
                     $approval_stmt = $conn->prepare($approval_sql);
                     $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
                     $approval_stmt->bindParam(':approver_id', $admin['id'], PDO::PARAM_INT);
+                    $approval_stmt->bindParam(':token', $email_token, PDO::PARAM_STR);
+                    $approval_stmt->bindParam(':expires', $token_expires, PDO::PARAM_STR);
                     $approval_stmt->execute();
                     
                     // Create notification for admin
@@ -347,12 +353,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 if ($admin_stmt->rowCount() > 0) {
                     $admin = $admin_stmt->fetch();
                     
+                    // Generate email token for one-click action
+                    $email_token = bin2hex(random_bytes(32));
+                    $token_expires = date('Y-m-d H:i:s', strtotime('+48 hours'));
+                    
                     // Create approval record for admin
-                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
-                                    VALUES (:leave_application_id, :approver_id, 'admin')";
+                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, email_token, token_expires_at) 
+                                    VALUES (:leave_application_id, :approver_id, 'admin', :token, :expires)";
                     $approval_stmt = $conn->prepare($approval_sql);
                     $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
                     $approval_stmt->bindParam(':approver_id', $admin['id'], PDO::PARAM_INT);
+                    $approval_stmt->bindParam(':token', $email_token, PDO::PARAM_STR);
+                    $approval_stmt->bindParam(':expires', $token_expires, PDO::PARAM_STR);
                     $approval_stmt->execute();
                     
                     // Create notification for admin
@@ -375,12 +387,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 if ($director_stmt->rowCount() > 0) {
                     $director = $director_stmt->fetch();
                     
+                    // Generate email token for one-click action
+                    $email_token = bin2hex(random_bytes(32));
+                    $token_expires = date('Y-m-d H:i:s', strtotime('+48 hours'));
+                    
                     // Create approval record for director
-                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
-                                    VALUES (:leave_application_id, :approver_id, 'director')";
+                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, email_token, token_expires_at) 
+                                    VALUES (:leave_application_id, :approver_id, 'director', :token, :expires)";
                     $approval_stmt = $conn->prepare($approval_sql);
                     $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
                     $approval_stmt->bindParam(':approver_id', $director['id'], PDO::PARAM_INT);
+                    $approval_stmt->bindParam(':token', $email_token, PDO::PARAM_STR);
+                    $approval_stmt->bindParam(':expires', $token_expires, PDO::PARAM_STR);
                     $approval_stmt->execute();
                     
                     // Create notification for director
@@ -405,12 +423,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $dept_head = $dept_head_stmt->fetch();
             
             if ($dept_head && $dept_head['head_id'] && $dept_head['head_id'] != $applicant_user_id) {
+                // Generate email token for one-click action
+                $email_token = bin2hex(random_bytes(32));
+                $token_expires = date('Y-m-d H:i:s', strtotime('+48 hours'));
+                
                 // Create approval record for department head
-                $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level) 
-                                VALUES (:leave_application_id, :approver_id, 'head_of_department')";
+                $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, email_token, token_expires_at) 
+                                VALUES (:leave_application_id, :approver_id, 'head_of_department', :token, :expires)";
                 $approval_stmt = $conn->prepare($approval_sql);
                 $approval_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
                 $approval_stmt->bindParam(':approver_id', $dept_head['head_id'], PDO::PARAM_INT);
+                $approval_stmt->bindParam(':token', $email_token, PDO::PARAM_STR);
+                $approval_stmt->bindParam(':expires', $token_expires, PDO::PARAM_STR);
                 $approval_stmt->execute();
                 
                 // Get department head info for notification
@@ -439,7 +463,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $leave_type_name,
                 $start_date,
                 $end_date,
-                $leave_application_id
+                $leave_application_id,
+                isset($email_token) ? $email_token : ''
             );
         }
         

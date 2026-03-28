@@ -84,19 +84,127 @@ class EmailNotification {
         $this->from_name = $this->from_name ?: 'ELMS System';
     }
     
-    public function sendLeaveApplicationNotification($approver_email, $applicant_name, $leave_type, $start_date, $end_date, $application_id) {
+    public function sendLeaveApplicationNotification($approver_email, $applicant_name, $leave_type, $start_date, $end_date, $application_id, $email_token = '') {
         $subject = "Leave Approval Required - " . $applicant_name;
-        $message = "
-        <h3>Leave Approval Required</h3>
-        <p>A new leave application requires your approval:</p>
-        <ul>
-            <li><strong>Employee:</strong> {$applicant_name}</li>
-            <li><strong>Leave Type:</strong> {$leave_type}</li>
-            <li><strong>Period:</strong> {$start_date} to {$end_date}</li>
-            <li><strong>Application ID:</strong> #{$application_id}</li>
-        </ul>
-        <p>Please log in to the ELMS system to review and approve this application.</p>
-        ";
+        
+        // Get APP_URL from environment
+        $app_url = !empty($_ENV['APP_URL']) ? rtrim($_ENV['APP_URL'], '/') : 'http://localhost/LeaveTracker';
+        
+        // Build direct links
+        $dashboard_link = $app_url . '/index.php';
+        $view_link = $app_url . '/modules/view_leave_form.php?id=' . $application_id;
+        
+        // Build action links - use token-based if token is available
+        if (!empty($email_token)) {
+            $approve_link = $app_url . '/modules/email_action.php?token=' . urlencode($email_token) . '&action=approve';
+            $reject_link = $app_url . '/modules/email_action.php?token=' . urlencode($email_token) . '&action=reject';
+            $action_note = '💡 <strong>Quick Action:</strong> Click the buttons above to approve or reject directly — no login required! You will see a confirmation page before the action is processed. Links expire in 48 hours.';
+        } else {
+            $approve_link = $view_link;
+            $reject_link = $view_link;
+            $action_note = '⚠️ <strong>Note:</strong> You will need to log in to the system to approve or reject this application. The buttons above will take you to the leave application page.';
+        }
+        
+        // Format dates for display
+        $start_display = date('d M Y', strtotime($start_date));
+        $end_display = date('d M Y', strtotime($end_date));
+        
+        $message = '
+        <div style="font-family: \'Segoe UI\', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 0;">
+            
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); padding: 30px 30px 25px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 600;">📋 Leave Approval Required</h1>
+                <p style="margin: 8px 0 0; color: #bbdefb; font-size: 14px;">A new leave application needs your attention</p>
+            </div>
+            
+            <!-- Body -->
+            <div style="background-color: #ffffff; padding: 30px; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0;">
+                
+                <!-- Greeting -->
+                <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;">
+                    Dear Approver,<br/>
+                    <strong>' . htmlspecialchars($applicant_name) . '</strong> has submitted a leave application that requires your review and approval.
+                </p>
+                
+                <!-- Leave Details Card -->
+                <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                    <h3 style="margin: 0 0 15px; color: #1a73e8; font-size: 16px; border-bottom: 2px solid #1a73e8; padding-bottom: 8px;">
+                        📄 Leave Application Details
+                    </h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px; width: 40%; border-bottom: 1px solid #eee;">👤 Employee</td>
+                            <td style="padding: 8px 10px; color: #333; font-size: 13px; font-weight: 600; border-bottom: 1px solid #eee;">' . htmlspecialchars($applicant_name) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px; border-bottom: 1px solid #eee;">📋 Leave Type</td>
+                            <td style="padding: 8px 10px; color: #333; font-size: 13px; font-weight: 600; border-bottom: 1px solid #eee;">' . htmlspecialchars($leave_type) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px; border-bottom: 1px solid #eee;">📅 From</td>
+                            <td style="padding: 8px 10px; color: #333; font-size: 13px; font-weight: 600; border-bottom: 1px solid #eee;">' . $start_display . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px; border-bottom: 1px solid #eee;">📅 To</td>
+                            <td style="padding: 8px 10px; color: #333; font-size: 13px; font-weight: 600; border-bottom: 1px solid #eee;">' . $end_display . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px;">🔢 Application ID</td>
+                            <td style="padding: 8px 10px; color: #333; font-size: 13px; font-weight: 600;">#' . $application_id . '</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div style="text-align: center; margin: 30px 0;">
+                    <p style="margin: 0 0 15px; color: #555; font-size: 14px; font-weight: 600;">Take Action on this Application:</p>
+                    
+                    <table style="margin: 0 auto;" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <!-- Approve Button -->
+                            <td style="padding: 0 8px;">
+                                <a href="' . $approve_link . '" 
+                                   style="display: inline-block; background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 6px; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);">
+                                    ✅ Approve
+                                </a>
+                            </td>
+                            
+                            <!-- Reject Button -->
+                            <td style="padding: 0 8px;">
+                                <a href="' . $reject_link . '" 
+                                   style="display: inline-block; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 6px; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);">
+                                    ❌ Reject
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Direct Link -->
+                <div style="text-align: center; margin: 20px 0 10px;">
+                    <a href="' . $view_link . '" 
+                       style="display: inline-block; background-color: #f8f9fa; color: #1a73e8; text-decoration: none; padding: 10px 25px; border-radius: 6px; font-size: 13px; font-weight: 500; border: 1px solid #1a73e8;">
+                        📄 View Full Application
+                    </a>
+                </div>
+                
+                <!-- Info Note -->
+                <div style="background-color: #e8f5e9; border: 1px solid #4caf50; border-radius: 6px; padding: 12px 16px; margin-top: 20px;">
+                    <p style="margin: 0; color: #2e7d32; font-size: 12px; line-height: 1.5;">
+                        ' . $action_note . '
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="background-color: #f1f3f5; padding: 20px 30px; text-align: center; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none;">
+                <p style="margin: 0; color: #999; font-size: 11px; line-height: 1.5;">
+                    This is an automated notification from ELMS (Leave Tracker System).<br/>
+                    The Technological Institute of Textile & Sciences, Bhiwani-127021
+                </p>
+            </div>
+        </div>';
         
         return $this->sendEmail($approver_email, $subject, $message);
     }
