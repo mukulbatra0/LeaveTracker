@@ -21,8 +21,7 @@
     <link rel="stylesheet" href="<?php echo $base_path; ?>css/responsive-override.css">
     <link rel="stylesheet" href="<?php echo $base_path; ?>css/mobile-tables.css">
     <!-- Favicon -->
-    <link rel="icon" href="<?php echo $base_path; ?>images/favicon.ico" type="image/x-icon">
-    
+    <link rel="icon" href="<?php echo $base_path; ?>images/logo.png" type="image/x-icon">
     <!-- JavaScript files -->
     <script src="<?php echo $base_path; ?>js/mobile-detector.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -63,6 +62,9 @@
                     <?php if($_SESSION['role'] == 'head_of_department' || $_SESSION['role'] == 'director' || $_SESSION['role'] == 'dean' || $_SESSION['role'] == 'principal' || $_SESSION['role'] == 'hr_admin'): ?>
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo $base_path; ?>modules/leave_approvals.php"><i class="fas fa-tasks me-1"></i> Pending Approvals</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo $base_path; ?>modules/who_on_leave.php"><i class="fas fa-user-clock me-1"></i> Who's on Leave</a>
                     </li>
                     <?php endif; ?>
                     

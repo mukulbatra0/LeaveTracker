@@ -91,3 +91,5 @@ composer.lock
 *.bak
 *.backup
 *.old
+
+/Leavemanagemaent_papers/

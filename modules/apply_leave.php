@@ -48,6 +48,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $half_day_period = $is_half_day ? trim($_POST['half_day_period']) : null;
     $mode_of_transport = !empty($_POST['mode_of_transport']) ? trim($_POST['mode_of_transport']) : null;
     $work_adjustment = !empty($_POST['work_adjustment']) ? trim($_POST['work_adjustment']) : null;
+    $visit_address = !empty($_POST['visit_address']) ? trim($_POST['visit_address']) : null;
+    $contact_number = !empty($_POST['contact_number']) ? trim($_POST['contact_number']) : null;
     
     // Validate leave type
     $valid_leave_type = false;
@@ -264,8 +266,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     try {
         // Insert leave application
-        $insert_sql = "INSERT INTO leave_applications (user_id, leave_type_id, start_date, end_date, days, reason, attachment, is_half_day, half_day_period, mode_of_transport, work_adjustment) 
-                      VALUES (:user_id, :leave_type_id, :start_date, :end_date, :days, :reason, :attachment, :is_half_day, :half_day_period, :mode_of_transport, :work_adjustment)";
+        $insert_sql = "INSERT INTO leave_applications (user_id, leave_type_id, start_date, end_date, days, reason, attachment, is_half_day, half_day_period, mode_of_transport, work_adjustment, visit_address, contact_number) 
+                      VALUES (:user_id, :leave_type_id, :start_date, :end_date, :days, :reason, :attachment, :is_half_day, :half_day_period, :mode_of_transport, :work_adjustment, :visit_address, :contact_number)";
         $insert_stmt = $conn->prepare($insert_sql);
         $insert_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
         $insert_stmt->bindParam(':leave_type_id', $leave_type_id, PDO::PARAM_INT);
@@ -278,6 +280,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $insert_stmt->bindParam(':half_day_period', $half_day_period, PDO::PARAM_STR);
         $insert_stmt->bindParam(':mode_of_transport', $mode_of_transport, PDO::PARAM_STR);
         $insert_stmt->bindParam(':work_adjustment', $work_adjustment, PDO::PARAM_STR);
+        $insert_stmt->bindParam(':visit_address', $visit_address, PDO::PARAM_STR);
+        $insert_stmt->bindParam(':contact_number', $contact_number, PDO::PARAM_STR);
         $insert_stmt->execute();
         
         $leave_application_id = $conn->lastInsertId();
@@ -473,182 +477,334 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 include_once '../includes/header.php';
 ?>
 
-<div class="container">
+
+<div class="container-fluid px-3 px-lg-5 py-4">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-professional">
-                <div class="card-header">
-                    <h4 class="mb-0"><i class="fas fa-file-alt me-2"></i>Apply for Leave</h4>
+        <div class="col-12 col-xl-10">
+            <!-- Header Section -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div>
+                        <h2 class="mb-1"><i class="fas fa-file-signature me-2 text-primary"></i>Leave Application</h2>
+                        <p class="text-muted mb-0">Complete the form below to submit your leave request</p>
+                    </div>
+                    <a href="../index.php" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
                 </div>
-                <div class="card-body">
-                    <?php if(count($leave_types) == 0): ?>
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i> No leave types available for your role.
+            </div>
+
+            <?php if(count($leave_types) == 0): ?>
+                <div class="alert alert-warning shadow-sm">
+                    <i class="fas fa-exclamation-triangle me-2"></i> No leave types available for your role.
+                </div>
+            <?php else: ?>
+                <?php
+                // Get user details
+                $user_details_sql = "SELECT u.first_name, u.last_name, u.email, u.role, d.name as department_name 
+                                    FROM users u 
+                                    LEFT JOIN departments d ON u.department_id = d.id 
+                                    WHERE u.id = :user_id";
+                $user_details_stmt = $conn->prepare($user_details_sql);
+                $user_details_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                $user_details_stmt->execute();
+                $user_details = $user_details_stmt->fetch();
+                
+                // Format role for display
+                $role_display = ucwords(str_replace('_', ' ', $user_details['role']));
+                ?>
+                
+                <!-- Progress Indicator -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <div class="progress-container">
+                            <div class="progress-step active" data-step="1">
+                                <div class="progress-step-icon">
+                                    <i class="fas fa-user"></i>
+                                    <div class="progress-step-check"><i class="fas fa-check"></i></div>
+                                </div>
+                                <div class="progress-step-label">Personal Info</div>
+                            </div>
+                            <div class="progress-line"></div>
+                            <div class="progress-step" data-step="2">
+                                <div class="progress-step-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <div class="progress-step-check"><i class="fas fa-check"></i></div>
+                                </div>
+                                <div class="progress-step-label">Leave Details</div>
+                            </div>
+                            <div class="progress-line"></div>
+                            <div class="progress-step" data-step="3">
+                                <div class="progress-step-icon">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <div class="progress-step-check"><i class="fas fa-check"></i></div>
+                                </div>
+                                <div class="progress-step-label">Additional Info</div>
+                            </div>
                         </div>
-                    <?php else: ?>
-                        <?php
-                        // Get user details
-                        $user_details_sql = "SELECT u.first_name, u.last_name, u.email, u.role, d.name as department_name 
-                                            FROM users u 
-                                            LEFT JOIN departments d ON u.department_id = d.id 
-                                            WHERE u.id = :user_id";
-                        $user_details_stmt = $conn->prepare($user_details_sql);
-                        $user_details_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-                        $user_details_stmt->execute();
-                        $user_details = $user_details_stmt->fetch();
-                        
-                        // Format role for display
-                        $role_display = ucwords(str_replace('_', ' ', $user_details['role']));
-                        ?>
-                        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" enctype="multipart/form-data">
-                            <!-- Applicant Information Section -->
-                            <div class="mb-4">
-                                <h5 class="border-bottom pb-2 mb-3">Applicant Information</h5>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="applicant_name" class="form-label">Name</label>
-                                        <input type="text" class="form-control" id="applicant_name" 
-                                               value="<?php echo htmlspecialchars($user_details['first_name'] . ' ' . $user_details['last_name']); ?>" 
-                                               readonly>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="designation" class="form-label">Designation</label>
-                                        <input type="text" class="form-control" id="designation" 
-                                               value="<?php echo htmlspecialchars($role_display); ?>" 
-                                               readonly>
-                                    </div>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="department" class="form-label">Department</label>
-                                        <input type="text" class="form-control" id="department" 
-                                               value="<?php echo htmlspecialchars($user_details['department_name'] ?? 'N/A'); ?>" 
-                                               readonly>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="application_date" class="form-label">Application Date</label>
-                                        <input type="text" class="form-control" id="application_date" 
-                                               value="<?php echo date('d/m/Y'); ?>" 
-                                               readonly>
-                                    </div>
-                                </div>
-                            </div>
+                    </div>
+                </div>
+
+                <!-- Form Card -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4 p-lg-5">
+                        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" enctype="multipart/form-data" id="leaveApplicationForm">
                             
-                            <!-- Leave Details Section -->
-                            <div class="mb-4">
-                                <h5 class="border-bottom pb-2 mb-3">Leave Details</h5>
-                                
-                                <div class="mb-3">
-                                    <label for="leave_type_id" class="form-label">Type of Leave Required <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="leave_type_id" name="leave_type_id" required>
-                                        <option value="">Select Leave Type</option>
-                                        <?php foreach($leave_types as $leave_type): ?>
-                                            <option value="<?php echo $leave_type['id']; ?>" 
-                                                    data-requires-attachment="<?php echo $leave_type['requires_attachment']; ?>"
-                                                    data-description="<?php echo htmlspecialchars($leave_type['description']); ?>">
-                                                <?php echo htmlspecialchars($leave_type['name']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <div class="form-text" id="leave-description" style="display: none; margin-top: 0.5rem;">
-                                    </div>
-                                    <div class="form-text" id="attachment-note" style="display: none;">
-                                        <i class="fas fa-info-circle me-1"></i> This leave type requires supporting documentation.
-                                    </div>
+                            <!-- Form Steps -->
+                            <div class="form-step active" id="step1">
+                                <div class="step-header mb-4">
+                                    <h4 class="step-title"><i class="fas fa-user-circle me-2 text-primary"></i>Applicant Information</h4>
+                                    <p class="text-muted mb-0">Your personal details are pre-filled from your profile</p>
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_half_day" name="is_half_day" value="1">
-                                        <label class="form-check-label" for="is_half_day">
-                                            Apply for Half Day Leave
-                                        </label>
-                                    </div>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="start_date" class="form-label">From Date <span class="text-danger">*</span></label>
-                                        <input type="date" class="form-control" id="start_date" name="start_date" required min="<?php echo date('Y-m-d'); ?>">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="end_date" class="form-label">To Date <span class="text-danger">*</span></label>
-                                        <input type="date" class="form-control" id="end_date" name="end_date" required min="<?php echo date('Y-m-d'); ?>">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="days" class="form-label">Number of Days <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control" id="days" name="days" step="0.5" min="0.5" required readonly>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3" id="half_day_period_field" style="display: none;">
-                                    <label class="form-label">Select Half Day Period <span class="text-danger">*</span></label>
-                                    <div class="d-flex gap-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="half_day_period" id="first_half" value="first_half">
-                                            <label class="form-check-label" for="first_half">
-                                                First Half (Morning)
-                                            </label>
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="applicant_name" 
+                                                   value="<?php echo htmlspecialchars($user_details['first_name'] . ' ' . $user_details['last_name']); ?>" 
+                                                   readonly>
+                                            <label for="applicant_name"><i class="fas fa-user me-2"></i>Full Name</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="half_day_period" id="second_half" value="second_half">
-                                            <label class="form-check-label" for="second_half">
-                                                Second Half (Afternoon)
-                                            </label>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="designation" 
+                                                   value="<?php echo htmlspecialchars($role_display); ?>" 
+                                                   readonly>
+                                            <label for="designation"><i class="fas fa-id-badge me-2"></i>Designation</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="department" 
+                                                   value="<?php echo htmlspecialchars($user_details['department_name'] ?? 'N/A'); ?>" 
+                                                   readonly>
+                                            <label for="department"><i class="fas fa-building me-2"></i>Department</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="application_date" 
+                                                   value="<?php echo date('d/m/Y'); ?>" 
+                                                   readonly>
+                                            <label for="application_date"><i class="fas fa-calendar me-2"></i>Application Date</label>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div class="form-text mb-3">
-                                    <i class="fas fa-info-circle me-1"></i> Number of days will be calculated automatically based on your date selection.
-                                </div>
-                                <div class="alert alert-warning mt-2" id="balance-warning" style="display: none;"></div>
-                                <div class="alert alert-info mt-2" id="holiday-note" style="display: none;"></div>
-                                <div class="alert alert-warning mt-2" id="academic-event-warning" style="display: none;"></div>
-                                
-                                <div class="mb-3">
-                                    <label for="reason" class="form-label">Reason for Leave <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="reason" name="reason" rows="4" 
-                                              placeholder="Please provide detailed reason for your leave application..." required></textarea>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="mode_of_transport" class="form-label">Mode of Transport for Official Work (if any)</label>
-                                    <input type="text" class="form-control" id="mode_of_transport" name="mode_of_transport" 
-                                           placeholder="e.g., Personal vehicle, Public transport, Flight, etc.">
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i> Specify if you'll be traveling for official work during leave period.
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="work_adjustment" class="form-label">Work Adjustment During Leave Period (if any)</label>
-                                    <textarea class="form-control" id="work_adjustment" name="work_adjustment" rows="3" 
-                                              placeholder="Mention any work arrangements, handover details, or coverage plans..."></textarea>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i> Describe how your work will be managed during your absence.
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3" id="attachment-field" style="display: none;">
-                                    <label for="attachment" class="form-label">Supporting Document <span class="text-danger">*</span></label>
-                                    <input type="file" class="form-control" id="attachment" name="attachment" onchange="previewDocument(this)">
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i> Allowed file types: pdf, doc, docx, jpg, jpeg, png. Maximum size: 5MB.
-                                    </div>
-                                    <div id="document-preview" class="mt-3"></div>
+                                <div class="step-actions">
+                                    <button type="button" class="btn btn-lg btn-primary px-5" onclick="nextStep(2)">
+                                        Continue <i class="fas fa-arrow-right ms-2"></i>
+                                    </button>
                                 </div>
                             </div>
-                            
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a href="../index.php" class="btn btn-secondary me-md-2">
-                                    <i class="fas fa-times me-1"></i> Cancel
-                                </a>
-                                <button type="submit" class="btn btn-primary" id="submit-btn">
-                                    <i class="fas fa-paper-plane me-1"></i> Submit Application
-                                </button>
+                                
+                                <!-- Step 2: Leave Details -->
+                                <div class="form-step" id="step2">
+                                    <div class="step-header mb-4">
+                                        <h4 class="step-title"><i class="fas fa-calendar-alt me-2 text-primary"></i>Leave Details</h4>
+                                        <p class="text-muted mb-0">Specify your leave type, dates, and reason</p>
+                                    </div>
+                                    
+                                    <div class="row g-4">
+                                        <div class="col-12">
+                                            <label for="leave_type_id" class="form-label fw-semibold">
+                                                <i class="fas fa-list-alt me-2 text-primary"></i>Type of Leave 
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <select class="form-select form-select-lg" id="leave_type_id" name="leave_type_id" required>
+                                                <option value="">-- Select Leave Type --</option>
+                                                <?php foreach($leave_types as $leave_type): ?>
+                                                    <option value="<?php echo $leave_type['id']; ?>" 
+                                                            data-requires-attachment="<?php echo $leave_type['requires_attachment']; ?>"
+                                                            data-description="<?php echo htmlspecialchars($leave_type['description']); ?>">
+                                                        <?php echo htmlspecialchars($leave_type['name']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <div class="alert alert-info mt-2" id="leave-description" style="display: none;"></div>
+                                            <div class="alert alert-warning mt-2" id="attachment-note" style="display: none;">
+                                                <i class="fas fa-paperclip me-2"></i>Supporting document is required for this leave type.
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-12">
+                                            <div class="card bg-light border-0">
+                                                <div class="card-body">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="is_half_day" name="is_half_day" value="1" style="width: 3em; height: 1.5em;">
+                                                        <label class="form-check-label ms-2 fw-semibold" for="is_half_day">
+                                                            <i class="fas fa-clock me-2"></i>Apply for Half Day Leave
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <label for="start_date" class="form-label fw-semibold">
+                                                <i class="fas fa-calendar-day me-2 text-success"></i>From Date 
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" class="form-control form-control-lg" id="start_date" name="start_date" required min="<?php echo date('Y-m-d'); ?>">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="end_date" class="form-label fw-semibold">
+                                                <i class="fas fa-calendar-check me-2 text-danger"></i>To Date 
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" class="form-control form-control-lg" id="end_date" name="end_date" required min="<?php echo date('Y-m-d'); ?>">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="days" class="form-label fw-semibold">
+                                                <i class="fas fa-calculator me-2 text-info"></i>Number of Days 
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="number" class="form-control form-control-lg" id="days" name="days" step="0.5" min="0.5" required readonly>
+                                            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Auto-calculated</small>
+                                        </div>
+                                        
+                                        <div class="col-12" id="half_day_period_field" style="display: none;">
+                                            <label class="form-label fw-semibold">
+                                                <i class="fas fa-clock me-2 text-warning"></i>Select Half Day Period 
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <div class="card border-2 half-day-option">
+                                                        <div class="card-body text-center">
+                                                            <input class="form-check-input d-none" type="radio" name="half_day_period" id="first_half" value="first_half">
+                                                            <label class="w-100 cursor-pointer" for="first_half">
+                                                                <i class="fas fa-sun fa-3x text-warning mb-3"></i>
+                                                                <h5 class="mb-0">First Half</h5>
+                                                                <small class="text-muted">Morning Session</small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card border-2 half-day-option">
+                                                        <div class="card-body text-center">
+                                                            <input class="form-check-input d-none" type="radio" name="half_day_period" id="second_half" value="second_half">
+                                                            <label class="w-100 cursor-pointer" for="second_half">
+                                                                <i class="fas fa-moon fa-3x text-primary mb-3"></i>
+                                                                <h5 class="mb-0">Second Half</h5>
+                                                                <small class="text-muted">Afternoon Session</small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-12">
+                                            <div class="alert alert-warning mt-2" id="balance-warning" style="display: none;"></div>
+                                            <div class="alert alert-info mt-2" id="holiday-note" style="display: none;"></div>
+                                            <div class="alert alert-warning mt-2" id="academic-event-warning" style="display: none;"></div>
+                                        </div>
+                                        
+                                        <div class="col-12">
+                                            <label for="reason" class="form-label fw-semibold">
+                                                <i class="fas fa-comment-dots me-2 text-primary"></i>Purpose / Reason for Leave 
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <textarea class="form-control" id="reason" name="reason" rows="4" 
+                                                      placeholder="Please provide a detailed reason for your leave application..." required></textarea>
+                                            <div class="form-text">
+                                                <span id="reason-count">0</span>/500 characters
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-12" id="attachment-field" style="display: none;">
+                                            <label for="attachment" class="form-label fw-semibold">
+                                                <i class="fas fa-paperclip me-2 text-primary"></i>Supporting Document 
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="file-upload-wrapper">
+                                                <input type="file" class="form-control" id="attachment" name="attachment">
+                                                <div class="file-upload-info mt-2">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        Allowed: PDF, DOC, DOCX, JPG, JPEG, PNG | Max size: 5MB
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <div id="document-preview" class="mt-3"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="step-actions">
+                                        <button type="button" class="btn btn-lg btn-outline-secondary px-4" onclick="prevStep(1)">
+                                            <i class="fas fa-arrow-left me-2"></i>Previous
+                                        </button>
+                                        <button type="button" class="btn btn-lg btn-primary px-5" onclick="nextStep(3)">
+                                            Continue <i class="fas fa-arrow-right ms-2"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 3: Additional Information -->
+                                <div class="form-step" id="step3">
+                                    <div class="step-header mb-4">
+                                        <h4 class="step-title"><i class="fas fa-clipboard-list me-2 text-primary"></i>Additional Information</h4>
+                                        <p class="text-muted mb-0">Provide contact details and work arrangements during your leave</p>
+                                    </div>
+                                    
+                                    <div class="row g-4">
+                                        <div class="col-md-6">
+                                            <label for="visit_address" class="form-label fw-semibold">
+                                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>Place / Address of Visit
+                                            </label>
+                                            <textarea class="form-control" id="visit_address" name="visit_address" rows="3" 
+                                                      placeholder="Enter the address where you'll be during leave period..."></textarea>
+                                            <div class="form-text">
+                                                <i class="fas fa-info-circle me-1"></i>Specify your location for emergency contact purposes
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <label for="contact_number" class="form-label fw-semibold">
+                                                <i class="fas fa-phone me-2 text-success"></i>Mobile No. during Leave Period
+                                            </label>
+                                            <input type="tel" class="form-control form-control-lg" id="contact_number" name="contact_number" 
+                                                   placeholder="Enter contact number..." pattern="[0-9]{10,15}">
+                                            <div class="form-text">
+                                                <i class="fas fa-info-circle me-1"></i>Provide a reachable mobile number
+                                            </div>
+                                            
+                                            <label for="mode_of_transport" class="form-label fw-semibold mt-4">
+                                                <i class="fas fa-bus me-2 text-info"></i>Mode of Transport
+                                            </label>
+                                            <input type="text" class="form-control" id="mode_of_transport" name="mode_of_transport" 
+                                                   placeholder="e.g., Personal vehicle, Public transport, Flight">
+                                            <div class="form-text">
+                                                <i class="fas fa-info-circle me-1"></i>If traveling for official work
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-12">
+                                            <label for="work_adjustment" class="form-label fw-semibold">
+                                                <i class="fas fa-tasks me-2 text-warning"></i>Work Adjustment During Leave 
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <textarea class="form-control" id="work_adjustment" name="work_adjustment" rows="4" 
+                                                      placeholder="Mention work arrangements, handover details, or coverage plans..." required></textarea>
+                                            <div class="form-text">
+                                                <i class="fas fa-info-circle me-1"></i>Describe how your work will be managed during your absence
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="step-actions">
+                                        <button type="button" class="btn btn-lg btn-outline-secondary px-4" onclick="prevStep(2)">
+                                            <i class="fas fa-arrow-left me-2"></i>Previous
+                                        </button>
+                                        <button type="submit" class="btn btn-lg btn-success px-5" id="submit-btn">
+                                            <i class="fas fa-paper-plane me-2"></i>Submit Application
+                                        </button>
+                                    </div>
+                                </div>
+                                
                             </div>
                         </form>
                     <?php endif; ?>
@@ -658,26 +814,525 @@ include_once '../includes/header.php';
     </div>
 </div>
 
+<style>
+    /* Progress Indicator Styles */
+    .progress-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .progress-step-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #e9ecef;
+        border: 3px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #6c757d;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .progress-step-check {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: #28a745;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .progress-step.active .progress-step-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .progress-step.completed .progress-step-icon {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .progress-step.completed .progress-step-check {
+        display: flex;
+    }
+    
+    .progress-step.completed .progress-step-icon i:not(.fa-check) {
+        display: none;
+    }
+    
+    .progress-step-label {
+        margin-top: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-align: center;
+    }
+    
+    .progress-step.active .progress-step-label {
+        color: #667eea;
+    }
+    
+    .progress-step.completed .progress-step-label {
+        color: #28a745;
+    }
+    
+    .progress-line {
+        flex: 1;
+        height: 3px;
+        background: #dee2e6;
+        margin: 0 10px;
+        position: relative;
+        top: -20px;
+    }
+    
+    .progress-line.completed {
+        background: #28a745;
+    }
+    
+    /* Form Step Styles */
+    .form-step {
+        display: none;
+        animation: fadeInUp 0.4s ease;
+    }
+    
+    .form-step.active {
+        display: block;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .step-header {
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    
+    .step-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+    
+    .step-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 2px solid #f0f0f0;
+    }
+    
+    /* Form Control Enhancements */
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        color: #667eea;
+    }
+    
+    /* Half Day Option Cards */
+    .half-day-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-color: #dee2e6 !important;
+    }
+    
+    .half-day-option:hover {
+        border-color: #667eea !important;
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .half-day-option input:checked + label {
+        color: #667eea;
+    }
+    
+    .half-day-option:has(input:checked) {
+        border-color: #667eea !important;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* File Upload Styling */
+    .file-upload-wrapper {
+        position: relative;
+    }
+    
+    .file-upload-wrapper input[type="file"] {
+        padding: 15px;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .file-upload-wrapper input[type="file"]:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    /* Utility Classes */
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    .fw-semibold {
+        font-weight: 600;
+    }
+    
+    /* Button Enhancements */
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(40, 167, 69, 0.4);
+    }
+    
+    /* Card Enhancements */
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .shadow-sm {
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
+    }
+    
+    /* Alert Enhancements */
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    .alert-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        color: #0d47a1;
+    }
+    
+    .alert-warning {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        color: #e65100;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .progress-container {
+            flex-direction: column;
+        }
+        
+        .progress-line {
+            width: 3px;
+            height: 30px;
+            margin: 10px 0;
+            top: 0;
+        }
+        
+        .progress-step-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+        }
+        
+        .step-title {
+            font-size: 1.25rem;
+        }
+        
+        .step-actions {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .step-actions button {
+            width: 100%;
+        }
+    }
+    
+    /* Loading State */
+    .btn-loading {
+        position: relative;
+        pointer-events: none;
+    }
+    
+    .btn-loading::after {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spinner 0.6s linear infinite;
+    }
+    
+    @keyframes spinner {
+        to { transform: rotate(360deg); }
+    }
+</style>
+
 <script>
+    let currentStep = 1;
+    const totalSteps = 3;
+    
+    // Step Navigation Functions
+    function nextStep(step) {
+        console.log('nextStep called, moving from', currentStep, 'to', step);
+        
+        if (!validateStep(currentStep)) {
+            console.log('Validation failed for step', currentStep);
+            return;
+        }
+        
+        console.log('Validation passed, proceeding to next step');
+        
+        // Mark current step as completed
+        const currentProgressStep = document.querySelector(`.progress-step[data-step="${currentStep}"]`);
+        if (currentProgressStep) {
+            currentProgressStep.classList.add('completed');
+            console.log('Marked step', currentStep, 'as completed');
+        }
+        
+        // Mark progress line as completed
+        const progressLines = document.querySelectorAll('.progress-line');
+        if (progressLines[currentStep - 1]) {
+            progressLines[currentStep - 1].classList.add('completed');
+        }
+        
+        // Hide current step
+        const currentStepElement = document.getElementById(`step${currentStep}`);
+        if (currentStepElement) {
+            currentStepElement.classList.remove('active');
+            console.log('Hidden step', currentStep);
+        }
+        
+        // Show next step
+        currentStep = step;
+        const nextStepElement = document.getElementById(`step${currentStep}`);
+        if (nextStepElement) {
+            nextStepElement.classList.add('active');
+            console.log('Showing step', currentStep);
+        } else {
+            console.error('Step element not found:', `step${currentStep}`);
+        }
+        
+        // Update progress indicator
+        updateProgressIndicator();
+        
+        // Smooth scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    function prevStep(step) {
+        console.log('prevStep called, moving from', currentStep, 'to', step);
+        
+        // Hide current step
+        const currentStepElement = document.getElementById(`step${currentStep}`);
+        if (currentStepElement) {
+            currentStepElement.classList.remove('active');
+        }
+        
+        // Show previous step
+        currentStep = step;
+        const prevStepElement = document.getElementById(`step${currentStep}`);
+        if (prevStepElement) {
+            prevStepElement.classList.add('active');
+        }
+        
+        // Update progress indicator
+        updateProgressIndicator();
+        
+        // Smooth scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    function updateProgressIndicator() {
+        // Remove active class from all steps
+        document.querySelectorAll('.progress-step').forEach(step => {
+            step.classList.remove('active');
+        });
+        
+        // Add active class to current step
+        const activeStep = document.querySelector(`.progress-step[data-step="${currentStep}"]`);
+        if (activeStep) {
+            activeStep.classList.add('active');
+        }
+    }
+    
+    function validateStep(step) {
+        console.log('Validating step', step);
+        
+        // Step 1 has only readonly fields, so always valid
+        if (step === 1) {
+            console.log('Step 1 is always valid');
+            return true;
+        }
+        
+        const currentStepElement = document.getElementById(`step${step}`);
+        if (!currentStepElement) {
+            console.error(`Step ${step} not found`);
+            return false;
+        }
+        
+        const inputs = currentStepElement.querySelectorAll('input[required]:not([readonly]), select[required], textarea[required]');
+        console.log('Found', inputs.length, 'required inputs in step', step);
+        
+        let valid = true;
+        let firstInvalidField = null;
+        
+        inputs.forEach(input => {
+            if (!input.value || input.value.trim() === '') {
+                input.classList.add('is-invalid');
+                valid = false;
+                if (!firstInvalidField) {
+                    firstInvalidField = input;
+                }
+                console.log('Invalid field:', input.id || input.name);
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+        
+        // Special validation for step 2
+        if (step === 2) {
+            const isHalfDay = document.getElementById('is_half_day').checked;
+            if (isHalfDay) {
+                const firstHalf = document.getElementById('first_half');
+                const secondHalf = document.getElementById('second_half');
+                if (!firstHalf.checked && !secondHalf.checked) {
+                    showNotification('Please select first half or second half for half day leave.', 'warning');
+                    return false;
+                }
+            }
+            
+            // Validate dates
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const days = document.getElementById('days').value;
+            
+            if (!days || days <= 0) {
+                showNotification('Please select valid dates.', 'warning');
+                return false;
+            }
+        }
+        
+        if (!valid) {
+            showNotification('Please fill in all required fields.', 'warning');
+            if (firstInvalidField) {
+                firstInvalidField.focus();
+                firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        console.log('Validation result:', valid);
+        return valid;
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
-        // Show/hide attachment field based on leave type selection
+        // Character counter for reason textarea
+        const reasonTextarea = document.getElementById('reason');
+        const reasonCount = document.getElementById('reason-count');
+        
+        reasonTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            reasonCount.textContent = length;
+            
+            if (length > 500) {
+                this.value = this.value.substring(0, 500);
+                reasonCount.textContent = 500;
+            }
+        });
+        
+        // Leave type change handler
         document.getElementById('leave_type_id').addEventListener('change', function() {
-            var selectedOption = this.options[this.selectedIndex];
-            var requiresAttachment = selectedOption.getAttribute('data-requires-attachment');
-            var description = selectedOption.getAttribute('data-description');
-            var attachmentField = document.getElementById('attachment-field');
-            var attachmentNote = document.getElementById('attachment-note');
-            var attachmentInput = document.getElementById('attachment');
-            var leaveDescription = document.getElementById('leave-description');
+            const selectedOption = this.options[this.selectedIndex];
+            const requiresAttachment = selectedOption.getAttribute('data-requires-attachment');
+            const description = selectedOption.getAttribute('data-description');
+            const attachmentField = document.getElementById('attachment-field');
+            const attachmentNote = document.getElementById('attachment-note');
+            const attachmentInput = document.getElementById('attachment');
+            const leaveDescription = document.getElementById('leave-description');
             
             // Show/hide description
             if (description && description.trim() !== '') {
-                leaveDescription.innerHTML = '<i class="fas fa-info-circle me-1"></i>' + description;
+                leaveDescription.innerHTML = '<i class="fas fa-info-circle me-2"></i>' + description;
                 leaveDescription.style.display = 'block';
             } else {
                 leaveDescription.style.display = 'none';
             }
             
+            // Show/hide attachment field
             if (requiresAttachment == 1) {
                 attachmentField.style.display = 'block';
                 attachmentNote.style.display = 'block';
@@ -689,14 +1344,14 @@ include_once '../includes/header.php';
             }
         });
         
-        // Handle half day checkbox
-        var isHalfDayCheckbox = document.getElementById('is_half_day');
-        var halfDayPeriodField = document.getElementById('half_day_period_field');
-        var startDateInput = document.getElementById('start_date');
-        var endDateInput = document.getElementById('end_date');
-        var daysInput = document.getElementById('days');
-        var firstHalfRadio = document.getElementById('first_half');
-        var secondHalfRadio = document.getElementById('second_half');
+        // Half day checkbox handler
+        const isHalfDayCheckbox = document.getElementById('is_half_day');
+        const halfDayPeriodField = document.getElementById('half_day_period_field');
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+        const daysInput = document.getElementById('days');
+        const firstHalfRadio = document.getElementById('first_half');
+        const secondHalfRadio = document.getElementById('second_half');
         
         isHalfDayCheckbox.addEventListener('change', function() {
             if (this.checked) {
@@ -704,7 +1359,6 @@ include_once '../includes/header.php';
                 firstHalfRadio.required = true;
                 secondHalfRadio.required = true;
                 
-                // Set days to 0.5 and make end date same as start date
                 daysInput.value = '0.5';
                 if (startDateInput.value) {
                     endDateInput.value = startDateInput.value;
@@ -717,31 +1371,37 @@ include_once '../includes/header.php';
                 firstHalfRadio.checked = false;
                 secondHalfRadio.checked = false;
                 endDateInput.disabled = false;
-                
-                // Recalculate days
                 calculateDays();
             }
         });
         
-        // Calculate days automatically
+        // Half day option card click handlers
+        document.querySelectorAll('.half-day-option').forEach(card => {
+            card.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+            });
+        });
+        
+        // Calculate days function
         function calculateDays() {
-            var isHalfDay = isHalfDayCheckbox.checked;
+            const isHalfDay = isHalfDayCheckbox.checked;
             
             if (isHalfDay) {
                 daysInput.value = '0.5';
                 return;
             }
             
-            var startDate = startDateInput.value;
-            var endDate = endDateInput.value;
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
             
             if (startDate && endDate) {
-                var start = new Date(startDate);
-                var end = new Date(endDate);
+                const start = new Date(startDate);
+                const end = new Date(endDate);
                 
                 if (end >= start) {
-                    var timeDiff = end.getTime() - start.getTime();
-                    var daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+                    const timeDiff = end.getTime() - start.getTime();
+                    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
                     daysInput.value = daysDiff;
                 } else {
                     daysInput.value = '';
@@ -751,7 +1411,7 @@ include_once '../includes/header.php';
             }
         }
         
-        // Bind date change events
+        // Date change handlers
         startDateInput.addEventListener('change', function() {
             if (isHalfDayCheckbox.checked) {
                 endDateInput.value = this.value;
@@ -765,6 +1425,65 @@ include_once '../includes/header.php';
         endDateInput.addEventListener('change', function() {
             if (!isHalfDayCheckbox.checked) {
                 calculateDays();
+            }
+        });
+        
+        // Phone number validation
+        document.getElementById('contact_number').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9+\-\s()]/g, '');
+        });
+        
+        // File upload preview
+        document.getElementById('attachment').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('document-preview');
+            
+            if (file) {
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                const fileName = file.name;
+                const fileExt = fileName.split('.').pop().toLowerCase();
+                
+                let icon = 'fa-file';
+                if (['pdf'].includes(fileExt)) icon = 'fa-file-pdf';
+                else if (['doc', 'docx'].includes(fileExt)) icon = 'fa-file-word';
+                else if (['jpg', 'jpeg', 'png'].includes(fileExt)) icon = 'fa-file-image';
+                
+                preview.innerHTML = `
+                    <div class="alert alert-success d-flex align-items-center">
+                        <i class="fas ${icon} fa-2x me-3"></i>
+                        <div>
+                            <strong>${fileName}</strong><br>
+                            <small>Size: ${fileSize} MB</small>
+                        </div>
+                    </div>
+                `;
+            } else {
+                preview.innerHTML = '';
+            }
+        });
+        
+        // Form submission handler
+        document.getElementById('leaveApplicationForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.classList.add('btn-loading');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+        });
+        
+        // Remove invalid class on input
+        document.querySelectorAll('input, select, textarea').forEach(field => {
+            field.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+            });
+        });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                if (currentStep < totalSteps) {
+                    nextStep(currentStep + 1);
+                }
             }
         });
     });

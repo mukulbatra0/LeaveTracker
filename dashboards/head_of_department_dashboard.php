@@ -56,6 +56,18 @@ $dept_stats_stmt->bindParam(':dept_id', $department_id, PDO::PARAM_INT);
 $dept_stats_stmt->execute();
 $dept_stats = $dept_stats_stmt->fetch();
 
+// Get count of staff on leave today
+$on_leave_today_sql = "SELECT COUNT(DISTINCT la.user_id) as on_leave_count
+    FROM leave_applications la
+    JOIN users u ON la.user_id = u.id
+    WHERE u.department_id = :dept_id
+      AND la.status = 'approved'
+      AND CURDATE() BETWEEN la.start_date AND la.end_date";
+$on_leave_today_stmt = $conn->prepare($on_leave_today_sql);
+$on_leave_today_stmt->bindParam(':dept_id', $department_id, PDO::PARAM_INT);
+$on_leave_today_stmt->execute();
+$on_leave_today = $on_leave_today_stmt->fetchColumn();
+
 // Get recent department applications
 $recent_applications_sql = "SELECT la.id, u.first_name, u.last_name, u.employee_id, lt.name as leave_type, 
                            la.start_date, la.end_date, la.days, la.status, la.created_at
@@ -106,56 +118,64 @@ $leave_balances = $leave_balances_stmt->fetchAll();
     <!-- Quick Stats Row -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4><?php echo count($pending_approvals); ?></h4>
-                            <p class="mb-0">Pending Approvals</p>
+            <a href="./modules/leave_approvals.php" class="text-decoration-none">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4><?php echo count($pending_approvals); ?></h4>
+                                <p class="mb-0">Pending Approvals</p>
+                            </div>
+                            <i class="fas fa-clock fa-2x opacity-75"></i>
                         </div>
-                        <i class="fas fa-clock fa-2x opacity-75"></i>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4><?php echo $dept_stats['staff_count']; ?></h4>
-                            <p class="mb-0">Department Staff</p>
+            <a href="./modules/department_staff.php" class="text-decoration-none">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4><?php echo $dept_stats['staff_count']; ?></h4>
+                                <p class="mb-0">Department Staff</p>
+                            </div>
+                            <i class="fas fa-users fa-2x opacity-75"></i>
                         </div>
-                        <i class="fas fa-users fa-2x opacity-75"></i>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4><?php echo $dept_stats['monthly_approved']; ?></h4>
-                            <p class="mb-0">Approved This Month</p>
+            <a href="./modules/department_applications.php" class="text-decoration-none">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4><?php echo $dept_stats['monthly_approved']; ?></h4>
+                                <p class="mb-0">Approved This Month</p>
+                            </div>
+                            <i class="fas fa-check-circle fa-2x opacity-75"></i>
                         </div>
-                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4><?php echo $dept_stats['weekly_applications']; ?></h4>
-                            <p class="mb-0">This Week</p>
+            <a href="./modules/who_on_leave.php" class="text-decoration-none">
+                <div class="card text-white" style="background: linear-gradient(135deg,#7c3aed,#4f46e5);">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4><?php echo (int)$on_leave_today; ?></h4>
+                                <p class="mb-0">On Leave Today</p>
+                            </div>
+                            <i class="fas fa-user-clock fa-2x opacity-75"></i>
                         </div>
-                        <i class="fas fa-calendar-week fa-2x opacity-75"></i>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
     
@@ -248,6 +268,9 @@ $leave_balances = $leave_balances_stmt->fetchAll();
                         </a>
                         <a href="./modules/leave_approvals.php" class="btn btn-warning btn-sm">
                             <i class="fas fa-tasks me-1"></i>Pending Approvals
+                        </a>
+                        <a href="./modules/who_on_leave.php" class="btn btn-sm text-white" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);">
+                            <i class="fas fa-user-clock me-1"></i>Who's on Leave?
                         </a>
                         <a href="./modules/department_applications.php" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-list me-1"></i>All Department Applications
