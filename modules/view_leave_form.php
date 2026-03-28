@@ -183,9 +183,7 @@ include_once '../includes/header.php';
             <div class="d-flex justify-content-between align-items-center">
                 <h2><i class="fas fa-file-alt me-2"></i>Leave Application Form</h2>
                 <div>
-                    <button onclick="window.print()" class="btn btn-primary">
-                        <i class="fas fa-print me-1"></i>Print
-                    </button>
+
                     <a href="download_leave_pdf.php?id=<?php echo $leave_id; ?>" class="btn btn-success" target="_blank">
                         <i class="fas fa-download me-1"></i>Download PDF
                     </a>

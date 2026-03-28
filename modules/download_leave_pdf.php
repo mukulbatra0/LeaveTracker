@@ -150,240 +150,270 @@ try {
     // Set font
     $pdf->SetFont('helvetica', '', 10);
 
-    // Build the HTML content for the leave form
+    // Prepare data for the form
+    $applicant_name = htmlspecialchars($leave['first_name'] . ' ' . $leave['last_name']);
+    $designation = htmlspecialchars(ucwords(str_replace('_', ' ', $leave['role'])));
+    $department = htmlspecialchars($leave['department_name']);
+    $leave_type = htmlspecialchars($leave['leave_type_name']);
+    $from_date = date('d/m/Y', strtotime($leave['start_date']));
+    $to_date = date('d/m/Y', strtotime($leave['end_date']));
+    $application_date = date('d/m/Y', strtotime($leave['created_at']));
+    $num_days = $leave['days'];
+    $half_day_text = '';
+    if ($leave['is_half_day']) {
+        $half_day_text = ' (' . ($leave['half_day_period'] == 'first_half' ? 'First Half' : 'Second Half') . ')';
+    }
+    $reason = htmlspecialchars($leave['reason']);
+    $transport = !empty($leave['mode_of_transport']) ? htmlspecialchars($leave['mode_of_transport']) : '';
+    $work_adj = !empty($leave['work_adjustment']) ? htmlspecialchars($leave['work_adjustment']) : '';
+    $visit_address = !empty($leave['visit_address']) ? htmlspecialchars($leave['visit_address']) : '';
+    $contact_number = !empty($leave['contact_number']) ? htmlspecialchars($leave['contact_number']) : '';
+    $place_mobile = '';
+    if ($visit_address && $contact_number) {
+        $place_mobile = $visit_address . ', Mobile: ' . $contact_number;
+    } elseif ($visit_address) {
+        $place_mobile = $visit_address;
+    } elseif ($contact_number) {
+        $place_mobile = 'Mobile: ' . $contact_number;
+    }
+
+    // Build the HTML content matching the official leave application form
     $html = '
     <style>
-        .form-header {
-            text-align: center;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+        body {
+            font-family: helvetica, sans-serif;
+            font-size: 11px;
+            color: #000;
         }
-        .form-header h3 {
-            font-size: 16px;
+        .header-title {
+            font-size: 15px;
             font-weight: bold;
-            margin: 0 0 5px 0;
-            line-height: 1.4;
-        }
-        .form-header h4 {
-            font-size: 13px;
-            margin: 5px 0 0 0;
-            font-weight: normal;
-        }
-        table.form-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-        table.form-table td, table.form-table th {
-            border: 1px solid #000;
-            padding: 8px 10px;
-            vertical-align: top;
+            text-align: center;
             line-height: 1.5;
         }
-        table.form-table th {
-            background-color: #f5f5f5;
+        .header-subtitle {
+            font-size: 12px;
             font-weight: bold;
-            text-align: left;
-            width: 40%;
+            text-align: center;
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+        .field-label {
+            font-weight: bold;
             font-size: 11px;
         }
-        table.form-table td {
+        table.leave-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.leave-table th, table.leave-table td {
+            border: 1px solid #000;
+            padding: 8px 10px;
             font-size: 11px;
-            width: 60%;
+            vertical-align: middle;
         }
-        .approval-section {
-            margin-top: 20px;
-            margin-bottom: 15px;
-        }
-        .approval-title {
-            font-size: 13px;
+        table.leave-table th {
             font-weight: bold;
-            margin-bottom: 10px;
-            padding: 5px 0;
-            border-bottom: 1px solid #333;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        table.leave-table td {
+            text-align: center;
+            height: 35px;
+        }
+        .info-value {
+            font-weight: normal;
         }
         table.approval-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         table.approval-table th {
-            background-color: #e8e8e8;
+            background-color: #e0e0e0;
             border: 1px solid #000;
-            padding: 6px 8px;
-            font-size: 10px;
+            padding: 5px 6px;
+            font-size: 9px;
             font-weight: bold;
             text-align: center;
         }
         table.approval-table td {
             border: 1px solid #000;
-            padding: 6px 8px;
-            font-size: 10px;
+            padding: 5px 6px;
+            font-size: 9px;
             text-align: center;
         }
-        .signature-section {
-            margin-top: 25px;
-        }
-        .signature-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .signature-box {
-            border: 1px solid #000;
-            padding: 12px;
-            vertical-align: top;
-            width: 48%;
-        }
-        .signature-title {
-            font-weight: bold;
-            font-size: 11px;
-            margin-bottom: 8px;
-            text-decoration: underline;
-        }
-        .signature-line {
-            margin: 8px 0;
-            font-size: 10px;
-        }
         .badge {
-            padding: 3px 8px;
+            padding: 2px 6px;
             border-radius: 3px;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: bold;
         }
         .badge-success { background-color: #28a745; color: white; }
         .badge-danger { background-color: #dc3545; color: white; }
         .badge-warning { background-color: #ffc107; color: black; }
-        .badge-info { background-color: #17a2b8; color: white; }
-        .text-bold { font-weight: bold; }
     </style>
-    
-    <div class="form-header">
-        <h3>The Technological Institute of Textile & Sciences, Bhiwani-127021</h3>
-        <h4>Application form for Comm Leave /CL/ EL/ On Duty/ Duty Leave</h4>
-    </div>
-    
-    <table class="form-table">
+
+    <!-- ===== HEADER ===== -->
+    <div class="header-title">The Technological Institute of Textile &amp; Sciences, Bhiwani-127021</div>
+    <div class="header-subtitle">Application form for Comm. Leave / CL / EL / On Duty* / Duty Leave*</div>
+
+    <br/><br/>
+
+    <!-- ===== NAME & DATE ROW ===== -->
+    <table cellpadding="0" cellspacing="0" style="width:100%; border:none;">
         <tr>
-            <th>NAME</th>
-            <td>' . htmlspecialchars($leave['first_name'] . ' ' . $leave['last_name']) . '</td>
+            <td style="width:65%; border:none; padding:4px 0;">
+                <span class="field-label">NAME</span>
+                <span style="border-bottom:1px solid #000; display:inline;">&nbsp;&nbsp;' . $applicant_name . str_repeat('&nbsp;', 30) . '</span>
+            </td>
+            <td style="width:35%; border:none; padding:4px 0; text-align:right;">
+                <span class="field-label">DATE</span>
+                <span style="border-bottom:1px solid #000; display:inline;">&nbsp;&nbsp;' . $application_date . str_repeat('&nbsp;', 10) . '</span>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ===== DESIGNATION & DEPTT ROW ===== -->
+    <table cellpadding="0" cellspacing="0" style="width:100%; border:none;">
+        <tr>
+            <td style="width:65%; border:none; padding:4px 0;">
+                <span class="field-label">DESIGNATION</span>
+                <span style="border-bottom:1px solid #000; display:inline;">&nbsp;&nbsp;' . $designation . str_repeat('&nbsp;', 20) . '</span>
+            </td>
+            <td style="width:35%; border:none; padding:4px 0; text-align:right;">
+                <span class="field-label">DEPTT</span>
+                <span style="border-bottom:1px solid #000; display:inline;">&nbsp;&nbsp;' . $department . str_repeat('&nbsp;', 10) . '</span>
+            </td>
+        </tr>
+    </table>
+
+    <br/><br/>
+
+    <!-- ===== LEAVE DETAILS TABLE ===== -->
+    <table class="leave-table">
+        <tr>
+            <th style="width:28%;">TYPE OF LEAVE<br/>REQUIRED</th>
+            <th style="width:27%;">FROM</th>
+            <th style="width:22%;">TO</th>
+            <th style="width:23%;">NUMBER OF DAYS</th>
         </tr>
         <tr>
-            <th>DESIGNATION</th>
-            <td>' . htmlspecialchars(ucwords(str_replace('_', ' ', $leave['role']))) . '</td>
+            <td style="font-weight:bold;">' . $leave_type . '</td>
+            <td>' . $from_date . '</td>
+            <td>' . $to_date . '</td>
+            <td>' . $num_days . ' day(s)' . $half_day_text . '</td>
         </tr>
+    </table>
+
+    <br/><br/>
+
+    <!-- ===== ADDITIONAL FIELDS ===== -->
+    <table cellpadding="0" cellspacing="0" style="width:100%; border:none;">
         <tr>
-            <th>DEPARTMENT</th>
-            <td>' . htmlspecialchars($leave['department_name']) . '</td>
+            <td style="border:none; padding:5px 0; border-bottom:1px solid #000;">
+                <span class="field-label">* MODE OF TRANSPORT FOR OFFICIAL WORK, IF ANY :-</span>
+                <span class="info-value">&nbsp;&nbsp;' . $transport . '</span>
+            </td>
         </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" style="width:100%; border:none;">
         <tr>
-            <th>TYPE OF LEAVE REQUIRED</th>
-            <td class="text-bold">' . htmlspecialchars($leave['leave_type_name']) . '</td>
+            <td style="border:none; padding:5px 0; border-bottom:1px solid #000;">
+                <span class="field-label">CLASS / WORK ADJUSTMENT DURING LEAVE PERIOD, IF ANY :-</span>
+                <span class="info-value">&nbsp;&nbsp;' . $work_adj . '</span>
+            </td>
         </tr>
+    </table>
+
+    <br/><br/>
+
+    <table cellpadding="0" cellspacing="0" style="width:100%; border:none;">
         <tr>
-            <th>FROM</th>
-            <td>' . date('d/m/Y', strtotime($leave['start_date'])) . '</td>
+            <td style="border:none; padding:5px 0; border-bottom:1px solid #000;">
+                <span class="field-label">PURPOSE/REASON FOR LEAVE :-</span>
+                <span class="info-value">&nbsp;&nbsp;' . $reason . '</span>
+            </td>
         </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" style="width:100%; border:none;">
         <tr>
-            <th>TO</th>
-            <td>' . date('d/m/Y', strtotime($leave['end_date'])) . '</td>
-        </tr>
-        <tr>
-            <th>DATE OF APPLICATION</th>
-            <td>' . date('d/m/Y', strtotime($leave['created_at'])) . '</td>
-        </tr>
-        <tr>
-            <th>NUMBER OF DAYS</th>
-            <td>' . $leave['days'] . ' day(s)';
-    
-    if ($leave['is_half_day']) {
-        $html .= ' <span class="badge badge-info">' . 
-                 ($leave['half_day_period'] == 'first_half' ? 'First Half (Morning)' : 'Second Half (Afternoon)') . 
-                 '</span>';
-    }
-    
-    $html .= '</td>
-        </tr>
-        <tr>
-            <th>PURPOSE/REASON FOR LEAVE</th>
-            <td>' . nl2br(htmlspecialchars($leave['reason'])) . '</td>
-        </tr>';
-    
-    if (!empty($leave['mode_of_transport'])) {
-        $html .= '<tr>
-            <th>MODE OF TRANSPORT FOR OFFICIAL WORK, IF ANY</th>
-            <td>' . nl2br(htmlspecialchars($leave['mode_of_transport'])) . '</td>
-        </tr>';
-    }
-    
-    if (!empty($leave['work_adjustment'])) {
-        $html .= '<tr>
-            <th>CLASS / WORK ADJUSTMENT DURING LEAVE PERIOD</th>
-            <td>' . nl2br(htmlspecialchars($leave['work_adjustment'])) . '</td>
-        </tr>';
-    }
-    
-    if (!empty($leave['attachment'])) {
-        $html .= '<tr>
-            <th>ATTACHMENT</th>
-            <td>' . htmlspecialchars($leave['attachment']) . '</td>
-        </tr>';
-    }
-    
-    $html .= '<tr>
-            <th>APPLICATION SIGNATURE</th>
-            <td style="padding: 15px 10px;">' . htmlspecialchars($leave['first_name'] . ' ' . $leave['last_name']) . '</td>
+            <td style="border:none; padding:5px 0; border-bottom:1px solid #000;">
+                <span class="field-label">PLACE / ADDRESS OF VISIT &amp; MOBILE NO. DURING LEAVE PERIOD :-</span>
+                <span class="info-value">&nbsp;&nbsp;' . $place_mobile . '</span>
+            </td>
         </tr>
     </table>';
-    
-    // Add approval history
-    if (count($approvals) > 0) {
-        $html .= '<div class="approval-section">
-        <div class="approval-title">Approval Status</div>
-        <table class="approval-table">
+
+    // Attachment info if present
+    if (!empty($leave['attachment'])) {
+        $html .= '
+        <table cellpadding="0" cellspacing="0" style="width:100%; border:none;">
             <tr>
-                <th style="width: 22%;">Approver Level</th>
-                <th style="width: 25%;">Approver Name</th>
-                <th style="width: 13%;">Status</th>
-                <th style="width: 25%;">Comments</th>
-                <th style="width: 15%;">Date</th>
-            </tr>';
-        
-        foreach ($approvals as $approval) {
-            $status_class = $approval['status'] == 'approved' ? 'badge-success' : 
-                           ($approval['status'] == 'rejected' ? 'badge-danger' : 'badge-warning');
-            
-            $html .= '<tr>
-                <td style="text-align: left;">' . ucwords(str_replace('_', ' ', $approval['approver_level'])) . '</td>
-                <td style="text-align: left;">' . htmlspecialchars($approval['first_name'] . ' ' . $approval['last_name']) . '</td>
-                <td><span class="badge ' . $status_class . '">' . ucfirst($approval['status']) . '</span></td>
-                <td style="text-align: left;">' . htmlspecialchars($approval['comments'] ?? '-') . '</td>
-                <td>' . ($approval['status'] != 'pending' ? date('d/m/Y H:i', strtotime($approval['updated_at'])) : '-') . '</td>
-            </tr>';
-        }
-        
-        $html .= '</table></div>';
-    }
-    
-    // Add signature section
-    $html .= '
-    <div class="signature-section">
-        <table class="signature-table">
-            <tr>
-                <td class="signature-box">
-                    <div class="signature-title">HEAD OF DEPARTMENT</div>
-                    <div class="signature-line">Signature: _______________________</div>
-                    <div class="signature-line">Date: _______________________</div>
-                </td>
-                <td style="width: 4%; border: none;"></td>
-                <td class="signature-box">
-                    <div class="signature-title">DIRECTOR</div>
-                    <div class="signature-line">Signature: _______________________</div>
-                    <div class="signature-line">Date: _______________________</div>
+                <td style="border:none; padding:5px 0; border-bottom:1px solid #000;">
+                    <span class="field-label">ATTACHMENT :-</span>
+                    <span class="info-value">&nbsp;&nbsp;' . htmlspecialchars($leave['attachment']) . '</span>
                 </td>
             </tr>
-        </table>
-    </div>';
+        </table>';
+    }
+
+    $html .= '<br/><br/><br/>';
+
+    // ===== SIGNATURE SECTION =====
+    $html .= '
+    <table cellpadding="0" cellspacing="0" style="width:100%; border:none;">
+        <tr>
+            <td style="width:33%; border:none; padding:5px 0; text-align:left; vertical-align:bottom;">
+                <span class="field-label">APPLICANT\'S SIGNATURE</span><br/><br/>
+                <span style="border-bottom:1px solid #000;">' . $applicant_name . str_repeat('&nbsp;', 10) . '</span>
+            </td>
+            <td style="width:34%; border:none; padding:5px 0; text-align:center; vertical-align:bottom;">
+                <span class="field-label">HEAD OF DEPTT.</span><br/><br/>
+                <span style="border-bottom:1px solid #000;">' . str_repeat('&nbsp;', 30) . '</span>
+            </td>
+            <td style="width:33%; border:none; padding:5px 0; text-align:right; vertical-align:bottom;">
+                <span class="field-label">DIRECTOR</span><br/><br/>
+                <span style="border-bottom:1px solid #000;">' . str_repeat('&nbsp;', 30) . '</span>
+            </td>
+        </tr>
+    </table>';
+
+    // ===== APPROVAL HISTORY =====
+    if (count($approvals) > 0) {
+        $html .= '
+        <br/><br/>
+        <div style="border-top:2px solid #000; padding-top:8px; margin-top:10px;">
+            <div style="font-size:12px; font-weight:bold; margin-bottom:8px; text-align:center;">Approval Status</div>
+            <table class="approval-table">
+                <tr>
+                    <th style="width:22%;">Approver Level</th>
+                    <th style="width:25%;">Approver Name</th>
+                    <th style="width:13%;">Status</th>
+                    <th style="width:25%;">Comments</th>
+                    <th style="width:15%;">Date</th>
+                </tr>';
+
+        foreach ($approvals as $approval) {
+            $status_class = $approval['status'] == 'approved' ? 'badge-success' :
+                           ($approval['status'] == 'rejected' ? 'badge-danger' : 'badge-warning');
+
+            $html .= '
+                <tr>
+                    <td style="text-align:left;">' . ucwords(str_replace('_', ' ', $approval['approver_level'])) . '</td>
+                    <td style="text-align:left;">' . htmlspecialchars($approval['first_name'] . ' ' . $approval['last_name']) . '</td>
+                    <td><span class="badge ' . $status_class . '">' . ucfirst($approval['status']) . '</span></td>
+                    <td style="text-align:left;">' . htmlspecialchars($approval['comments'] ?? '-') . '</td>
+                    <td>' . ($approval['status'] != 'pending' ? date('d/m/Y H:i', strtotime($approval['updated_at'])) : '-') . '</td>
+                </tr>';
+        }
+
+        $html .= '
+            </table>
+        </div>';
+    }
 
     // Write the HTML content
     $pdf->writeHTML($html, true, false, true, false, '');
