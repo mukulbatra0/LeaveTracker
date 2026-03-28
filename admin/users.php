@@ -36,7 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $employment_type = $_POST['employment_type'] ?? 'full_time';
         $department_id = $_POST['department_id'];
         $role = $_POST['role'];
-        $default_password = $_ENV['DEFAULT_PASSWORD'] ?? 'TempPass123!';
+        
+        // Generate default password: First 3 letters of first name in CAPS + @123
+        // If name is shorter than 3 letters, use what's available
+        $name_prefix = strtoupper(substr($first_name, 0, 3));
+        $default_password = $name_prefix . '@123';
         $password = password_hash($default_password, PASSWORD_DEFAULT);
         
         // Validate input
@@ -166,7 +170,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $conn->commit();
                 
-                $_SESSION['alert'] = "User added successfully. Default password has been set.";
+                // Send welcome email to the new user
+                try {
+                    require_once '../classes/EmailNotification.php';
+                    $emailNotification = new EmailNotification($conn);
+                    
+                    // Get department name for the email
+                    $dept_name_sql = "SELECT name FROM departments WHERE id = :dept_id";
+                    $dept_name_stmt = $conn->prepare($dept_name_sql);
+                    $dept_name_stmt->bindParam(':dept_id', $department_id, PDO::PARAM_INT);
+                    $dept_name_stmt->execute();
+                    $dept_result = $dept_name_stmt->fetch();
+                    $department_name = $dept_result ? $dept_result['name'] : '';
+                    
+                    $full_name = $first_name . ' ' . $last_name;
+                    $emailNotification->sendWelcomeEmail($email, $full_name, $employee_id, $default_password, $role, $department_name);
+                    
+                    // Note: We don't check the return value because we don't want email failures to block user creation
+                    // Email errors are logged by the EmailNotification class
+                } catch (Exception $e) {
+                    // Log the error but don't stop the user creation process
+                    error_log("Failed to send welcome email to new user {$email}: " . $e->getMessage());
+                }
+                
+                $_SESSION['alert'] = "User added successfully. Welcome email has been sent to {$email}.";
                 $_SESSION['alert_type'] = "success";
                 header("Location: users.php");
                 exit;
@@ -305,11 +332,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Reset password
     if (isset($_POST['reset_password'])) {
         $reset_user_id = $_POST['reset_user_id'];
-        $default_password = $_ENV['DEFAULT_PASSWORD'] ?? 'TempPass123!';
-        $new_password = password_hash($default_password, PASSWORD_DEFAULT);
         
-        try {
-            $conn->beginTransaction();
+        // Get user's first name to generate password
+        $user_info_sql = "SELECT first_name, last_name, email FROM users WHERE id = :user_id";
+        $user_info_stmt = $conn->prepare($user_info_sql);
+        $user_info_stmt->bindParam(':user_id', $reset_user_id, PDO::PARAM_INT);
+        $user_info_stmt->execute();
+        $user_info = $user_info_stmt->fetch();
+        
+        if (!$user_info) {
+            $errors[] = "User not found";
+        } else {
+            // Generate default password: First 3 letters of first name in CAPS + @123
+            $name_prefix = strtoupper(substr($user_info['first_name'], 0, 3));
+            $default_password = $name_prefix . '@123';
+            $new_password = password_hash($default_password, PASSWORD_DEFAULT);
+            
+            try {
+                $conn->beginTransaction();
             
             $reset_sql = "UPDATE users SET password = :password, updated_at = NOW() WHERE id = :user_id";
             $reset_stmt = $conn->prepare($reset_sql);
@@ -338,9 +378,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['alert_type'] = "success";
             header("Location: users.php");
             exit;
-        } catch (PDOException $e) {
-            $conn->rollBack();
-            $errors[] = "Database error: " . $e->getMessage();
+            } catch (PDOException $e) {
+                $conn->rollBack();
+                $errors[] = "Database error: " . $e->getMessage();
+            }
         }
     }
 }

@@ -236,6 +236,117 @@ class EmailNotification {
         return $this->sendEmail($applicant_email, $subject, $message, $pdf_attachment_path, $pdf_filename);
     }
     
+    public function sendWelcomeEmail($user_email, $user_name, $employee_id, $default_password, $role, $department_name = '') {
+        $subject = "Welcome to LeaveTracker - Your Account Has Been Created";
+        
+        // Get APP_URL from environment
+        $app_url = !empty($_ENV['APP_URL']) ? rtrim($_ENV['APP_URL'], '/') : 'http://localhost/LeaveTracker';
+        $login_link = $app_url . '/login.php';
+        
+        // Format role for display
+        $role_display = ucwords(str_replace('_', ' ', $role));
+        
+        $message = '
+        <div style="font-family: \'Segoe UI\', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 0;">
+            
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #28a745 0%, #218838 100%); padding: 30px 30px 25px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">Welcome to LeaveTracker!</h1>
+                <p style="margin: 8px 0 0; color: #d4edda; font-size: 14px;">Your account has been successfully created</p>
+            </div>
+            
+            <!-- Body -->
+            <div style="background-color: #ffffff; padding: 30px; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0;">
+                
+                <!-- Greeting -->
+                <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;">
+                    Dear <strong>' . htmlspecialchars($user_name) . '</strong>,<br/><br/>
+                    Welcome to the Employee Leave Management System! Your account has been created and you can now access the system to manage your leave applications.
+                </p>
+                
+                <!-- Account Details Card -->
+                <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                    <h3 style="margin: 0 0 15px; color: #28a745; font-size: 16px; border-bottom: 2px solid #28a745; padding-bottom: 8px;">
+                        Your Login Credentials
+                    </h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px; width: 40%; border-bottom: 1px solid #eee;">Name</td>
+                            <td style="padding: 8px 10px; color: #333; font-size: 13px; font-weight: 600; border-bottom: 1px solid #eee;">' . htmlspecialchars($user_name) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px; border-bottom: 1px solid #eee;">Email</td>
+                            <td style="padding: 8px 10px; color: #333; font-size: 13px; font-weight: 600; border-bottom: 1px solid #eee;">' . htmlspecialchars($user_email) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px; border-bottom: 1px solid #eee;">Employee ID</td>
+                            <td style="padding: 8px 10px; color: #333; font-size: 13px; font-weight: 600; border-bottom: 1px solid #eee;">' . htmlspecialchars($employee_id) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px; border-bottom: 1px solid #eee;">Password</td>
+                            <td style="padding: 8px 10px; color: #dc3545; font-size: 14px; font-weight: 700; font-family: monospace; border-bottom: 1px solid #eee;">' . htmlspecialchars($default_password) . '</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px; border-bottom: 1px solid #eee;">Role</td>
+                            <td style="padding: 8px 10px; color: #333; font-size: 13px; font-weight: 600; border-bottom: 1px solid #eee;">' . htmlspecialchars($role_display) . '</td>
+                        </tr>';
+        
+        if (!empty($department_name)) {
+            $message .= '
+                        <tr>
+                            <td style="padding: 8px 10px; color: #666; font-size: 13px;">Department</td>
+                            <td style="padding: 8px 10px; color: #333; font-size: 13px; font-weight: 600;">' . htmlspecialchars($department_name) . '</td>
+                        </tr>';
+        }
+        
+        $message .= '
+                    </table>
+                </div>
+                
+                <!-- Security Notice -->
+                <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 15px; margin-bottom: 25px;">
+                    <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.5;">
+                        <strong>Important Security Notice:</strong><br/>
+                        For your security, please change your password immediately after your first login. Go to your profile settings and update your password.
+                    </p>
+                </div>
+                
+                <!-- Login Button -->
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="' . $login_link . '" 
+                       style="display: inline-block; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);">
+                        Login to LeaveTracker
+                    </a>
+                </div>
+                
+                <!-- Getting Started -->
+                <div style="background-color: #e8f5e9; border: 1px solid #4caf50; border-radius: 6px; padding: 15px; margin-top: 20px;">
+                    <h4 style="margin: 0 0 10px; color: #2e7d32; font-size: 14px;">Getting Started:</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #2e7d32; font-size: 12px; line-height: 1.6;">
+                        <li>Log in using your email and the password provided above</li>
+                        <li>Change your password in Profile Settings</li>
+                        <li>View your leave balance on the dashboard</li>
+                        <li>Submit leave applications when needed</li>
+                        <li>Track your leave history and status</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="background-color: #f1f3f5; padding: 20px 30px; text-align: center; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none;">
+                <p style="margin: 0 0 5px; color: #666; font-size: 12px;">
+                    If you have any questions or need assistance, please contact your system administrator.
+                </p>
+                <p style="margin: 0; color: #999; font-size: 11px; line-height: 1.5;">
+                    This is an automated notification from LeaveTracker System.<br/>
+                    The Technological Institute of Textile & Sciences, Bhiwani-127021
+                </p>
+            </div>
+        </div>';
+        
+        return $this->sendEmail($user_email, $subject, $message);
+    }
+    
     /**
      * Send a test email with detailed debug output
      * Returns an array with 'success', 'message', and 'debug' keys
