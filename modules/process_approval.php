@@ -242,11 +242,10 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
                         $days = $application['days'];
                         $app_leave_type_id = $application['leave_type_id'];
                         $update_balance_sql = "UPDATE leave_balances 
-                                             SET total_days = total_days - :days_subtract, used_days = used_days + :days_add 
+                                             SET used_days = used_days + :days 
                                              WHERE user_id = :user_id AND leave_type_id = :leave_type_id AND year = :year";
                         $update_balance_stmt = $conn->prepare($update_balance_sql);
-                        $update_balance_stmt->bindParam(':days_subtract', $days, PDO::PARAM_STR);
-                        $update_balance_stmt->bindParam(':days_add', $days, PDO::PARAM_STR);
+                        $update_balance_stmt->bindParam(':days', $days, PDO::PARAM_STR);
                         $update_balance_stmt->bindParam(':user_id', $app_user_id, PDO::PARAM_INT);
                         $update_balance_stmt->bindParam(':leave_type_id', $app_leave_type_id, PDO::PARAM_INT);
                         $update_balance_stmt->bindParam(':year', $current_year, PDO::PARAM_STR);

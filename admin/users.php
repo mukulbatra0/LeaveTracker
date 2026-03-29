@@ -329,11 +329,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // Reset password
+    // Reset password - Direct reset without OTP
     if (isset($_POST['reset_password'])) {
         $reset_user_id = $_POST['reset_user_id'];
         
-        // Get user's first name to generate password
+        error_log("Admin direct password reset for user ID: " . $reset_user_id . " by admin ID: " . $user_id);
+        
+        // Get user's information
         $user_info_sql = "SELECT first_name, last_name, email FROM users WHERE id = :user_id";
         $user_info_stmt = $conn->prepare($user_info_sql);
         $user_info_stmt->bindParam(':user_id', $reset_user_id, PDO::PARAM_INT);
@@ -341,46 +343,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user_info = $user_info_stmt->fetch();
         
         if (!$user_info) {
-            $errors[] = "User not found";
+            $_SESSION['alert'] = "User not found.";
+            $_SESSION['alert_type'] = "danger";
+            error_log("Admin password reset failed: User not found");
         } else {
-            // Generate default password: First 3 letters of first name in CAPS + @123
-            $name_prefix = strtoupper(substr($user_info['first_name'], 0, 3));
-            $default_password = $name_prefix . '@123';
-            $new_password = password_hash($default_password, PASSWORD_DEFAULT);
-            
             try {
                 $conn->beginTransaction();
-            
-            $reset_sql = "UPDATE users SET password = :password, updated_at = NOW() WHERE id = :user_id";
-            $reset_stmt = $conn->prepare($reset_sql);
-            $reset_stmt->bindParam(':password', $new_password, PDO::PARAM_STR);
-            $reset_stmt->bindParam(':user_id', $reset_user_id, PDO::PARAM_INT);
-            $reset_stmt->execute();
-            
-            // Get user details for audit log
-            $user_details_sql = "SELECT first_name, last_name FROM users WHERE id = :user_id";
-            $user_details_stmt = $conn->prepare($user_details_sql);
-            $user_details_stmt->bindParam(':user_id', $reset_user_id, PDO::PARAM_INT);
-            $user_details_stmt->execute();
-            $user_details = $user_details_stmt->fetch();
-            
-            // Add audit log
-            $action = "Reset password for user ID $reset_user_id: {$user_details['first_name']} {$user_details['last_name']}";
-            $audit_sql = "INSERT INTO audit_logs (user_id, action, created_at) VALUES (:user_id, :action, NOW())";
-            $audit_stmt = $conn->prepare($audit_sql);
-            $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-            $audit_stmt->bindParam(':action', $action, PDO::PARAM_STR);
-            $audit_stmt->execute();
-            
-            $conn->commit();
-            
-            $_SESSION['alert'] = "Password reset successfully. New password has been set.";
-            $_SESSION['alert_type'] = "success";
-            header("Location: users.php");
-            exit;
-            } catch (PDOException $e) {
+                
+                // Generate default password: First 3 letters of first name in CAPS + @123
+                $name_prefix = strtoupper(substr($user_info['first_name'], 0, 3));
+                $default_password = $name_prefix . '@123';
+                $hashed_password = password_hash($default_password, PASSWORD_DEFAULT);
+                
+                error_log("Resetting password for user ID: " . $reset_user_id . " to default: " . $default_password);
+                
+                // Update user's password
+                $reset_sql = "UPDATE users SET password = :password, updated_at = NOW() WHERE id = :user_id";
+                $reset_stmt = $conn->prepare($reset_sql);
+                $reset_stmt->bindParam(':password', $hashed_password, PDO::PARAM_STR);
+                $reset_stmt->bindParam(':user_id', $reset_user_id, PDO::PARAM_INT);
+                $reset_stmt->execute();
+                
+                error_log("Password reset successful, rows affected: " . $reset_stmt->rowCount());
+                
+                // Add audit log
+                $full_name = $user_info['first_name'] . ' ' . $user_info['last_name'];
+                $action = "Admin reset password for user ID $reset_user_id: {$full_name}";
+                $audit_sql = "INSERT INTO audit_logs (user_id, action, created_at) VALUES (:user_id, :action, NOW())";
+                $audit_stmt = $conn->prepare($audit_sql);
+                $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                $audit_stmt->bindParam(':action', $action, PDO::PARAM_STR);
+                $audit_stmt->execute();
+                
+                $conn->commit();
+                
+                error_log("Transaction committed successfully");
+                
+                // Send notification email to user (optional)
+                try {
+                    require_once '../classes/EmailNotification.php';
+                    $emailNotification = new EmailNotification($conn);
+                    
+                    $subject = "Password Reset - LeaveTracker";
+                    $message = '
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <h2 style="color: #dc3545;">Password Reset Notification</h2>
+                        <p>Dear ' . htmlspecialchars($full_name) . ',</p>
+                        <p>Your password has been reset by the system administrator.</p>
+                        <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #dc3545; margin: 20px 0;">
+                            <p style="margin: 0;"><strong>Your new password is:</strong></p>
+                            <p style="font-size: 24px; font-weight: bold; color: #dc3545; margin: 10px 0;">' . htmlspecialchars($default_password) . '</p>
+                        </div>
+                        <p><strong>Important:</strong> Please change your password immediately after logging in for security reasons.</p>
+                        <p>To change your password:</p>
+                        <ol>
+                            <li>Log in with the password above</li>
+                            <li>Go to Profile → Change Password</li>
+                            <li>Set a new secure password</li>
+                        </ol>
+                        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+                            This is an automated notification from LeaveTracker System.<br/>
+                            If you did not request this password reset, please contact your administrator immediately.
+                        </p>
+                    </div>';
+                    
+                    $emailNotification->sendEmail($user_info['email'], $subject, $message);
+                    error_log("Password reset notification email sent to: " . $user_info['email']);
+                } catch (Exception $e) {
+                    error_log("Failed to send password reset notification email: " . $e->getMessage());
+                    // Don't fail the reset if email fails
+                }
+                
+                $_SESSION['alert'] = "Password reset successfully for <strong>{$full_name}</strong>!<br>New password: <strong>{$default_password}</strong><br><small>An email has been sent to the user.</small>";
+                $_SESSION['alert_type'] = "success";
+                
+            } catch (Exception $e) {
                 $conn->rollBack();
-                $errors[] = "Database error: " . $e->getMessage();
+                $_SESSION['alert'] = "Error resetting password: " . $e->getMessage();
+                $_SESSION['alert_type'] = "danger";
+                error_log("Admin password reset error: " . $e->getMessage());
             }
         }
     }
@@ -908,12 +949,21 @@ include '../includes/header.php';
                 <div class="modal-body">
                     <p>Are you sure you want to reset the password for <strong id="reset_user_name"></strong>?</p>
                     <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i> The password will be reset to the default password.
+                        <i class="fas fa-exclamation-triangle me-1"></i> 
+                        <strong>This will immediately reset the password to the default format:</strong>
+                        <br>
+                        <code>First 3 letters of first name (CAPS) + @123</code>
+                        <br><br>
+                        <small>Example: John → JOH@123</small>
+                        <br><br>
+                        <i class="fas fa-envelope me-1"></i> The user will receive an email with their new password.
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" name="reset_password" class="btn btn-warning">Reset Password</button>
+                    <button type="submit" name="reset_password" class="btn btn-warning">
+                        <i class="fas fa-key me-1"></i>Reset Password
+                    </button>
                 </div>
             </form>
         </div>

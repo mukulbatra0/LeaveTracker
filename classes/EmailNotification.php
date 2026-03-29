@@ -348,6 +348,69 @@ class EmailNotification {
     }
     
     /**
+     * Send a password reset OTP email to the user
+     * Called when admin initiates a password reset
+     */
+    public function sendPasswordResetOTP($user_email, $user_name, $otp_code) {
+        $subject = "Password Reset OTP - LeaveTracker";
+        
+        $message = '
+        <div style="font-family: \'Segoe UI\', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 0;">
+            
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #e65100 0%, #bf360c 100%); padding: 30px 30px 25px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 600;">🔐 Password Reset OTP</h1>
+                <p style="margin: 8px 0 0; color: #ffccbc; font-size: 14px;">Verify your identity to reset your password</p>
+            </div>
+            
+            <!-- Body -->
+            <div style="background-color: #ffffff; padding: 30px; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0;">
+                
+                <!-- Greeting -->
+                <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;">
+                    Dear <strong>' . htmlspecialchars($user_name) . '</strong>,<br/><br/>
+                    A password reset has been initiated for your account by the system administrator. Please use the OTP below to verify and complete the password reset.
+                </p>
+                
+                <!-- OTP Display -->
+                <div style="text-align: center; margin: 30px 0;">
+                    <p style="margin: 0 0 10px; color: #666; font-size: 14px; font-weight: 500;">Your One-Time Password (OTP)</p>
+                    <div style="display: inline-block; background: linear-gradient(135deg, #1a237e 0%, #283593 100%); padding: 20px 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);">
+                        <span style="font-size: 36px; font-weight: 700; color: #ffffff; letter-spacing: 12px; font-family: \'Courier New\', monospace;">' . $otp_code . '</span>
+                    </div>
+                </div>
+                
+                <!-- Expiry Notice -->
+                <div style="background-color: #fff3e0; border: 1px solid #ff9800; border-radius: 6px; padding: 15px; margin: 25px 0;">
+                    <p style="margin: 0; color: #e65100; font-size: 13px; line-height: 1.5;">
+                        <strong>⏰ This OTP expires in 10 minutes.</strong><br/>
+                        If your OTP has expired, please ask the admin to initiate a new password reset.
+                    </p>
+                </div>
+                
+                <!-- Security Notice -->
+                <div style="background-color: #fce4ec; border: 1px solid #ef5350; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
+                    <p style="margin: 0; color: #c62828; font-size: 13px; line-height: 1.5;">
+                        <strong>🔒 Security Notice:</strong><br/>
+                        • Do not share this OTP with anyone.<br/>
+                        • If you did not request a password reset, please contact your administrator immediately.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="background-color: #f1f3f5; padding: 20px 30px; text-align: center; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none;">
+                <p style="margin: 0; color: #999; font-size: 11px; line-height: 1.5;">
+                    This is an automated notification from LeaveTracker System.<br/>
+                    The Technological Institute of Textile &amp; Sciences, Bhiwani-127021
+                </p>
+            </div>
+        </div>';
+        
+        return $this->sendEmail($user_email, $subject, $message);
+    }
+    
+    /**
      * Send a test email with detailed debug output
      * Returns an array with 'success', 'message', and 'debug' keys
      */
@@ -491,7 +554,7 @@ class EmailNotification {
         }
     }
     
-    private function sendEmail($to, $subject, $message, $attachment_path = '', $attachment_name = '') {
+    public function sendEmail($to, $subject, $message, $attachment_path = '', $attachment_name = '') {
         $this->last_error = '';
         
         // Check if email notifications are enabled

@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Edit policy rule
-    if (isset($_POST['edit_policy'])) {
+    if (isset($_POST['policy_id']) && !isset($_POST['add_policy']) && !isset($_POST['delete_policy']) && !isset($_POST['recalculate_balances'])) {
         $policy_id = (int)$_POST['policy_id'];
         $allocated_days = (float)$_POST['allocated_days'];
         $max_accumulation = !empty($_POST['max_accumulation']) ? (float)$_POST['max_accumulation'] : null;
@@ -100,25 +100,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description = trim($_POST['description'] ?? '');
         $is_active = isset($_POST['is_active']) ? 1 : 0;
 
-        try {
-            $update_sql = "UPDATE leave_policy_rules SET 
-                          allocated_days = :ad, max_accumulation = :ma, max_at_once = :mao, 
-                          description = :desc, is_active = :ia, updated_at = NOW()
-                          WHERE id = :id";
-            $stmt = $conn->prepare($update_sql);
-            $stmt->execute([':ad' => $allocated_days, ':ma' => $max_accumulation, ':mao' => $max_at_once, ':desc' => $description, ':ia' => $is_active, ':id' => $policy_id]);
+        // Validate input
+        $errors = [];
+        if (empty($policy_id)) {
+            $errors[] = "Policy ID is required";
+        }
+        if ($allocated_days < 0) {
+            $errors[] = "Allocated days cannot be negative";
+        }
 
-            $action = "Updated leave policy rule ID $policy_id";
-            $audit_stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, created_at) VALUES (:uid, :action, NOW())");
-            $audit_stmt->execute([':uid' => $user_id, ':action' => $action]);
+        if (empty($errors)) {
+            try {
+                $update_sql = "UPDATE leave_policy_rules SET 
+                              allocated_days = :ad, max_accumulation = :ma, max_at_once = :mao, 
+                              description = :desc, is_active = :ia, updated_at = NOW()
+                              WHERE id = :id";
+                $stmt = $conn->prepare($update_sql);
+                $result = $stmt->execute([
+                    ':ad' => $allocated_days, 
+                    ':ma' => $max_accumulation, 
+                    ':mao' => $max_at_once, 
+                    ':desc' => $description, 
+                    ':ia' => $is_active, 
+                    ':id' => $policy_id
+                ]);
 
-            $_SESSION['alert'] = "Policy rule updated successfully.";
-            $_SESSION['alert_type'] = "success";
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-            header("Location: leave_policies.php");
-            exit;
-        } catch (PDOException $e) {
-            $_SESSION['alert'] = "Error: " . $e->getMessage();
+                if ($result) {
+                    // Audit log
+                    $action = "Updated leave policy rule ID $policy_id (Days: $allocated_days)";
+                    $audit_stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, created_at) VALUES (:uid, :action, NOW())");
+                    $audit_stmt->execute([':uid' => $user_id, ':action' => $action]);
+
+                    $_SESSION['alert'] = "Policy rule updated successfully.";
+                    $_SESSION['alert_type'] = "success";
+                } else {
+                    $_SESSION['alert'] = "Failed to update policy rule.";
+                    $_SESSION['alert_type'] = "danger";
+                }
+                
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                header("Location: leave_policies.php");
+                exit;
+            } catch (PDOException $e) {
+                $_SESSION['alert'] = "Database error: " . $e->getMessage();
+                $_SESSION['alert_type'] = "danger";
+            }
+        } else {
+            $_SESSION['alert'] = implode('<br>', $errors);
             $_SESSION['alert_type'] = "danger";
         }
     }

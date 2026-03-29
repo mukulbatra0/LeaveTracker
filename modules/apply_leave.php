@@ -26,13 +26,36 @@ if ($role == 'hr_admin') {
     exit;
 }
 
-// Get available leave types for the user's role
-$leave_types_sql = "SELECT id, name, description, max_days, requires_attachment 
-                   FROM leave_types 
-                   WHERE FIND_IN_SET(:role, applicable_to) > 0 
-                   ORDER BY name ASC";
+// Get user details for policy-based filtering
+$user_details_sql = "SELECT staff_type, gender, employment_type FROM users WHERE id = :user_id";
+$user_details_stmt = $conn->prepare($user_details_sql);
+$user_details_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+$user_details_stmt->execute();
+$user_data = $user_details_stmt->fetch();
+
+$user_staff_type = $user_data['staff_type'] ?? 'teaching';
+$user_gender = $user_data['gender'] ?? 'male';
+$user_employment_type = $user_data['employment_type'] ?? 'full_time';
+
+// Get available leave types based on policy rules that match user's attributes
+$leave_types_sql = "SELECT DISTINCT lt.id, lt.name, lt.description, lt.default_days as max_days, lt.requires_attachment 
+                   FROM leave_types lt
+                   LEFT JOIN leave_policy_rules lpr ON lt.id = lpr.leave_type_id 
+                   WHERE lt.is_active = 1
+                   AND (
+                       lpr.id IS NULL 
+                       OR (
+                           lpr.is_active = 1
+                           AND (lpr.staff_type = :staff_type OR lpr.staff_type = 'all')
+                           AND (lpr.gender = :gender OR lpr.gender = 'all')
+                           AND (lpr.employment_type = :employment_type OR lpr.employment_type = 'all')
+                       )
+                   )
+                   ORDER BY lt.name ASC";
 $leave_types_stmt = $conn->prepare($leave_types_sql);
-$leave_types_stmt->bindParam(':role', $role, PDO::PARAM_STR);
+$leave_types_stmt->bindParam(':staff_type', $user_staff_type, PDO::PARAM_STR);
+$leave_types_stmt->bindParam(':gender', $user_gender, PDO::PARAM_STR);
+$leave_types_stmt->bindParam(':employment_type', $user_employment_type, PDO::PARAM_STR);
 $leave_types_stmt->execute();
 $leave_types = $leave_types_stmt->fetchAll();
 
