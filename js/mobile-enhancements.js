@@ -21,8 +21,14 @@ document.addEventListener('DOMContentLoaded', function() {
         initMobileEnhancements();
     }
     
-    // Handle window resize
-    window.addEventListener('resize', debounce(handleResize, 250));
+    // Handle window resize with proper debouncing
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            debounce(handleResize, 250)();
+        }, 100);
+    });
     
     function initMobileEnhancements() {
         // Add mobile classes to key elements
@@ -174,11 +180,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const newIsMobile = window.innerWidth <= 768;
         const newIsTablet = window.innerWidth <= 992 && window.innerWidth > 768;
         
-        // Update body classes
+        // Update body classes without triggering re-initialization
         document.body.classList.remove('mobile-device', 'tablet-device', 'desktop-device');
         
         if (newIsMobile) {
             document.body.classList.add('mobile-device');
+            // Only initialize once
             if (!document.body.classList.contains('mobile-enhanced')) {
                 initMobileEnhancements();
                 document.body.classList.add('mobile-enhanced');

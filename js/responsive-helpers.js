@@ -7,8 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize responsive features
     initResponsiveFeatures();
     
-    // Handle window resize
-    window.addEventListener('resize', debounce(handleResize, 250));
+    // Handle window resize with proper debouncing
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(debounce(handleResize, 250), 100);
+    });
     
     function initResponsiveFeatures() {
         // Make tables responsive

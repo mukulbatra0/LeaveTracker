@@ -20,14 +20,20 @@
     <link rel="stylesheet" href="<?php echo $base_path; ?>css/style.css">
     <link rel="stylesheet" href="<?php echo $base_path; ?>css/responsive-override.css">
     <link rel="stylesheet" href="<?php echo $base_path; ?>css/mobile-tables.css">
+    <link rel="stylesheet" href="<?php echo $base_path; ?>css/mobile-enhancements.css">
     <!-- Favicon -->
     <link rel="icon" href="<?php echo $base_path; ?>images/logo.png" type="image/x-icon">
-    <!-- JavaScript files -->
+    <!-- JavaScript files - Mobile scroll fix MUST load first -->
+    <script src="<?php echo $base_path; ?>js/mobile-scroll-fix.js"></script>
     <script src="<?php echo $base_path; ?>js/mobile-detector.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo $base_path; ?>js/responsive-helpers.js"></script>
     <script src="<?php echo $base_path; ?>js/mobile-enhancements.js"></script>
+    <script src="<?php echo $base_path; ?>js/mobile-form-enhancements.js"></script>
     <script src="<?php echo $base_path; ?>js/notifications.js"></script>
+    <!-- AJAX Form Handlers -->
+    <script src="<?php echo $base_path; ?>js/ajax-forms.js"></script>
+    <script src="<?php echo $base_path; ?>js/admin-ajax-init.js"></script>
 </head>
 <body>
 

@@ -1,0 +1,930 @@
+/**
+ * Mobile Enhancements for LeaveTracker
+ * Comprehensive mobile-first improvements for all pages
+ * Special focus on Leave Application Form
+ */
+
+/* ========================================
+   MOBILE-FIRST BASE IMPROVEMENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Container and Spacing */
+    .container-fluid {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+    
+    /* Typography Improvements */
+    h1, h2 {
+        font-size: 1.5rem !important;
+        line-height: 1.3 !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    h3, h4 {
+        font-size: 1.25rem !important;
+        line-height: 1.3 !important;
+    }
+    
+    h5, h6 {
+        font-size: 1.1rem !important;
+    }
+    
+    p, .text-muted {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+    }
+    
+    /* Card Improvements */
+    .card {
+        border-radius: 12px !important;
+        margin-bottom: 1rem !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    }
+    
+    .card-body {
+        padding: 1.25rem !important;
+    }
+    
+    .card-header {
+        padding: 1rem !important;
+        font-size: 1rem !important;
+        border-radius: 12px 12px 0 0 !important;
+    }
+    
+    /* Button Improvements - Touch Friendly */
+    .btn {
+        min-height: 48px !important;
+        padding: 12px 20px !important;
+        font-size: 0.95rem !important;
+        border-radius: 10px !important;
+        font-weight: 500 !important;
+        width: 100% !important;
+        margin-bottom: 0.75rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+    }
+    
+    .btn-group .btn,
+    .btn-toolbar .btn {
+        width: auto !important;
+        flex: 1 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .btn i {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Form Improvements */
+    .form-control,
+    .form-select {
+        font-size: 16px !important; /* Prevents iOS zoom */
+        min-height: 48px !important;
+        padding: 12px 16px !important;
+        border-radius: 10px !important;
+        border: 2px solid #e9ecef !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15) !important;
+    }
+    
+    .form-label {
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.5rem !important;
+        color: #2c3e50 !important;
+    }
+    
+    .form-text,
+    small {
+        font-size: 0.85rem !important;
+    }
+    
+    textarea.form-control {
+        min-height: 120px !important;
+    }
+    
+    /* Input Groups */
+    .input-group {
+        margin-bottom: 1rem !important;
+    }
+    
+    .input-group-text {
+        min-height: 48px !important;
+        padding: 12px 16px !important;
+        font-size: 16px !important;
+        border: 2px solid #e9ecef !important;
+    }
+    
+    /* Form Floating Labels */
+    .form-floating > .form-control,
+    .form-floating > .form-select {
+        height: 58px !important;
+        line-height: 1.25 !important;
+    }
+    
+    .form-floating > label {
+        padding: 1rem 0.75rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    /* Alert Improvements */
+    .alert {
+        border-radius: 10px !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .alert i {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Breadcrumb */
+    .breadcrumb {
+        font-size: 0.85rem !important;
+        padding: 0.75rem 0 !important;
+        margin-bottom: 1rem !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .breadcrumb-item {
+        padding: 0.25rem 0 !important;
+    }
+}
+
+/* ========================================
+   LEAVE APPLICATION FORM - MOBILE
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Progress Indicator - Vertical Layout */
+    .progress-container {
+        flex-direction: column !important;
+        align-items: center !important;
+        padding: 1rem 0 !important;
+    }
+    
+    .progress-step {
+        width: 100% !important;
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        padding: 0.75rem 0 !important;
+    }
+    
+    .progress-step-icon {
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 1.2rem !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .progress-step-label {
+        margin-top: 0 !important;
+        margin-left: 1rem !important;
+        text-align: left !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .progress-line {
+        width: 3px !important;
+        height: 20px !important;
+        margin: 0 !important;
+        margin-left: 23px !important;
+        top: 0 !important;
+    }
+    
+    /* Step Header */
+    .step-header {
+        padding-bottom: 1rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .step-title {
+        font-size: 1.25rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .step-header p {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Form Steps */
+    .form-step {
+        padding: 0 !important;
+    }
+    
+    .form-step .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    .form-step .row > [class*="col-"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Step Actions */
+    .step-actions {
+        flex-direction: column-reverse !important;
+        gap: 0.75rem !important;
+        margin-top: 2rem !important;
+        padding-top: 1.5rem !important;
+    }
+    
+    .step-actions .btn {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Half Day Options */
+    .half-day-option {
+        margin-bottom: 1rem !important;
+    }
+    
+    .half-day-option .card-body {
+        padding: 1.5rem 1rem !important;
+    }
+    
+    .half-day-option i {
+        font-size: 2.5rem !important;
+    }
+    
+    .half-day-option h5 {
+        font-size: 1.1rem !important;
+    }
+    
+    /* File Upload */
+    .file-upload-wrapper input[type="file"] {
+        padding: 12px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .file-upload-info {
+        font-size: 0.8rem !important;
+    }
+    
+    /* Date Inputs - Better Touch Target */
+    input[type="date"],
+    input[type="time"],
+    input[type="number"] {
+        min-height: 48px !important;
+        font-size: 16px !important;
+    }
+    
+    /* Textarea Character Counter */
+    #reason-count {
+        font-weight: 600 !important;
+        color: #667eea !important;
+    }
+    
+    /* Form Check (Checkboxes & Radios) */
+    .form-check {
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .form-check-input {
+        width: 1.5em !important;
+        height: 1.5em !important;
+        margin-top: 0 !important;
+    }
+    
+    .form-check-label {
+        font-size: 0.95rem !important;
+        padding-left: 0.5rem !important;
+        line-height: 1.5 !important;
+    }
+    
+    .form-switch .form-check-input {
+        width: 3em !important;
+        height: 1.5em !important;
+    }
+    
+    /* Card with Switch */
+    .card.bg-light {
+        background-color: #f8f9fa !important;
+        border: 2px solid #e9ecef !important;
+        padding: 0.5rem !important;
+    }
+}
+
+/* ========================================
+   DASHBOARD MOBILE IMPROVEMENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Dashboard Cards */
+    .dashboard-card {
+        text-align: center !important;
+        padding: 1.5rem 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .dashboard-card h3 {
+        font-size: 2rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .dashboard-card p {
+        font-size: 0.9rem !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .dashboard-card i {
+        font-size: 2.5rem !important;
+        margin-bottom: 1rem !important;
+        display: block !important;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+        padding: 1rem !important;
+        border-radius: 10px !important;
+    }
+    
+    .quick-actions .btn {
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Stats Cards */
+    .card.bg-primary,
+    .card.bg-success,
+    .card.bg-info,
+    .card.bg-warning,
+    .card.bg-danger {
+        margin-bottom: 1rem !important;
+    }
+    
+    .card.bg-primary .card-body,
+    .card.bg-success .card-body,
+    .card.bg-info .card-body,
+    .card.bg-warning .card-body,
+    .card.bg-danger .card-body {
+        padding: 1.5rem 1rem !important;
+        text-align: center !important;
+    }
+}
+
+/* ========================================
+   TABLE MOBILE IMPROVEMENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Table Wrapper */
+    .table-responsive {
+        border: none !important;
+        box-shadow: none !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Hide table header */
+    .table thead {
+        display: none !important;
+    }
+    
+    /* Transform table to cards */
+    .table,
+    .table tbody,
+    .table tr,
+    .table td {
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    .table tbody tr {
+        border: 2px solid #e9ecef !important;
+        border-radius: 12px !important;
+        margin-bottom: 1rem !important;
+        padding: 1rem !important;
+        background: white !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    }
+    
+    .table tbody td {
+        border: none !important;
+        padding: 0.75rem 0 !important;
+        text-align: left !important;
+        position: relative !important;
+        padding-left: 45% !important;
+        min-height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    .table tbody td:before {
+        content: attr(data-label) !important;
+        position: absolute !important;
+        left: 0 !important;
+        width: 40% !important;
+        font-weight: 700 !important;
+        color: #2c3e50 !important;
+        font-size: 0.85rem !important;
+        padding-right: 0.5rem !important;
+    }
+    
+    /* Action buttons in tables */
+    .table tbody td .btn {
+        width: auto !important;
+        padding: 8px 16px !important;
+        font-size: 0.85rem !important;
+        min-height: 36px !important;
+        margin-bottom: 0.25rem !important;
+    }
+    
+    .table tbody td .btn-group {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.25rem !important;
+        width: 100% !important;
+    }
+    
+    .table tbody td .btn-group .btn {
+        width: 100% !important;
+    }
+    
+    /* Badge in tables */
+    .table tbody td .badge {
+        font-size: 0.8rem !important;
+        padding: 0.35rem 0.65rem !important;
+        display: inline-block !important;
+    }
+}
+
+/* ========================================
+   NAVIGATION MOBILE IMPROVEMENTS
+   ======================================== */
+
+@media (max-width: 991px) {
+    /* Navbar */
+    .navbar {
+        padding: 0.75rem 1rem !important;
+    }
+    
+    .navbar-brand {
+        font-size: 1.25rem !important;
+    }
+    
+    .navbar-brand img {
+        height: 28px !important;
+    }
+    
+    .navbar-toggler {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 1.1rem !important;
+        border: 2px solid rgba(255,255,255,0.3) !important;
+    }
+    
+    .navbar-collapse {
+        background-color: rgba(27, 60, 83, 0.98) !important;
+        margin: 0.75rem -1rem -0.75rem -1rem !important;
+        padding: 1rem !important;
+        border-radius: 0 0 12px 12px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    }
+    
+    .navbar-nav {
+        gap: 0.25rem !important;
+    }
+    
+    .nav-link {
+        padding: 0.75rem 1rem !important;
+        border-radius: 8px !important;
+        margin: 0.125rem 0 !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .nav-link:hover,
+    .nav-link:focus {
+        background-color: rgba(255,255,255,0.15) !important;
+    }
+    
+    /* Dropdown in navbar */
+    .navbar-nav .dropdown-menu {
+        position: static !important;
+        float: none !important;
+        width: 100% !important;
+        margin-top: 0.5rem !important;
+        background-color: rgba(255,255,255,0.95) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1) !important;
+    }
+    
+    .navbar-nav .dropdown-item {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.9rem !important;
+        color: #2c3e50 !important;
+        border-radius: 6px !important;
+        margin: 0.125rem 0.5rem !important;
+    }
+    
+    .navbar-nav .dropdown-item:hover {
+        background-color: rgba(102, 126, 234, 0.1) !important;
+        color: #667eea !important;
+    }
+    
+    /* Notification Badge */
+    .notification-badge {
+        font-size: 0.7rem !important;
+        min-width: 20px !important;
+        height: 20px !important;
+        line-height: 20px !important;
+    }
+}
+
+/* ========================================
+   MODAL MOBILE IMPROVEMENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem !important;
+        max-width: calc(100vw - 1rem) !important;
+    }
+    
+    .modal-content {
+        border-radius: 15px !important;
+    }
+    
+    .modal-header {
+        padding: 1.25rem !important;
+        border-radius: 15px 15px 0 0 !important;
+    }
+    
+    .modal-title {
+        font-size: 1.25rem !important;
+    }
+    
+    .modal-body {
+        padding: 1.25rem !important;
+    }
+    
+    .modal-footer {
+        padding: 1rem 1.25rem !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+    
+    .modal-footer .btn {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+}
+
+/* ========================================
+   TAB NAVIGATION MOBILE
+   ======================================== */
+
+@media (max-width: 768px) {
+    .nav-tabs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+        border-bottom: 2px solid #e9ecef !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .nav-tabs::-webkit-scrollbar {
+        display: none !important;
+    }
+    
+    .nav-tabs .nav-item {
+        flex-shrink: 0 !important;
+    }
+    
+    .nav-tabs .nav-link {
+        white-space: nowrap !important;
+        font-size: 0.9rem !important;
+        padding: 0.75rem 1.25rem !important;
+        margin-right: 0.5rem !important;
+        border-radius: 8px 8px 0 0 !important;
+        border: none !important;
+        background-color: transparent !important;
+        color: #6c757d !important;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background-color: white !important;
+        color: #667eea !important;
+        font-weight: 600 !important;
+        border-bottom: 3px solid #667eea !important;
+    }
+    
+    .tab-content {
+        padding-top: 1rem !important;
+    }
+}
+
+/* ========================================
+   PAGINATION MOBILE
+   ======================================== */
+
+@media (max-width: 576px) {
+    .pagination {
+        justify-content: center !important;
+        flex-wrap: wrap !important;
+        gap: 0.25rem !important;
+    }
+    
+    .pagination .page-item {
+        margin: 0.125rem !important;
+    }
+    
+    .pagination .page-link {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+        border-radius: 8px !important;
+        min-width: 40px !important;
+        text-align: center !important;
+    }
+    
+    /* Hide page numbers on very small screens, keep prev/next */
+    .pagination .page-item:not(.page-item:first-child):not(.page-item:last-child) {
+        display: none !important;
+    }
+    
+    .pagination .page-item.active {
+        display: inline-block !important;
+    }
+}
+
+/* ========================================
+   UTILITY CLASSES FOR MOBILE
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Spacing Utilities */
+    .mb-mobile-2 {
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .mb-mobile-3 {
+        margin-bottom: 1rem !important;
+    }
+    
+    .mb-mobile-4 {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .mt-mobile-2 {
+        margin-top: 0.5rem !important;
+    }
+    
+    .mt-mobile-3 {
+        margin-top: 1rem !important;
+    }
+    
+    .p-mobile-2 {
+        padding: 0.5rem !important;
+    }
+    
+    .p-mobile-3 {
+        padding: 1rem !important;
+    }
+    
+    /* Display Utilities */
+    .d-mobile-none {
+        display: none !important;
+    }
+    
+    .d-mobile-block {
+        display: block !important;
+    }
+    
+    .d-mobile-flex {
+        display: flex !important;
+    }
+    
+    /* Text Utilities */
+    .text-mobile-center {
+        text-align: center !important;
+    }
+    
+    .text-mobile-left {
+        text-align: left !important;
+    }
+    
+    /* Flex Utilities */
+    .flex-mobile-column {
+        flex-direction: column !important;
+    }
+    
+    .flex-mobile-wrap {
+        flex-wrap: wrap !important;
+    }
+    
+    /* Width Utilities */
+    .w-mobile-100 {
+        width: 100% !important;
+    }
+    
+    .w-mobile-auto {
+        width: auto !important;
+    }
+}
+
+/* ========================================
+   TOUCH INTERACTIONS
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Touch Feedback */
+    .btn:active {
+        transform: scale(0.98) !important;
+        transition: transform 0.1s ease !important;
+    }
+    
+    .card:active {
+        transform: scale(0.99) !important;
+        transition: transform 0.1s ease !important;
+    }
+    
+    /* Prevent text selection on buttons */
+    .btn,
+    .nav-link,
+    .dropdown-item {
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+    
+    /* Larger tap targets for links */
+    a {
+        min-height: 44px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+    
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth !important;
+    }
+}
+
+/* ========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Focus States */
+    .btn:focus,
+    .form-control:focus,
+    .form-select:focus,
+    .nav-link:focus {
+        outline: 3px solid rgba(102, 126, 234, 0.5) !important;
+        outline-offset: 2px !important;
+    }
+    
+    /* Skip to content link */
+    .skip-to-content {
+        position: absolute !important;
+        top: -40px !important;
+        left: 0 !important;
+        background: #667eea !important;
+        color: white !important;
+        padding: 8px 16px !important;
+        text-decoration: none !important;
+        z-index: 100 !important;
+    }
+    
+    .skip-to-content:focus {
+        top: 0 !important;
+    }
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+
+@media (max-width: 768px) {
+    .btn-loading {
+        position: relative !important;
+        pointer-events: none !important;
+        opacity: 0.7 !important;
+    }
+    
+    .btn-loading::after {
+        content: "" !important;
+        position: absolute !important;
+        width: 18px !important;
+        height: 18px !important;
+        top: 50% !important;
+        left: 50% !important;
+        margin-left: -9px !important;
+        margin-top: -9px !important;
+        border: 2px solid #ffffff !important;
+        border-radius: 50% !important;
+        border-top-color: transparent !important;
+        animation: spinner 0.6s linear infinite !important;
+    }
+    
+    @keyframes spinner {
+        to { transform: rotate(360deg); }
+    }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+    .navbar,
+    .btn,
+    .alert,
+    .breadcrumb,
+    .step-actions,
+    .progress-container {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+    }
+    
+    .form-control,
+    .form-select {
+        border: 1px solid #000 !important;
+    }
+}
+
+/* ========================================
+   LANDSCAPE ORIENTATION
+   ======================================== */
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .progress-container {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+    }
+    
+    .progress-step {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    
+    .progress-step-label {
+        margin-left: 0 !important;
+        margin-top: 0.5rem !important;
+        text-align: center !important;
+    }
+    
+    .progress-line {
+        width: 40px !important;
+        height: 3px !important;
+        margin: 0 10px !important;
+        margin-left: 0 !important;
+    }
+}
+
+/* ========================================
+   EXTRA SMALL DEVICES (< 576px)
+   ======================================== */
+
+@media (max-width: 576px) {
+    .container-fluid {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
+    }
+    
+    .btn {
+        padding: 10px 16px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    h1, h2 {
+        font-size: 1.35rem !important;
+    }
+    
+    .step-title {
+        font-size: 1.15rem !important;
+    }
+    
+    .form-label {
+        font-size: 0.9rem !important;
+    }
+    
+    .alert {
+        padding: 0.75rem !important;
+        font-size: 0.85rem !important;
+    }
+}

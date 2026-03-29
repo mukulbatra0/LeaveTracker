@@ -183,14 +183,19 @@
         document.head.appendChild(slideOutStyle);
     }
     
-    // Add resize handler
+    // Add resize handler with debounce to prevent excessive triggers
+    let resizeTimer;
     window.addEventListener('resize', function() {
-        const newIsMobile = window.innerWidth <= 768;
-        const newIsTablet = window.innerWidth <= 992 && window.innerWidth > 768;
-        
-        if ((newIsMobile || newIsTablet) && !document.getElementById('mobile-indicator')) {
-            // Re-add indicator if resized to mobile/tablet
-            location.reload(); // Simple solution to re-apply mobile styles
-        }
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            const newIsMobile = window.innerWidth <= 768;
+            const newIsTablet = window.innerWidth <= 992 && window.innerWidth > 768;
+            
+            // Update mobile indicator without reloading
+            if ((newIsMobile || newIsTablet) && !document.getElementById('mobile-indicator')) {
+                // Just update CSS classes, no reload needed
+                document.documentElement.style.setProperty('--mobile-active', '1');
+            }
+        }, 250); // Wait 250ms after resize stops
     });
 })();

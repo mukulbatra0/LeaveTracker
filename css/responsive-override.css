@@ -1,5 +1,21 @@
 /* RESPONSIVE OVERRIDE - Immediate Visible Changes */
 
+/* Viewport Height Fix for Mobile */
+:root {
+    --vh: 1vh;
+}
+
+/* Prevent page refresh on mobile scroll */
+html {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+body {
+    overflow-x: hidden;
+    position: relative;
+}
+
 /* Mobile-First Container Improvements */
 @media (max-width: 768px) {
     .container-fluid {
