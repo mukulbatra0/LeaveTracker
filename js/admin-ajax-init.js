@@ -16,13 +16,6 @@
                 return;
             }
             
-            // Skip forms that should NOT be AJAX-ified (e.g., reset password needs normal POST)
-            const formData = new FormData(form);
-            if (formData.has('reset_password') || form.querySelector('[name="reset_password"]')) {
-                form.classList.add('ajax-converted');
-                return;
-            }
-            
             form.classList.add('ajax-converted');
             
             // Update form action to ajax_handler.php
@@ -50,6 +43,9 @@
                     action = 'add_leave_type';
                 } else if (formData.has('edit_leave_type')) {
                     action = 'edit_leave_type';
+                } else if (formData.has('action')) {
+                    // Action already set (e.g., reset_password)
+                    action = formData.get('action');
                 }
                 
                 if (action) {

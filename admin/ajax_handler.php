@@ -444,6 +444,89 @@ try {
                 ];
                 break;
 
+            case 'reset_password':
+                if ($role != 'admin') {
+                    throw new Exception("You don't have permission to perform this action.");
+                }
+                
+                $reset_user_id = $_POST['reset_user_id'];
+                
+                // Get user's information
+                $user_info_sql = "SELECT first_name, last_name, email FROM users WHERE id = :user_id";
+                $user_info_stmt = $conn->prepare($user_info_sql);
+                $user_info_stmt->bindParam(':user_id', $reset_user_id, PDO::PARAM_INT);
+                $user_info_stmt->execute();
+                $user_info = $user_info_stmt->fetch();
+                
+                if (!$user_info) {
+                    throw new Exception("User not found");
+                }
+                
+                $conn->beginTransaction();
+                
+                // Generate default password: First 3 letters of first name in CAPS + @123
+                $name_prefix = strtoupper(substr($user_info['first_name'], 0, 3));
+                $default_password = $name_prefix . '@123';
+                $hashed_password = password_hash($default_password, PASSWORD_DEFAULT);
+                
+                // Update user's password
+                $reset_sql = "UPDATE users SET password = :password, updated_at = NOW() WHERE id = :user_id";
+                $reset_stmt = $conn->prepare($reset_sql);
+                $reset_stmt->bindParam(':password', $hashed_password, PDO::PARAM_STR);
+                $reset_stmt->bindParam(':user_id', $reset_user_id, PDO::PARAM_INT);
+                $reset_stmt->execute();
+                
+                // Add audit log
+                $full_name = $user_info['first_name'] . ' ' . $user_info['last_name'];
+                $audit_action = "Admin reset password for user ID $reset_user_id: {$full_name}";
+                $audit_sql = "INSERT INTO audit_logs (user_id, action, created_at) VALUES (:user_id, :action, NOW())";
+                $audit_stmt = $conn->prepare($audit_sql);
+                $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                $audit_stmt->bindParam(':action', $audit_action, PDO::PARAM_STR);
+                $audit_stmt->execute();
+                
+                $conn->commit();
+                
+                // Send notification email to user
+                try {
+                    require_once '../classes/EmailNotification.php';
+                    $emailNotification = new EmailNotification($conn);
+                    
+                    $subject = "Password Reset - LeaveTracker";
+                    $message = '
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <h2 style="color: #dc3545;">Password Reset Notification</h2>
+                        <p>Dear ' . htmlspecialchars($full_name) . ',</p>
+                        <p>Your password has been reset by the system administrator.</p>
+                        <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #dc3545; margin: 20px 0;">
+                            <p style="margin: 0;"><strong>Your new password is:</strong></p>
+                            <p style="font-size: 24px; font-weight: bold; color: #dc3545; margin: 10px 0;">' . htmlspecialchars($default_password) . '</p>
+                        </div>
+                        <p><strong>Important:</strong> Please change your password immediately after logging in for security reasons.</p>
+                        <p>To change your password:</p>
+                        <ol>
+                            <li>Log in with the password above</li>
+                            <li>Go to Profile → Change Password</li>
+                            <li>Set a new secure password</li>
+                        </ol>
+                        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+                            This is an automated notification from LeaveTracker System.<br/>
+                            If you did not request this password reset, please contact your administrator immediately.
+                        </p>
+                    </div>';
+                    
+                    $emailNotification->sendEmail($user_info['email'], $subject, $message);
+                } catch (Exception $e) {
+                    error_log("Failed to send password reset notification email: " . $e->getMessage());
+                }
+                
+                $response = [
+                    'success' => true,
+                    'message' => "Password reset successfully for <strong>{$full_name}</strong>!<br>New password: <strong>{$default_password}</strong><br><small>An email has been sent to the user.</small>",
+                    'reload' => true
+                ];
+                break;
+
             case 'test':
                 // Test action for demonstration
                 $test_name = $_POST['test_name'] ?? '';

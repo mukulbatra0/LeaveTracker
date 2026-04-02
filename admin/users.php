@@ -943,8 +943,8 @@ include '../includes/header.php';
                 <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="users.php">
-                <input type="hidden" name="reset_password" value="1">
+            <form method="POST" action="ajax_handler.php">
+                <input type="hidden" name="action" value="reset_password">
                 <input type="hidden" name="reset_user_id" id="reset_user_id">
                 <div class="modal-body">
                     <p>Are you sure you want to reset the password for <strong id="reset_user_name"></strong>?</p>
