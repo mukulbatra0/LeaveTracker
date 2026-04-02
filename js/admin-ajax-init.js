@@ -16,6 +16,13 @@
                 return;
             }
             
+            // Skip forms that should NOT be AJAX-ified (e.g., reset password needs normal POST)
+            const formData = new FormData(form);
+            if (formData.has('reset_password') || form.querySelector('[name="reset_password"]')) {
+                form.classList.add('ajax-converted');
+                return;
+            }
+            
             form.classList.add('ajax-converted');
             
             // Update form action to ajax_handler.php

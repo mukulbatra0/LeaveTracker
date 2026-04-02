@@ -88,8 +88,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error_message = "This OTP has expired. Please go back and initiate a new password reset.";
             error_log("OTP verification failed: Expired");
         } else {
-            // Verify OTP
-            if ($entered_otp === $pending_otp['otp_code']) {
+            // Verify OTP - trim and cast both values to handle type mismatches
+            $db_otp = trim((string)($pending_otp['otp_code'] ?? ''));
+            $entered_otp_clean = trim((string)$entered_otp);
+            
+            error_log("Comparing DB OTP: '{$db_otp}' with Entered: '{$entered_otp_clean}'");
+            
+            if ($entered_otp_clean == $db_otp) {
                 // OTP is correct! Reset the password
                 error_log("OTP verified successfully for user ID: " . $reset_user_id);
                 
@@ -146,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } else {
                 $error_message = "Incorrect OTP. Please check and try again.";
-                error_log("OTP verification failed: Mismatch");
+                error_log("OTP verification failed: DB='{$db_otp}', Entered='{$entered_otp_clean}'");
             }
         }
     }

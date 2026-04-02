@@ -943,7 +943,7 @@ include '../includes/header.php';
                 <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="">
+            <form method="POST" action="users.php">
                 <input type="hidden" name="reset_password" value="1">
                 <input type="hidden" name="reset_user_id" id="reset_user_id">
                 <div class="modal-body">
@@ -961,7 +961,7 @@ include '../includes/header.php';
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" name="reset_password" class="btn btn-warning">
+                    <button type="submit" class="btn btn-warning" id="confirmResetBtn">
                         <i class="fas fa-key me-1"></i>Reset Password
                     </button>
                 </div>

@@ -47,65 +47,74 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['change_password'])) {
         $error_message = "New password must be at least 6 characters long.";
         error_log("Validation failed: Password too short");
     } else {
-        // Verify current password
-        $stmt = $conn->prepare("SELECT password FROM users WHERE id = :user_id");
-        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        error_log("Current password verification: " . (password_verify($current_password, $user['password']) ? 'PASS' : 'FAIL'));
-        
-        if (!$user || !password_verify($current_password, $user['password'])) {
-            $error_message = "Current password is incorrect.";
-            error_log("Current password verification failed");
-        } else {
-            // Verify OTP
-            $stmt = $conn->prepare("SELECT otp_code, otp_expiry FROM users WHERE id = :user_id");
+        try {
+            // Verify current password
+            $stmt = $conn->prepare("SELECT password FROM users WHERE id = :user_id");
             $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
             $stmt->execute();
-            $otp_data = $stmt->fetch(PDO::FETCH_ASSOC);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            error_log("OTP from DB: " . ($otp_data['otp_code'] ?? 'NULL'));
-            error_log("OTP from form: " . $otp);
-            error_log("OTP expiry: " . ($otp_data['otp_expiry'] ?? 'NULL'));
-            error_log("Current time: " . date('Y-m-d H:i:s'));
+            error_log("Current password verification: " . (password_verify($current_password, $user['password']) ? 'PASS' : 'FAIL'));
             
-            if (empty($otp_data['otp_code'])) {
-                $error_message = "No OTP found. Please request a new OTP.";
-                error_log("OTP verification failed: No OTP in database");
-            } elseif ($otp_data['otp_code'] !== $otp) {
-                $error_message = "Invalid OTP. Please check and try again.";
-                error_log("OTP verification failed: OTP mismatch");
-            } elseif (strtotime($otp_data['otp_expiry']) < time()) {
-                $error_message = "OTP has expired. Please request a new OTP.";
-                error_log("OTP verification failed: OTP expired");
+            if (!$user || !password_verify($current_password, $user['password'])) {
+                $error_message = "Current password is incorrect.";
+                error_log("Current password verification failed");
             } else {
-                // Update password and clear OTP
-                error_log("All validations passed, updating password...");
-                $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-                $update_stmt = $conn->prepare("UPDATE users SET password = :password, otp_code = NULL, otp_expiry = NULL WHERE id = :user_id");
-                $update_stmt->bindParam(':password', $hashed_password);
-                $update_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                // Verify OTP
+                $stmt = $conn->prepare("SELECT otp_code, otp_expiry FROM users WHERE id = :user_id");
+                $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                $stmt->execute();
+                $otp_data = $stmt->fetch(PDO::FETCH_ASSOC);
                 
-                if ($update_stmt->execute()) {
-                    $success_message = "Password changed successfully!";
-                    error_log("Password updated successfully for user ID: " . $user_id);
-                    
-                    // Log the password change in audit logs if table exists
-                    try {
-                        $audit_sql = "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details) VALUES (:user_id, 'password_change', 'users', :entity_id, 'User changed their password via OTP verification')";
-                        $audit_stmt = $conn->prepare($audit_sql);
-                        $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-                        $audit_stmt->bindParam(':entity_id', $user_id, PDO::PARAM_INT);
-                        $audit_stmt->execute();
-                    } catch (Exception $e) {
-                        error_log("Could not log to audit_logs: " . $e->getMessage());
-                    }
+                error_log("OTP from DB: " . ($otp_data['otp_code'] ?? 'NULL'));
+                error_log("OTP from form: " . $otp);
+                error_log("OTP expiry: " . ($otp_data['otp_expiry'] ?? 'NULL'));
+                error_log("Current time: " . date('Y-m-d H:i:s'));
+                
+                // Trim DB value to handle any whitespace or type mismatch
+                $db_otp = trim((string)($otp_data['otp_code'] ?? ''));
+                
+                if (empty($db_otp)) {
+                    $error_message = "No OTP found. Please click 'Send OTP' first and check your email.";
+                    error_log("OTP verification failed: No OTP in database");
+                } elseif ($db_otp != $otp) {
+                    $error_message = "Invalid OTP. Please check and try again. (DB: '{$db_otp}', Entered: '{$otp}')";
+                    error_log("OTP verification failed: OTP mismatch. DB='{$db_otp}', Form='{$otp}'");
+                } elseif (strtotime($otp_data['otp_expiry']) < time()) {
+                    $error_message = "OTP has expired. Please request a new OTP.";
+                    error_log("OTP verification failed: OTP expired");
                 } else {
-                    $error_message = "Failed to update password. Please try again.";
-                    error_log("Password update failed: " . print_r($update_stmt->errorInfo(), true));
+                    // Update password and clear OTP
+                    error_log("All validations passed, updating password...");
+                    $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+                    $update_stmt = $conn->prepare("UPDATE users SET password = :password, otp_code = NULL, otp_expiry = NULL WHERE id = :user_id");
+                    $update_stmt->bindParam(':password', $hashed_password);
+                    $update_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                    
+                    if ($update_stmt->execute()) {
+                        $success_message = "Password changed successfully!";
+                        error_log("Password updated successfully for user ID: " . $user_id);
+                        
+                        // Log the password change in audit logs if table exists
+                        try {
+                            $audit_sql = "INSERT INTO audit_logs (user_id, action, created_at) VALUES (:user_id, :action, NOW())";
+                            $audit_stmt = $conn->prepare($audit_sql);
+                            $audit_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                            $action = 'User changed their password via OTP verification';
+                            $audit_stmt->bindParam(':action', $action, PDO::PARAM_STR);
+                            $audit_stmt->execute();
+                        } catch (Exception $e) {
+                            error_log("Could not log to audit_logs: " . $e->getMessage());
+                        }
+                    } else {
+                        $error_message = "Failed to update password. Please try again.";
+                        error_log("Password update failed: " . print_r($update_stmt->errorInfo(), true));
+                    }
                 }
             }
+        } catch (PDOException $e) {
+            error_log("Password change database error: " . $e->getMessage());
+            $error_message = "A database error occurred. Please contact the administrator.";
         }
     }
 }
@@ -149,7 +158,8 @@ include '../includes/header.php';
                                 <p class="mb-0"><strong>Email:</strong> <?php echo htmlspecialchars($user_details['email']); ?></p>
                             </div>
 
-                            <form method="POST" action="" id="changePasswordForm">
+                            <form method="POST" action="change_password.php" id="changePasswordForm">
+                                <input type="hidden" name="change_password" value="1">
                                 <div class="mb-3">
                                     <label for="current_password" class="form-label">Current Password <span class="text-danger">*</span></label>
                                     <div class="input-group">
@@ -194,7 +204,7 @@ include '../includes/header.php';
                                 </div>
 
                                 <div class="d-flex gap-2">
-                                    <button type="submit" name="change_password" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-primary" id="changePasswordBtn">
                                         <i class="fas fa-save me-1"></i>Change Password
                                     </button>
                                     <a href="profile.php" class="btn btn-secondary">
