@@ -67,6 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $end_date = trim($_POST['end_date']);
     $days = trim($_POST['days']);
     $reason = trim($_POST['reason']);
+    $designation = !empty($_POST['designation']) ? trim($_POST['designation']) : null;
     $is_half_day = isset($_POST['is_half_day']) ? 1 : 0;
     $half_day_period = $is_half_day ? trim($_POST['half_day_period']) : null;
     $mode_of_transport = !empty($_POST['mode_of_transport']) ? trim($_POST['mode_of_transport']) : null;
@@ -289,8 +290,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     try {
         // Insert leave application
-        $insert_sql = "INSERT INTO leave_applications (user_id, leave_type_id, start_date, end_date, days, reason, attachment, is_half_day, half_day_period, mode_of_transport, work_adjustment, visit_address, contact_number) 
-                      VALUES (:user_id, :leave_type_id, :start_date, :end_date, :days, :reason, :attachment, :is_half_day, :half_day_period, :mode_of_transport, :work_adjustment, :visit_address, :contact_number)";
+        $insert_sql = "INSERT INTO leave_applications (user_id, leave_type_id, start_date, end_date, days, reason, designation, attachment, is_half_day, half_day_period, mode_of_transport, work_adjustment, visit_address, contact_number) 
+                      VALUES (:user_id, :leave_type_id, :start_date, :end_date, :days, :reason, :designation, :attachment, :is_half_day, :half_day_period, :mode_of_transport, :work_adjustment, :visit_address, :contact_number)";
         $insert_stmt = $conn->prepare($insert_sql);
         $insert_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
         $insert_stmt->bindParam(':leave_type_id', $leave_type_id, PDO::PARAM_INT);
@@ -298,6 +299,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $insert_stmt->bindParam(':end_date', $end_date, PDO::PARAM_STR);
         $insert_stmt->bindParam(':days', $days, PDO::PARAM_STR);
         $insert_stmt->bindParam(':reason', $reason, PDO::PARAM_STR);
+        $insert_stmt->bindParam(':designation', $designation, PDO::PARAM_STR);
         $insert_stmt->bindParam(':attachment', $attachment, PDO::PARAM_STR);
         $insert_stmt->bindParam(':is_half_day', $is_half_day, PDO::PARAM_INT);
         $insert_stmt->bindParam(':half_day_period', $half_day_period, PDO::PARAM_STR);
@@ -616,10 +618,9 @@ include_once '../includes/header.php';
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating">
-                                            <input type="text" class="form-control" id="designation" 
-                                                   value="<?php echo htmlspecialchars($role_display); ?>" 
-                                                   readonly>
-                                            <label for="designation"><i class="fas fa-id-badge me-2"></i>Designation</label>
+                                            <input type="text" class="form-control" id="designation" name="designation" 
+                                                   placeholder="Enter your designation" required>
+                                            <label for="designation"><i class="fas fa-id-badge me-2"></i>Designation <span class="text-danger">*</span></label>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -802,9 +803,10 @@ include_once '../includes/header.php';
                                         <div class="col-md-6">
                                             <label for="visit_address" class="form-label fw-semibold">
                                                 <i class="fas fa-map-marker-alt me-2 text-danger"></i>Place / Address of Visit
+                                                <span class="text-danger">*</span>
                                             </label>
                                             <textarea class="form-control" id="visit_address" name="visit_address" rows="3" 
-                                                      placeholder="Enter the address where you'll be during leave period..."></textarea>
+                                                      placeholder="Enter the address where you'll be during leave period..." required></textarea>
                                             <div class="form-text">
                                                 <i class="fas fa-info-circle me-1"></i>Specify your location for emergency contact purposes
                                             </div>
@@ -813,9 +815,10 @@ include_once '../includes/header.php';
                                         <div class="col-md-6">
                                             <label for="contact_number" class="form-label fw-semibold">
                                                 <i class="fas fa-phone me-2 text-success"></i>Mobile No. during Leave Period
+                                                <span class="text-danger">*</span>
                                             </label>
                                             <input type="tel" class="form-control form-control-lg" id="contact_number" name="contact_number" 
-                                                   placeholder="Enter contact number..." pattern="[0-9]{10,15}">
+                                                   placeholder="Enter contact number..." pattern="[0-9]{10,15}" required>
                                             <div class="form-text">
                                                 <i class="fas fa-info-circle me-1"></i>Provide a reachable mobile number
                                             </div>
@@ -826,7 +829,7 @@ include_once '../includes/header.php';
                                             <input type="text" class="form-control" id="mode_of_transport" name="mode_of_transport" 
                                                    placeholder="e.g., Personal vehicle, Public transport, Flight">
                                             <div class="form-text">
-                                                <i class="fas fa-info-circle me-1"></i>If traveling for official work
+                                                <i class="fas fa-info-circle me-1"></i>Optional - If traveling for official work
                                             </div>
                                         </div>
                                         
