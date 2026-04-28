@@ -229,21 +229,20 @@ include_once '../includes/header.php';
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="btn-group">
+                                        <div class="btn-group" role="group">
                                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDetails(<?php echo $leave['id']; ?>)">
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                             
                                             <?php if ($leave['status'] == 'pending'): ?>
-                                                <form method="post" onsubmit="return confirm('Are you sure you want to cancel this leave application?');">
-                                                    <input type="hidden" name="leave_id" value="<?php echo $leave['id']; ?>">
-                                                    <button type="submit" name="cancel_leave" class="btn btn-sm btn-outline-danger">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="editLeave(<?php echo $leave['id']; ?>)" title="Edit Leave">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="cancelLeave(<?php echo $leave['id']; ?>)" title="Cancel Leave">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
                                             <?php endif; ?>
                                         </div>
-
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -259,6 +258,35 @@ include_once '../includes/header.php';
 function viewDetails(applicationId) {
     // Implementation for viewing details
     window.location.href = 'view_application.php?id=' + applicationId;
+}
+
+function editLeave(leaveId) {
+    // Redirect to edit leave page
+    window.location.href = 'edit_leave.php?id=' + leaveId;
+}
+
+function cancelLeave(leaveId) {
+    if (confirm('Are you sure you want to cancel this leave application?')) {
+        // Create a form dynamically and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'my_leaves.php';
+        
+        const leaveIdInput = document.createElement('input');
+        leaveIdInput.type = 'hidden';
+        leaveIdInput.name = 'leave_id';
+        leaveIdInput.value = leaveId;
+        
+        const cancelInput = document.createElement('input');
+        cancelInput.type = 'hidden';
+        cancelInput.name = 'cancel_leave';
+        cancelInput.value = '1';
+        
+        form.appendChild(leaveIdInput);
+        form.appendChild(cancelInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
 }
 </script>
 

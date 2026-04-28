@@ -79,15 +79,46 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
             
             try {
                 if ($action == 'approve') {
-                    // Create final approval record
-                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, status, comments) 
-                                   VALUES (:app_id, :approver_id, :approver_level, 'approved', :comments)";
-                    $approval_stmt = $conn->prepare($approval_sql);
-                    $approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
-                    $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
-                    $approval_stmt->bindParam(':approver_level', $role, PDO::PARAM_STR);
-                    $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
-                    $approval_stmt->execute();
+                    // Check if director approval record already exists
+                    $check_director_sql = "SELECT id, status FROM leave_approvals 
+                                          WHERE leave_application_id = :app_id 
+                                          AND approver_level = 'director'";
+                    $check_director_stmt = $conn->prepare($check_director_sql);
+                    $check_director_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                    $check_director_stmt->execute();
+                    
+                    if ($check_director_stmt->rowCount() > 0) {
+                        $existing_approval = $check_director_stmt->fetch();
+                        
+                        // Only update if status is pending
+                        if ($existing_approval['status'] == 'pending') {
+                            // Update existing director approval record
+                            $approval_sql = "UPDATE leave_approvals 
+                                           SET approver_id = :approver_id, 
+                                               status = 'approved', 
+                                               comments = :comments
+                                           WHERE leave_application_id = :app_id 
+                                           AND approver_level = 'director'
+                                           AND status = 'pending'";
+                            $approval_stmt = $conn->prepare($approval_sql);
+                            $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
+                            $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
+                            $approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                            $approval_stmt->execute();
+                        } else {
+                            // Already processed
+                            throw new Exception("This application has already been " . $existing_approval['status'] . " by a Director.");
+                        }
+                    } else {
+                        // Create new director approval record (fallback)
+                        $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, status, comments) 
+                                       VALUES (:app_id, :approver_id, 'director', 'approved', :comments)";
+                        $approval_stmt = $conn->prepare($approval_sql);
+                        $approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                        $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
+                        $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
+                        $approval_stmt->execute();
+                    }
                     
                     // Update application status to approved
                     $update_app_sql = "UPDATE leave_applications SET status = 'approved' WHERE id = :app_id";
@@ -159,15 +190,46 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GET
                     $message = "Leave application has been given final approval.";
                     
                 } elseif ($action == 'reject') {
-                    // Create rejection record
-                    $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, status, comments) 
-                                   VALUES (:app_id, :approver_id, :approver_level, 'rejected', :comments)";
-                    $approval_stmt = $conn->prepare($approval_sql);
-                    $approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
-                    $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
-                    $approval_stmt->bindParam(':approver_level', $role, PDO::PARAM_STR);
-                    $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
-                    $approval_stmt->execute();
+                    // Check if director approval record already exists
+                    $check_director_sql = "SELECT id, status FROM leave_approvals 
+                                          WHERE leave_application_id = :app_id 
+                                          AND approver_level = 'director'";
+                    $check_director_stmt = $conn->prepare($check_director_sql);
+                    $check_director_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                    $check_director_stmt->execute();
+                    
+                    if ($check_director_stmt->rowCount() > 0) {
+                        $existing_approval = $check_director_stmt->fetch();
+                        
+                        // Only update if status is pending
+                        if ($existing_approval['status'] == 'pending') {
+                            // Update existing director approval record
+                            $approval_sql = "UPDATE leave_approvals 
+                                           SET approver_id = :approver_id, 
+                                               status = 'rejected', 
+                                               comments = :comments
+                                           WHERE leave_application_id = :app_id 
+                                           AND approver_level = 'director'
+                                           AND status = 'pending'";
+                            $approval_stmt = $conn->prepare($approval_sql);
+                            $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
+                            $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
+                            $approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                            $approval_stmt->execute();
+                        } else {
+                            // Already processed
+                            throw new Exception("This application has already been " . $existing_approval['status'] . " by a Director.");
+                        }
+                    } else {
+                        // Create new rejection record (fallback)
+                        $approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, status, comments) 
+                                       VALUES (:app_id, :approver_id, 'director', 'rejected', :comments)";
+                        $approval_stmt = $conn->prepare($approval_sql);
+                        $approval_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
+                        $approval_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
+                        $approval_stmt->bindParam(':comments', $reason, PDO::PARAM_STR);
+                        $approval_stmt->execute();
+                    }
                     
                     // Update application status to rejected
                     $update_app_sql = "UPDATE leave_applications SET status = 'rejected' WHERE id = :app_id";

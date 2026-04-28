@@ -29,10 +29,11 @@ $pending_approvals_sql = "SELECT la.id, u.first_name, u.last_name, u.employee_id
                              AND lap.approver_level = 'head_of_department'
                              AND lap.status = 'approved'
                          )
-                         AND NOT EXISTS (
+                         AND EXISTS (
                              SELECT 1 FROM leave_approvals lap2 
                              WHERE lap2.leave_application_id = la.id 
                              AND lap2.approver_level = 'director'
+                             AND lap2.status = 'pending'
                          )
                          ORDER BY la.created_at ASC";
 $pending_approvals_stmt = $conn->prepare($pending_approvals_sql);

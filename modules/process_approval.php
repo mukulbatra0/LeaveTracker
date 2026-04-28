@@ -109,10 +109,11 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
             $hod_approval_stmt->execute();
             $hod_count = $hod_approval_stmt->fetch()['count'];
             
-            // Check if director has already processed this application
+            // Check if director has already processed (approved/rejected) this application
             $director_processed_sql = "SELECT COUNT(*) as count FROM leave_approvals 
                                      WHERE leave_application_id = :app_id 
-                                     AND approver_level = 'director'";
+                                     AND approver_level = 'director'
+                                     AND status IN ('approved', 'rejected')";
             $director_processed_stmt = $conn->prepare($director_processed_sql);
             $director_processed_stmt->bindParam(':app_id', $application_id, PDO::PARAM_INT);
             $director_processed_stmt->execute();

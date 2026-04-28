@@ -142,6 +142,61 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     
+    // Check for overlapping leave applications
+    $overlap_sql = "SELECT la.id, la.start_date, la.end_date, la.status, la.is_half_day, la.half_day_period, lt.name as leave_type_name
+                    FROM leave_applications la
+                    JOIN leave_types lt ON la.leave_type_id = lt.id
+                    WHERE la.user_id = :user_id 
+                    AND la.status NOT IN ('rejected', 'cancelled')
+                    AND (
+                        (la.start_date <= :end_date AND la.end_date >= :start_date)
+                    )";
+    $overlap_stmt = $conn->prepare($overlap_sql);
+    $overlap_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+    $overlap_stmt->bindParam(':start_date', $start_date, PDO::PARAM_STR);
+    $overlap_stmt->bindParam(':end_date', $end_date, PDO::PARAM_STR);
+    $overlap_stmt->execute();
+    
+    if ($overlap_stmt->rowCount() > 0) {
+        $has_real_overlap = false;
+        $overlapping_leave = null;
+        
+        while ($existing_leave = $overlap_stmt->fetch()) {
+            // Special case: Same day with different half-day periods is allowed
+            if ($is_half_day && $existing_leave['is_half_day'] && 
+                $start_date == $end_date && 
+                $existing_leave['start_date'] == $existing_leave['end_date'] &&
+                $start_date == $existing_leave['start_date'] &&
+                $half_day_period != $existing_leave['half_day_period']) {
+                // Different half-day periods on same day - this is allowed
+                continue;
+            }
+            
+            // Real overlap found
+            $has_real_overlap = true;
+            $overlapping_leave = $existing_leave;
+            break;
+        }
+        
+        if ($has_real_overlap && $overlapping_leave) {
+            $overlap_start = date('d/m/Y', strtotime($overlapping_leave['start_date']));
+            $overlap_end = date('d/m/Y', strtotime($overlapping_leave['end_date']));
+            $overlap_status = ucfirst($overlapping_leave['status']);
+            $overlap_type = $overlapping_leave['leave_type_name'];
+            
+            $overlap_detail = "";
+            if ($overlapping_leave['is_half_day']) {
+                $period = $overlapping_leave['half_day_period'] == 'first_half' ? 'First Half' : 'Second Half';
+                $overlap_detail = " ({$period})";
+            }
+            
+            $_SESSION['alert'] = "You already have a {$overlap_status} leave application ({$overlap_type}{$overlap_detail}) from {$overlap_start} to {$overlap_end} that overlaps with the selected dates. Please choose different dates or cancel the existing application first.";
+            $_SESSION['alert_type'] = "danger";
+            header('Location: apply_leave.php');
+            exit;
+        }
+    }
+    
     // Check leave balance
     $current_year = date('Y');
     $balance_sql = "SELECT (total_days - used_days) as balance FROM leave_balances 
@@ -618,8 +673,11 @@ include_once '../includes/header.php';
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating">
-                                            <input type="text" class="form-control" id="designation" name="designation" 
-                                                   placeholder="Enter your designation" required>
+                                            <select class="form-select" id="designation" name="designation" required>
+                                                <option value="">-- Select Designation --</option>
+                                                <option value="Assistant Professor">Assistant Professor</option>
+                                                <option value="Associate Professor">Associate Professor</option>
+                                            </select>
                                             <label for="designation"><i class="fas fa-id-badge me-2"></i>Designation <span class="text-danger">*</span></label>
                                         </div>
                                     </div>
@@ -1173,6 +1231,28 @@ include_once '../includes/header.php';
     @keyframes spinner {
         to { transform: rotate(360deg); }
     }
+    
+    /* Invalid Field Styling */
+    .form-control.is-invalid,
+    .form-select.is-invalid {
+        border-color: #dc3545 !important;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+    
+    .form-control.is-invalid:focus,
+    .form-select.is-invalid:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    .form-floating > .form-control.is-invalid ~ label,
+    .form-floating > .form-select.is-invalid ~ label {
+        color: #dc3545;
+    }
 </style>
 
 <script>
@@ -1266,9 +1346,18 @@ include_once '../includes/header.php';
     function validateStep(step) {
         console.log('Validating step', step);
         
-        // Step 1 has only readonly fields, so always valid
+        // Step 1 validation - check designation field
         if (step === 1) {
-            console.log('Step 1 is always valid');
+            const designation = document.getElementById('designation');
+            if (!designation.value || designation.value.trim() === '') {
+                designation.classList.add('is-invalid');
+                showNotification('Please select your designation.', 'warning');
+                designation.focus();
+                console.log('Step 1 validation failed: designation not selected');
+                return false;
+            }
+            designation.classList.remove('is-invalid');
+            console.log('Step 1 validation passed');
             return true;
         }
         
@@ -1424,6 +1513,8 @@ include_once '../includes/header.php';
                 endDateInput.disabled = false;
                 calculateDays();
             }
+            // Check for overlap when half-day is toggled
+            checkLeaveOverlap();
         });
         
         // Half day option card click handlers
@@ -1431,6 +1522,8 @@ include_once '../includes/header.php';
             card.addEventListener('click', function() {
                 const radio = this.querySelector('input[type="radio"]');
                 radio.checked = true;
+                // Check for overlap when half-day period is selected
+                checkLeaveOverlap();
             });
         });
         
@@ -1462,6 +1555,67 @@ include_once '../includes/header.php';
             }
         }
         
+        // Check for overlapping leave applications
+        function checkLeaveOverlap() {
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            
+            if (!startDate || !endDate) {
+                return;
+            }
+            
+            // Clear previous warnings
+            const existingWarning = document.getElementById('overlap-warning');
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+            
+            // Get half-day information
+            const isHalfDay = isHalfDayCheckbox.checked;
+            const firstHalf = document.getElementById('first_half');
+            const secondHalf = document.getElementById('second_half');
+            const halfDayPeriod = isHalfDay ? (firstHalf.checked ? 'first_half' : (secondHalf.checked ? 'second_half' : null)) : null;
+            
+            // Make AJAX request to check for overlaps
+            fetch('../api/check_leave_overlap.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    start_date: startDate,
+                    end_date: endDate,
+                    is_half_day: isHalfDay,
+                    half_day_period: halfDayPeriod
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.has_overlap && data.overlapping_leaves.length > 0) {
+                    const leave = data.overlapping_leaves[0];
+                    const halfDayInfo = leave.is_half_day ? ` (${leave.half_day_period})` : '';
+                    const warningHtml = `
+                        <div class="alert alert-danger alert-dismissible fade show" id="overlap-warning" style="background-color: #f8d7da; border: 1px solid #f5c2c7; color: #842029;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Overlapping Leave Found!</strong><br>
+                            You already have a <strong>${leave.status}</strong> leave application 
+                            (<strong>${leave.leave_type}${halfDayInfo}</strong>) from 
+                            <strong>${leave.start_date}</strong> to <strong>${leave.end_date}</strong>.
+                            <br><small>Please choose different dates or cancel the existing application first.</small>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `;
+                    
+                    // Insert warning after the days field
+                    const daysField = document.getElementById('days').closest('.col-md-4');
+                    daysField.insertAdjacentHTML('afterend', '<div class="col-12">' + warningHtml + '</div>');
+                }
+            })
+            .catch(error => {
+                console.error('Error checking leave overlap:', error);
+            });
+        }
+        
         // Date change handlers
         startDateInput.addEventListener('change', function() {
             if (isHalfDayCheckbox.checked) {
@@ -1471,12 +1625,16 @@ include_once '../includes/header.php';
                 calculateDays();
                 endDateInput.setAttribute('min', this.value);
             }
+            // Check for overlapping leaves
+            checkLeaveOverlap();
         });
         
         endDateInput.addEventListener('change', function() {
             if (!isHalfDayCheckbox.checked) {
                 calculateDays();
             }
+            // Check for overlapping leaves
+            checkLeaveOverlap();
         });
         
         // Phone number validation
@@ -1515,6 +1673,15 @@ include_once '../includes/header.php';
         
         // Form submission handler
         document.getElementById('leaveApplicationForm').addEventListener('submit', function(e) {
+            // Check if there's an overlap warning visible
+            const overlapWarning = document.getElementById('overlap-warning');
+            if (overlapWarning) {
+                e.preventDefault();
+                showNotification('Cannot submit: You have an overlapping leave application. Please choose different dates.', 'danger');
+                overlapWarning.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
+            
             const submitBtn = document.getElementById('submit-btn');
             submitBtn.classList.add('btn-loading');
             submitBtn.disabled = true;
