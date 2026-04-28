@@ -307,7 +307,25 @@ include_once '../includes/header.php';
             </div>
 
             <!-- Quick Actions for Approvers -->
-            <?php if ($role != 'staff' && $application['status'] == 'pending'): ?>
+            <?php 
+            // Only show quick actions if:
+            // 1. User is not staff
+            // 2. Application is pending
+            // 3. User is NOT the applicant (can't approve own leave)
+            // 4. User has a pending approval record for this application
+            if ($role != 'staff' && $application['status'] == 'pending' && $application['user_id'] != $user_id): 
+                // Check if current user has a pending approval for this application
+                $check_approval_sql = "SELECT id FROM leave_approvals 
+                                      WHERE leave_application_id = :application_id 
+                                      AND approver_id = :user_id 
+                                      AND status = 'pending'";
+                $check_approval_stmt = $conn->prepare($check_approval_sql);
+                $check_approval_stmt->bindParam(':application_id', $application_id, PDO::PARAM_INT);
+                $check_approval_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                $check_approval_stmt->execute();
+                
+                if ($check_approval_stmt->rowCount() > 0):
+            ?>
                 <div class="card mt-3">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="fas fa-cogs me-2"></i>Quick Actions</h6>
@@ -323,7 +341,10 @@ include_once '../includes/header.php';
                         </div>
                     </div>
                 </div>
-            <?php endif; ?>
+            <?php 
+                endif;
+            endif; 
+            ?>
         </div>
     </div>
 </div>

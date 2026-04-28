@@ -66,6 +66,7 @@ class ProfileManager {
                     last_name = ?, 
                     email = ?, 
                     phone = ?, 
+                    designation = ?,
                     address = ?, 
                     emergency_contact = ? 
                 WHERE id = ?
@@ -76,6 +77,7 @@ class ProfileManager {
                 $data['last_name'], 
                 $data['email'],
                 $data['phone'] ?? null,
+                $data['designation'] ?? null,
                 $data['address'] ?? null,
                 $data['emergency_contact'] ?? null,
                 $this->user_id
@@ -214,6 +216,10 @@ class ProfileManager {
             if ($stmt->rowCount() > 0) {
                 $this->errors[] = "Email already in use by another account";
             }
+        }
+        
+        if (empty(trim($data['designation'] ?? ''))) {
+            $this->errors[] = "Designation is required";
         }
         
         return empty($this->errors);
@@ -421,6 +427,10 @@ include '../includes/header.php';
                             <span class="value"><?php echo ucwords(str_replace('_', '-', $user['staff_type'] ?? 'N/A')); ?></span>
                         </div>
                         <div class="info-item">
+                            <span class="label">Designation:</span>
+                            <span class="value"><?php echo htmlspecialchars($user['designation'] ?? 'Not Set'); ?></span>
+                        </div>
+                        <div class="info-item">
                             <span class="label">Gender:</span>
                             <span class="value"><?php echo ucfirst($user['gender'] ?? 'N/A'); ?></span>
                         </div>
@@ -481,6 +491,14 @@ include '../includes/header.php';
                                 <input type="tel" class="form-control" id="phone" name="phone" 
                                        value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>">
                             </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="designation" class="form-label">Designation *</label>
+                            <input type="text" class="form-control" id="designation" name="designation" 
+                                   value="<?php echo htmlspecialchars($user['designation'] ?? ''); ?>" 
+                                   placeholder="e.g., Assistant Professor, Associate Professor, Professor" required>
+                            <div class="form-text">Your job title/position (required for leave applications)</div>
                         </div>
                         
                         <div class="mb-3">

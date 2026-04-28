@@ -45,12 +45,14 @@ $sql = "SELECT la.*,
         JOIN users u ON la.user_id = u.id 
         JOIN departments d ON u.department_id = d.id
         JOIN leave_approvals lap ON la.id = lap.leave_application_id
-        WHERE lap.approver_id = :user_id 
+        WHERE lap.approver_id = :approver_id 
         AND lap.status = 'pending'
         AND la.status = 'pending'
+        AND la.user_id != :applicant_id
         ORDER BY la.created_at ASC";
 $stmt = $conn->prepare($sql);
-$stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+$stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
+$stmt->bindParam(':applicant_id', $user_id, PDO::PARAM_INT);
 $stmt->execute();
 $pending_approvals = $stmt->fetchAll();
 
@@ -69,12 +71,14 @@ $recent_sql = "SELECT la.*,
          JOIN leave_types lt ON la.leave_type_id = lt.id 
          JOIN users u ON la.user_id = u.id 
          JOIN departments d ON u.department_id = d.id
-         WHERE lap.approver_id = :user_id 
+         WHERE lap.approver_id = :approver_id 
          AND lap.status IN ('approved', 'rejected')
+         AND la.user_id != :applicant_id
          ORDER BY lap.updated_at DESC
          LIMIT 10";
 $recent_stmt = $conn->prepare($recent_sql);
-$recent_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+$recent_stmt->bindParam(':approver_id', $user_id, PDO::PARAM_INT);
+$recent_stmt->bindParam(':applicant_id', $user_id, PDO::PARAM_INT);
 $recent_stmt->execute();
 $recent_actions = $recent_stmt->fetchAll();
 
@@ -182,17 +186,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 } 
                 // If approved, check if this was the final approval
                 else if ($action == 'approved') {
-                    // Check if there are any more pending approvals
-                    $pending_check_sql = "SELECT COUNT(*) as pending_count 
-                                        FROM leave_approvals 
-                                        WHERE leave_application_id = :leave_application_id AND status = 'pending'";
-                    $pending_check_stmt = $conn->prepare($pending_check_sql);
-                    $pending_check_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
-                    $pending_check_stmt->execute();
-                    $pending_count = $pending_check_stmt->fetch()['pending_count'];
+                    // Get approval chain setting to determine if this is final approval
+                    $approval_chain_sql = "SELECT setting_value FROM system_settings WHERE setting_key = 'default_approval_chain'";
+                    $approval_chain_stmt = $conn->prepare($approval_chain_sql);
+                    $approval_chain_stmt->execute();
+                    $approval_chain_result = $approval_chain_stmt->fetch();
+                    $approval_chain = $approval_chain_result ? $approval_chain_result['setting_value'] : 'hod,director';
                     
-                    // If no more pending approvals, update leave application status
-                    if ($pending_count == 0) {
+                    // Determine if this is the final approval
+                    $is_final_approval = false;
+                    
+                    if ($role == 'admin') {
+                        // Admin approval is always final
+                        $is_final_approval = true;
+                    } elseif ($role == 'director') {
+                        // Director approval is always final
+                        $is_final_approval = true;
+                    } elseif ($role == 'head_of_department') {
+                        // HOD approval is final only if approval chain is 'hod' (single level)
+                        if ($approval_chain == 'hod') {
+                            $is_final_approval = true;
+                        }
+                    }
+                    
+                    // If this is final approval, mark leave as approved
+                    if ($is_final_approval) {
                         $update_application_sql = "UPDATE leave_applications 
                                                 SET status = 'approved', updated_at = NOW() 
                                                 WHERE id = :leave_application_id";
@@ -261,32 +279,54 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             );
                         }
                     } else {
-                        // Get next approver
-                        $next_approver_sql = "SELECT lap.approver_id, u.email, u.first_name, u.last_name 
-                                            FROM leave_approvals lap 
-                                            JOIN users u ON lap.approver_id = u.id 
-                                            WHERE lap.leave_application_id = :leave_application_id AND lap.status = 'pending' 
-                                            ORDER BY lap.created_at ASC 
-                                            LIMIT 1";
-                        $next_approver_stmt = $conn->prepare($next_approver_sql);
-                        $next_approver_stmt->bindParam(':leave_application_id', $leave_application_id, PDO::PARAM_INT);
-                        $next_approver_stmt->execute();
+                        // Intermediate approval (HOD approved, needs Director approval)
+                        // Forward to Director
+                        $director_sql = "SELECT id, email, first_name, last_name FROM users WHERE role = 'director' AND status = 'active' LIMIT 1";
+                        $director_stmt = $conn->prepare($director_sql);
+                        $director_stmt->execute();
                         
-                        if ($next_approver_stmt->rowCount() > 0) {
-                            $next_approver = $next_approver_stmt->fetch();
+                        if ($director_stmt->rowCount() > 0) {
+                            $director = $director_stmt->fetch();
+                            $director_id = $director['id'];
                             
-                            // Create notification for next approver
-                            $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
-                                                VALUES (:user_id, 'Leave Approval Required', 'A leave application requires your approval.', 'leave_application', :related_id)";
-                            $notification_stmt = $conn->prepare($notification_sql);
-                            $notification_stmt->bindParam(':user_id', $next_approver['approver_id'], PDO::PARAM_INT);
-                            $notification_stmt->bindParam(':related_id', $leave_application_id, PDO::PARAM_INT);
-                            $notification_stmt->execute();
+                            // Check if director approval record already exists
+                            $check_director_approval_sql = "SELECT COUNT(*) as count FROM leave_approvals 
+                                                           WHERE leave_application_id = :app_id 
+                                                           AND approver_level = 'director'";
+                            $check_director_approval_stmt = $conn->prepare($check_director_approval_sql);
+                            $check_director_approval_stmt->bindParam(':app_id', $leave_application_id, PDO::PARAM_INT);
+                            $check_director_approval_stmt->execute();
+                            $director_approval_exists = $check_director_approval_stmt->fetch()['count'];
+                            
+                            if ($director_approval_exists == 0) {
+                                // Create new director approval record
+                                $create_director_approval_sql = "INSERT INTO leave_approvals (leave_application_id, approver_id, approver_level, status) 
+                                                                VALUES (:app_id, :approver_id, 'director', 'pending')";
+                                $create_director_approval_stmt = $conn->prepare($create_director_approval_sql);
+                                $create_director_approval_stmt->bindParam(':app_id', $leave_application_id, PDO::PARAM_INT);
+                                $create_director_approval_stmt->bindParam(':approver_id', $director_id, PDO::PARAM_INT);
+                                $create_director_approval_stmt->execute();
+                            }
+                            
+                            // Send notification to director
+                            if (!empty($director_id) && $director_id > 0 && $leave_application_id > 0) {
+                                try {
+                                    $director_id = (int)$director_id;
+                                    $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
+                                                       VALUES (:user_id, 'Leave Approval Required', 'A leave application requires your final approval.', 'leave_application', :related_id)";
+                                    $notification_stmt = $conn->prepare($notification_sql);
+                                    $notification_stmt->bindParam(':user_id', $director_id, PDO::PARAM_INT);
+                                    $notification_stmt->bindParam(':related_id', $leave_application_id, PDO::PARAM_INT);
+                                    $notification_stmt->execute();
+                                } catch (PDOException $e) {
+                                    error_log("Error inserting director notification: " . $e->getMessage());
+                                }
+                            }
                         }
                         
-                        // Create notification for applicant about partial approval
+                        // Notify applicant about intermediate approval
                         $notification_sql = "INSERT INTO notifications (user_id, title, message, related_to, related_id) 
-                                            VALUES (:user_id, 'Leave Application Update', 'Your leave application has been approved by one level and is awaiting further approval.', 'leave_application', :related_id)";
+                                            VALUES (:user_id, 'Leave Application Update', 'Your leave application has been approved by your Head of Department and is now awaiting Director approval.', 'leave_application', :related_id)";
                         $notification_stmt = $conn->prepare($notification_sql);
                         $notification_stmt->bindParam(':user_id', $applicant_id, PDO::PARAM_INT);
                         $notification_stmt->bindParam(':related_id', $leave_application_id, PDO::PARAM_INT);

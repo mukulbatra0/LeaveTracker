@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $staff_type = $_POST['staff_type'];
         $gender = $_POST['gender'];
         $employment_type = $_POST['employment_type'] ?? 'full_time';
+        $designation = trim($_POST['designation'] ?? '');
         $department_id = $_POST['department_id'];
         $role = $_POST['role'];
         
@@ -101,8 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $conn->beginTransaction();
                 
-                $insert_sql = "INSERT INTO users (first_name, last_name, email, phone, department_id, role, password, employee_id, staff_type, gender, employment_type, created_at) 
-                              VALUES (:first_name, :last_name, :email, :phone, :department_id, :role, :password, :employee_id, :staff_type, :gender, :employment_type, NOW())";
+                $insert_sql = "INSERT INTO users (first_name, last_name, email, phone, department_id, role, password, employee_id, staff_type, gender, employment_type, designation, created_at) 
+                              VALUES (:first_name, :last_name, :email, :phone, :department_id, :role, :password, :employee_id, :staff_type, :gender, :employment_type, :designation, NOW())";
                 $insert_stmt = $conn->prepare($insert_sql);
                 $insert_stmt->bindParam(':first_name', $first_name, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':last_name', $last_name, PDO::PARAM_STR);
@@ -115,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $insert_stmt->bindParam(':staff_type', $staff_type, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':gender', $gender, PDO::PARAM_STR);
                 $insert_stmt->bindParam(':employment_type', $employment_type, PDO::PARAM_STR);
+                $insert_stmt->bindParam(':designation', $designation, PDO::PARAM_STR);
                 $insert_stmt->execute();
                 
                 $new_user_id = $conn->lastInsertId();
@@ -215,6 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $staff_type = $_POST['staff_type'];
         $gender = $_POST['gender'];
         $employment_type = $_POST['employment_type'] ?? 'full_time';
+        $designation = trim($_POST['designation'] ?? '');
         $department_id = $_POST['department_id'];
         $role = $_POST['role'];
         $status = $_POST['status'];
@@ -288,6 +291,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                               staff_type = :staff_type,
                               gender = :gender,
                               employment_type = :employment_type,
+                              designation = :designation,
                               department_id = :department_id, 
                               role = :role, 
                               status = :status, 
@@ -302,6 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_stmt->bindParam(':staff_type', $staff_type, PDO::PARAM_STR);
                 $update_stmt->bindParam(':gender', $gender, PDO::PARAM_STR);
                 $update_stmt->bindParam(':employment_type', $employment_type, PDO::PARAM_STR);
+                $update_stmt->bindParam(':designation', $designation, PDO::PARAM_STR);
                 $update_stmt->bindParam(':department_id', $department_id, PDO::PARAM_INT);
                 $update_stmt->bindParam(':role', $role, PDO::PARAM_STR);
                 $update_stmt->bindParam(':status', $status, PDO::PARAM_STR);
@@ -656,6 +661,7 @@ include '../includes/header.php';
                                                     data-staff-type="<?php echo htmlspecialchars($u['staff_type'] ?? ''); ?>"
                                                     data-gender="<?php echo htmlspecialchars($u['gender'] ?? ''); ?>"
                                                     data-employment-type="<?php echo htmlspecialchars($u['employment_type'] ?? 'full_time'); ?>"
+                                                    data-designation="<?php echo htmlspecialchars($u['designation'] ?? ''); ?>"
                                                     data-department="<?php echo $u['department_id']; ?>"
                                                     data-role="<?php echo $u['role']; ?>"
                                                     data-status="<?php echo $u['status']; ?>">
@@ -680,6 +686,7 @@ include '../includes/header.php';
                                                     data-staff-type="<?php echo htmlspecialchars($u['staff_type'] ?? ''); ?>"
                                                     data-gender="<?php echo htmlspecialchars($u['gender'] ?? ''); ?>"
                                                     data-employment-type="<?php echo htmlspecialchars($u['employment_type'] ?? 'full_time'); ?>"
+                                                    data-designation="<?php echo htmlspecialchars($u['designation'] ?? ''); ?>"
                                                     data-department="<?php echo $u['department_id']; ?>"
                                                     data-role="<?php echo $u['role']; ?>"
                                                     data-status="<?php echo $u['status']; ?>"
@@ -795,6 +802,12 @@ include '../includes/header.php';
                     </div>
                     <div class="row mb-3">
                         <div class="col-lg-6 col-md-12 mb-3">
+                            <label for="designation" class="form-label">Designation</label>
+                            <input type="text" class="form-control" id="designation" name="designation" 
+                                   placeholder="e.g., Assistant Professor, Associate Professor">
+                            <small class="form-text text-muted">Job title/position (optional, can be updated later)</small>
+                        </div>
+                        <div class="col-lg-6 col-md-12 mb-3">
                             <label for="department_id" class="form-label">Department <span class="text-danger">*</span></label>
                             <select class="form-select" id="department_id" name="department_id" required>
                                 <option value="">Select Department</option>
@@ -895,6 +908,12 @@ include '../includes/header.php';
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
+                            <label for="edit_designation" class="form-label">Designation</label>
+                            <input type="text" class="form-control" id="edit_designation" name="designation" 
+                                   placeholder="e.g., Assistant Professor, Associate Professor">
+                            <small class="form-text text-muted">Job title/position</small>
+                        </div>
+                        <div class="col-md-6">
                             <label for="edit_department_id" class="form-label">Department <span class="text-danger">*</span></label>
                             <select class="form-select" id="edit_department_id" name="department_id" required>
                                 <option value="">Select Department</option>
@@ -985,6 +1004,7 @@ include '../includes/header.php';
                 const staffType = this.getAttribute('data-staff-type');
                 const gender = this.getAttribute('data-gender');
                 const employmentType = this.getAttribute('data-employment-type');
+                const designation = this.getAttribute('data-designation');
                 const department = this.getAttribute('data-department');
                 const role = this.getAttribute('data-role');
                 const status = this.getAttribute('data-status');
@@ -998,6 +1018,7 @@ include '../includes/header.php';
                 document.getElementById('edit_staff_type').value = staffType;
                 document.getElementById('edit_gender').value = gender;
                 document.getElementById('edit_employment_type').value = employmentType;
+                document.getElementById('edit_designation').value = designation || '';
                 document.getElementById('edit_department_id').value = department;
                 document.getElementById('edit_role').value = role;
                 document.getElementById('edit_status').value = status;

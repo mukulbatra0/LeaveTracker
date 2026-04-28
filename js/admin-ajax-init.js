@@ -16,11 +16,25 @@
                 return;
             }
             
+            // Get form action
+            const originalAction = form.getAttribute('action') || '';
+            
+            // Skip forms with empty action or that don't match our pattern
+            // These forms will use regular POST submission
+            if (!originalAction || originalAction === '') {
+                return;
+            }
+            
+            // Only convert forms that point to specific admin pages
+            if (!originalAction.match(/\/(users|departments|leave_types)\.php/)) {
+                return;
+            }
+            
             form.classList.add('ajax-converted');
             
             // Update form action to ajax_handler.php
-            const originalAction = form.action;
-            form.action = form.action.replace(/\/(users|departments|leave_types)\.php/, '/ajax_handler.php');
+            const newAction = originalAction.replace(/\/(users|departments|leave_types)\.php/, '/ajax_handler.php');
+            form.setAttribute('action', newAction);
             
             // Add action field based on submit button name
             form.addEventListener('submit', function(e) {

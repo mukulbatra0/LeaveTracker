@@ -26,8 +26,8 @@ if ($role == 'hr_admin') {
     exit;
 }
 
-// Get user details for policy-based filtering
-$user_details_sql = "SELECT staff_type, gender, employment_type FROM users WHERE id = :user_id";
+// Get user details for policy-based filtering and designation
+$user_details_sql = "SELECT staff_type, gender, employment_type, designation FROM users WHERE id = :user_id";
 $user_details_stmt = $conn->prepare($user_details_sql);
 $user_details_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
 $user_details_stmt->execute();
@@ -36,6 +36,7 @@ $user_data = $user_details_stmt->fetch();
 $user_staff_type = $user_data['staff_type'] ?? 'teaching';
 $user_gender = $user_data['gender'] ?? 'male';
 $user_employment_type = $user_data['employment_type'] ?? 'full_time';
+$user_designation = $user_data['designation'] ?? '';
 
 // Get available leave types based on policy rules that match user's attributes
 $leave_types_sql = "SELECT DISTINCT lt.id, lt.name, lt.description, lt.default_days as max_days, lt.requires_attachment 
@@ -673,11 +674,9 @@ include_once '../includes/header.php';
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating">
-                                            <select class="form-select" id="designation" name="designation" required>
-                                                <option value="">-- Select Designation --</option>
-                                                <option value="Assistant Professor">Assistant Professor</option>
-                                                <option value="Associate Professor">Associate Professor</option>
-                                            </select>
+                                            <input type="text" class="form-control" id="designation" name="designation" 
+                                                   value="<?php echo htmlspecialchars($user_designation); ?>" 
+                                                   readonly required>
                                             <label for="designation"><i class="fas fa-id-badge me-2"></i>Designation <span class="text-danger">*</span></label>
                                         </div>
                                     </div>
@@ -1351,9 +1350,9 @@ include_once '../includes/header.php';
             const designation = document.getElementById('designation');
             if (!designation.value || designation.value.trim() === '') {
                 designation.classList.add('is-invalid');
-                showNotification('Please select your designation.', 'warning');
+                showNotification('Please update your profile with your designation before applying for leave.', 'warning');
                 designation.focus();
-                console.log('Step 1 validation failed: designation not selected');
+                console.log('Step 1 validation failed: designation not set in user profile');
                 return false;
             }
             designation.classList.remove('is-invalid');

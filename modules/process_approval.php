@@ -60,6 +60,14 @@ if (($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['action']) && isset($_GE
     if ($check_stmt->rowCount() > 0) {
         $application = $check_stmt->fetch();
         
+        // CRITICAL: Prevent self-approval - user cannot approve their own leave
+        if ($application['user_id'] == $user_id) {
+            $_SESSION['alert'] = "You cannot approve your own leave application.";
+            $_SESSION['alert_type'] = "danger";
+            header('Location: ../index.php');
+            exit;
+        }
+        
         // Double-check that the application is still pending
         if ($application['status'] !== 'pending') {
             $_SESSION['alert'] = "This application has already been " . $application['status'] . " and cannot be modified.";
